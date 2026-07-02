@@ -12,10 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: FAQ Agent tools — search_knowledge_base(query, category=policy|clinic_info) wrapper over data/qdrant_client, no raw SQL/filter here.
+# Description: FAQ Agent tools — search_knowledge_base(query, category)
+#              wrapper over data/qdrant_client, no raw SQL/filter here.
+#              Enforces grounding (ADR-0008) before returning anything to
+#              the LLM — below-threshold results never reach the prompt.
 ###############################################################################
 
+from common.config import settings
+from common.gemini_client import embed_batch
+from data.qdrant_client import search
 
-def search_knowledge_base(query: str, category: str):
-    """Search the knowledge base for grounded FAQ context."""
-    raise NotImplementedError
+from ..core.domain.grounding import (
+    NOT_FOUND_MESSAGE,
+    build_context_text,
+    filter_grounded_results,
+)
+
+
+async def search_knowledge_base(query: str, category: str) -> str:
+    """Search the knowledge base for grounded FAQ context.
+
+    Args:
+        query: The user's question, in their own words.
+        category: "policy" or "clinic_info" — never "medical_guide" (that's
+                   the Symptom Agent's domain).
+
+    Returns:
+        A context block with citable [knowledge_id=...] tags, or
+        NOT_FOUND_MESSAGE if nothing clears the grounding threshold.
+    """
+    vectors = await embed_batch([query])
+    results = search(vectors[0], category=category)
+    grounded = filter_grounded_results(results, settings.similarity_threshold)
+
+    if not grounded:
+        return NOT_FOUND_MESSAGE
+
+    return build_context_text(grounded)

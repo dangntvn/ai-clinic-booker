@@ -12,11 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: FAQ Agent — answers policy/insurance/clinic-info questions grounded in Qdrant (ARCH-001 §4, §5.2).
+# Description: FAQ Agent — answers policy/insurance/clinic-info questions
+#              grounded in Qdrant (ARCH-001 §4, §5.2). Registering with the
+#              Orchestrator happens automatically — orchestrator/agent.py
+#              picks up faq_agent by name once this module is importable.
 ###############################################################################
 
+from google.adk.agents import Agent
 
-class FaqAgent:
-    """Answers policy/clinic-info questions grounded in Qdrant."""
+from common.config import settings
 
-    pass
+from .prompt import FAQ_INSTRUCTION
+from .tools import search_knowledge_base
+
+
+def build_faq_agent() -> Agent:
+    """Build the FAQ Agent with its single grounded-search tool."""
+    return Agent(
+        name="faq_agent",
+        model=settings.gemini_llm_model,
+        instruction=FAQ_INSTRUCTION,
+        tools=[search_knowledge_base],
+    )
+
+
+faq_agent = build_faq_agent()
