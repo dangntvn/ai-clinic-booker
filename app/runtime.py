@@ -13,16 +13,14 @@
 # limitations under the License.
 #
 # Description: ADK runtime wiring — builds the two Runners the webhook needs:
-#              the main runner (placeholder echo agent until TASK-011 swaps
-#              in the real Orchestrator) and a dedicated emergency runner
-#              (ADR-0019) so Layer-1 red-flag matches skip the Orchestrator
-#              entirely, as ARCH-001 §5.4 requires.
+#              the main runner (now the real Orchestrator Agent, TASK-011)
+#              and a dedicated emergency runner (ADR-0019) so Layer-1
+#              red-flag matches skip the Orchestrator entirely, as
+#              ARCH-001 §5.4 requires.
 ###############################################################################
 
-from google.adk.agents import Agent
 from google.adk.runners import Runner
 
-from common.config import settings
 from common.module_loader import load_ai_agents
 from data.session import get_session_service
 
@@ -32,21 +30,13 @@ _runner: Runner | None = None
 _emergency_runner: Runner | None = None
 
 
-def _build_placeholder_agent() -> Agent:
-    """Simple echo agent used only until the Orchestrator Agent lands (TASK-011)."""
-    return Agent(
-        name="placeholder_echo_agent",
-        model=settings.gemini_llm_model,
-        instruction="Repeat back exactly what the user said, prefixed with 'Echo: '.",
-    )
-
-
 def build_runtime() -> Runner:
-    """Return the process-wide main Runner, creating it (and its root agent) on first use."""
+    """Return the process-wide main Runner, creating it (and the Orchestrator) on first use."""
     global _runner
     if _runner is None:
+        orchestrator_module = load_ai_agents("orchestrator.agent")
         _runner = Runner(
-            agent=_build_placeholder_agent(),
+            agent=orchestrator_module.orchestrator_agent,
             app_name=APP_NAME,
             session_service=get_session_service(),
         )
