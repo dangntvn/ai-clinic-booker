@@ -12,10 +12,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Hard intake rules by patient category — age, pregnancy, referral letter, named-doctor request, package exam, vaccination (BIZ-001 §4) — pure Python, no I/O.
+# Description: Hard intake rules by patient category (BIZ-001 §4) — pure
+#              Python, no I/O, checked before any symptom-based triage.
+#              Invariant: the first matching rule wins, in the exact order
+#              BIZ-001 §4 lists them (age before pregnancy before referral
+#              letter before named request before package exam before
+#              vaccination) — order is meaningful, not incidental.
 ###############################################################################
 
+from dataclasses import dataclass
 
-def classify_intake(patient):
-    """Apply hard intake rules by patient category (BIZ-001 §4)."""
-    raise NotImplementedError
+PEDIATRICS = "Nhi"
+OBSTETRICS_GYNECOLOGY = "Sản – Phụ khoa"
+GENERAL_MEDICINE = "Nội tổng quát"
+VACCINATION_ROOM = "Phòng tiêm chủng"
+
+
+@dataclass
+class IntakeInfo:
+    """Structured facts gathered before symptom-based triage (BIZ-001 §4).
+
+    All fields default to "unknown/no" so callers only need to set what
+    they actually learned from the patient.
+    """
+
+    age: int | None = None
+    is_pregnant: bool = False
+    has_gynecological_issue: bool = False
+    follow_up_department: str | None = None  # BIZ-001 §4 rule 4: giấy hẹn tái khám
+    referral_department: str | None = None  # BIZ-001 §4 rule 5: giấy chuyển tuyến
+    requested_specialty: str | None = None  # BIZ-001 §4 rule 6: yêu cầu đích danh
+    is_periodic_checkup: bool = False  # BIZ-001 §4 rule 7: khám định kỳ/gói/giấy tờ
+    needs_vaccination: bool = False  # BIZ-001 §4 rule 8
+
+
+def classify_intake(info: IntakeInfo) -> str | None:
+    """Apply hard intake rules by patient category, in BIZ-001 §4 order.
+
+    Returns:
+        The department name to route to, or None if no hard rule matched —
+        the caller (Symptom Agent) should fall through to symptom-based
+        triage (BIZ-001 §6-7) in that case.
+    """
+    if info.age is not None and info.age < 16:
+        return PEDIATRICS
+
+    if info.is_pregnant:
+        return OBSTETRICS_GYNECOLOGY
+
+    if info.has_gynecological_issue:
+        return OBSTETRICS_GYNECOLOGY
+
+    if info.follow_up_department:
+        return info.follow_up_department
+
+    if info.referral_department:
+        return info.referral_department
+
+    if info.requested_specialty:
+        return info.requested_specialty
+
+    if info.is_periodic_checkup:
+        return GENERAL_MEDICINE
+
+    if info.needs_vaccination:
+        return VACCINATION_ROOM
+
+    return None
