@@ -12,10 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Mounts the REST API routers exposed by modules/ (booking, doctor, knowledge) under /api/v1 — no business logic here.
+# Description: Mounts the REST API routers exposed by modules/ (booking,
+#              doctor, knowledge) under /api/v1 — no business logic here.
 ###############################################################################
 
+from fastapi import APIRouter
 
-def build_router():
+from modules.doctor.controller import router as doctor_router
+
+
+def build_router() -> APIRouter:
     """Assemble the /api/v1 router from modules/ sub-routers."""
-    raise NotImplementedError
+    router = APIRouter(prefix="/api/v1")
+    router.include_router(doctor_router)
+    return router

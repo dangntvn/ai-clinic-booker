@@ -21,6 +21,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from app.api.v1.router import build_router
 from app.webhook.handler import handle_webhook
 
 
@@ -40,6 +41,7 @@ class WebhookReply(BaseModel):
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
     app = FastAPI(title="AI Clinic Booking Agent")
+    app.include_router(build_router())
 
     @app.post("/webhook", response_model=WebhookReply)
     async def webhook(message: WebhookMessage) -> WebhookReply:
