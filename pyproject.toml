@@ -46,6 +46,9 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/*.py" = ["E501"]
+
 [tool.pytest.ini_options]
 markers = [
     "eval: AI quality gate tests (tests/eval/test_eval_gate.py)",
