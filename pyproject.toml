@@ -22,9 +22,14 @@ dependencies = [
     "structlog",
     "apscheduler",
     "google-genai",
+    "google-adk",
     "tenacity",
     "opentelemetry-api",
     "opentelemetry-sdk",
+    "langchain-core",
+    "langchain-text-splitters",
+    "langchain-experimental",
+    "langchain-google-genai",
 ]
 
 [project.optional-dependencies]

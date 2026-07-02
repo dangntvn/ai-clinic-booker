@@ -12,11 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Chunk repository — CRUD for the knowledge_chunks table (ADR-0021).
+# Description: Chunk repository — ORM model + CRUD for the knowledge_chunks
+#              table (ADR-0021). vector_id points to the Qdrant point; a null
+#              vector_id means the chunk is still pending_embed.
 ###############################################################################
 
+from sqlalchemy import ForeignKey, Integer, String, select
+from sqlalchemy.orm import Mapped, mapped_column
 
-class ChunkRepository:
+from core.base_model import BaseModel
+from core.base_repository import BaseRepository
+
+
+class KnowledgeChunk(BaseModel):
+    """ORM model for the ``knowledge_chunks`` table (ADR-0021)."""
+
+    __tablename__ = "knowledge_chunks"
+
+    knowledge_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("knowledge_base.id", ondelete="CASCADE"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    text: Mapped[str] = mapped_column(String, nullable=False)
+    vector_id: Mapped[str | None] = mapped_column(String(64))
+    embed_status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending_embed")
+
+
+class ChunkRepository(BaseRepository[KnowledgeChunk]):
     """Postgres repository for the knowledge_chunks table (ADR-0021)."""
 
-    pass
+    model = KnowledgeChunk
+
+    async def get_by_knowledge(self, knowledge_id: int) -> list[KnowledgeChunk]:
+        """Return every chunk belonging to a knowledge_base row, in ordinal order."""
+        stmt = (
+            select(self.model)
+            .where(self.model.knowledge_id == knowledge_id)
+            .order_by(self.model.ordinal)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_pending_embed(self, knowledge_id: int) -> list[KnowledgeChunk]:
+        """Return chunks for a knowledge_base row that still need embedding."""
+        stmt = select(self.model).where(
+            self.model.knowledge_id == knowledge_id,
+            self.model.embed_status == "pending_embed",
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def delete_by_knowledge(self, knowledge_id: int) -> None:
+        """Delete every chunk for a knowledge_base row (used on delete/archive)."""
+        chunks = await self.get_by_knowledge(knowledge_id)
+        for chunk in chunks:
+            await self.session.delete(chunk)
+        await self.session.flush()
