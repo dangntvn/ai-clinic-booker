@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: DatabaseSessionService (ADK) factory pointed at the same Postgres instance used for transactional data (ADR-0015).
+# Description: DatabaseSessionService (ADK) factory pointed at the same
+#              Postgres instance used for transactional data (ADR-0015).
 ###############################################################################
 
 

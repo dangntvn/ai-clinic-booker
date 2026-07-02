@@ -12,10 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Qdrant client factory — search + upsert + delete_by_knowledge_id, payload filter by category (ADR-0007).
+# Description: Qdrant client factory — connection only for now; search +
+#              upsert + delete_by_knowledge_id land with the ingestion
+#              pipeline reuse (TASK-003, ADR-0021). Adapted from rag-health's
+#              common/qdrant.py (ADR-0021), relocated to data/ per ARCH-001
+#              §4/§8 — this is the data-access boundary, not shared infra.
 ###############################################################################
 
+from qdrant_client import QdrantClient
 
-def get_qdrant_client():
-    """Return the shared Qdrant client instance."""
-    raise NotImplementedError
+from common.config import settings
+
+
+def get_qdrant_client() -> QdrantClient:
+    """Create and return a Qdrant client connected to the configured endpoint.
+
+    The connection URL is read from ``settings.qdrant_url``, keeping all
+    infrastructure coordinates in one place. A new client object is returned
+    on every call; the underlying HTTP connection pool is managed by the
+    ``qdrant_client`` library.
+
+    Returns:
+        QdrantClient: A ready-to-use Qdrant client instance.
+    """
+    return QdrantClient(url=settings.qdrant_url)

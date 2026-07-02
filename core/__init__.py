@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Generic base-class package reused from rag-health — no concrete table/domain names here (ADR-0021).
+# Description: Generic base-class package reused from rag-health — no
+#              concrete table/domain names here (ADR-0021).
 ###############################################################################

@@ -12,11 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Ingestion job repository — get_pending (SKIP LOCKED), get_by_knowledge, get_failed (ADR-0021).
+# Description: Ingestion job repository — get_pending (SKIP LOCKED),
+#              get_by_knowledge, get_failed (ADR-0021).
 ###############################################################################
 
 
 class IngestionJobRepository:
-    """Postgres repository for ingestion_jobs — get_pending/get_by_knowledge/get_failed (ADR-0021)."""
+    """Postgres repository for ingestion_jobs.
+
+    Exposes get_pending/get_by_knowledge/get_failed (ADR-0021).
+    """
 
     pass

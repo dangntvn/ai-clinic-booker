@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Data access layer package — the only boundary that knows real table/collection names (ADR-0013).
+# Description: Data access layer package — the only boundary that knows
+#              real table/collection names (ADR-0013).
 ###############################################################################

@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Doctor repository — CRUD for the doctors table, which also holds profile fields (ADR-0020).
+# Description: Doctor repository — CRUD for the doctors table, which also
+#              holds profile fields (ADR-0020).
 ###############################################################################
 
 

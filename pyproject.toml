@@ -1,3 +1,10 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*", "core*", "data*", "common*", "modules*", "eval*"]
+
 [project]
 name = "ai-clinic-agent"
 version = "0.1.0"
@@ -8,11 +15,16 @@ dependencies = [
     "uvicorn[standard]",
     "sqlalchemy",
     "alembic",
+    "asyncpg",
     "psycopg[binary]",
     "qdrant-client",
     "pydantic-settings",
     "structlog",
     "apscheduler",
+    "google-genai",
+    "tenacity",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
 ]
 
 [project.optional-dependencies]

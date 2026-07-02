@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Booking repository — relies on the partial unique index UNIQUE(doctor_id, slot_time) WHERE status != cancelled (ADR-0009); the only place a constraint violation becomes SlotTakenError.
+# Description: Booking repository — relies on the partial unique index
+#              UNIQUE(doctor_id, slot_time) WHERE status != cancelled
+#              (ADR-0009); the only place a constraint violation becomes
+#              SlotTakenError.
 ###############################################################################
 
 

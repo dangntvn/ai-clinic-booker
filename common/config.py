@@ -12,11 +12,96 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Pydantic Settings — env-driven configuration, domain-agnostic.
+# Description: Centralised application configuration — every tuneable
+#              parameter is a Pydantic Settings field loaded from .env.
+#              Adapted from rag-health (ADR-0021): OpenAI fields replaced by
+#              Gemini (ADR-0006), model selection stays env-driven per SRS-001.
 ###############################################################################
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class Settings:
-    """Env-driven application settings."""
 
-    pass
+class Settings(BaseSettings):
+    """Application-wide configuration loaded from environment variables / .env.
+
+    All fields have sensible defaults so the application can start in a local
+    development environment with minimal setup. Production deployments should
+    override sensitive values (``gemini_api_key``, ``postgres_password``, etc.)
+    via environment variables or a secrets manager — never commit real secrets.
+
+    Attribute groups:
+        App:        Environment name, logging.
+        Gemini:     API credentials and model selection (LLM + embedding).
+        Postgres:   Connection parts, composed into ``database_url``.
+        Qdrant:     Connection parts, composed into ``qdrant_url``, plus
+                    retrieval tuning (similarity threshold, top_k).
+        Ingestion:  Chunking pipeline and job-queue configuration (ADR-0021).
+        Cron:       Polling intervals for background scheduler jobs.
+    """
+
+    # App
+    app_env: str = "local"
+    log_level: str = "INFO"
+    log_path: str = "./storage/logs"
+    app_port: int = 8000
+
+    # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
+    gemini_api_key: str = ""
+    gemini_llm_model: str = "gemini-2.0-flash"
+    gemini_embedding_model: str = "text-embedding-004"
+    llm_temperature: float = 0.0
+    llm_max_tokens: int = 2048
+    llm_timeout_seconds: int = 120
+    llm_retry_max: int = 3
+
+    # Postgres — composed into database_url below.
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_db: str = "ai_clinic_booker"
+    postgres_user: str = "postgres"
+    postgres_password: str = ""
+
+    # Qdrant — composed into qdrant_url below.
+    qdrant_host: str = "localhost"
+    qdrant_port: int = 6333
+    qdrant_collection: str = "ai_clinic_knowledge"
+    similarity_threshold: float = 0.5
+    top_k: int = 6
+
+    # Ingestion (ADR-0021) — chunk_max_size/overlap match ARCH-001 §5.5.
+    embedding_batch_size: int = 100
+    semantic_chunker_threshold_type: str = "percentile"
+    semantic_chunker_threshold_amount: float = 80.0
+    semantic_chunker_buffer_size: int = 2
+    chunk_max_size: int = 1000
+    chunk_overlap: int = 150
+    chunk_min_size: int = 100
+    ingestion_job_batch_size: int = 3
+    job_stuck_minutes: int = 30
+    job_max_retry: int = 3
+
+    # Cron intervals (seconds), ADR-0021
+    cron_chunk_interval_seconds: int = 300
+    cron_embed_interval_seconds: int = 300
+    cron_sweep_interval_seconds: int = 600
+
+    # Grounded generation (ADR-0008)
+    not_found_message: str = "I could not find relevant information in the knowledge base."
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @property
+    def database_url(self) -> str:
+        """Async SQLAlchemy connection string composed from the postgres_* fields."""
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+    @property
+    def qdrant_url(self) -> str:
+        """Qdrant HTTP endpoint composed from the qdrant_host/qdrant_port fields."""
+        return f"http://{self.qdrant_host}:{self.qdrant_port}"
+
+
+settings = Settings()

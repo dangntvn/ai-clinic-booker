@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Knowledge repository — CRUD for the knowledge_base table (system of record for authored content).
+# Description: Knowledge repository — CRUD for the knowledge_base table
+#              (system of record for authored content).
 ###############################################################################
 
 

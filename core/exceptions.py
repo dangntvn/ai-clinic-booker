@@ -12,23 +12,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: AppException hierarchy (NotFoundError, ValidationError, ...), generic — no concrete domain names (ADR-0021).
+# Description: Domain exception hierarchy — typed application exceptions
+#              caught by FastAPI exception handlers and translated into
+#              structured HTTP error responses. Generic, no concrete domain
+#              names. Reused verbatim from rag-health (ADR-0021).
 ###############################################################################
 
 
 class AppException(Exception):
-    """Root of the generic application exception hierarchy."""
+    """Base class for all application-level exceptions.
 
-    pass
+    Carries a human-readable ``message`` and a machine-readable ``code`` string
+    so API clients can branch on error type without parsing message text.
+
+    Args:
+        message: A descriptive error message suitable for logging and API responses.
+        code: A short, uppercase identifier (e.g. ``"NOT_FOUND"``).  Defaults to
+              ``"INTERNAL_ERROR"`` for unexpected failures.
+    """
+
+    def __init__(self, message: str, code: str = "INTERNAL_ERROR"):
+        super().__init__(message)
+        self.message = message
+        self.code = code
 
 
 class NotFoundError(AppException):
-    """Raised when a requested entity does not exist."""
+    """Raised when a requested resource does not exist in the data store.
 
-    pass
+    Maps to HTTP 404 via the FastAPI exception handler registered in
+    ``app.main``.
+
+    Args:
+        message: Optional override for the default "Resource not found" text.
+    """
+
+    def __init__(self, message: str = "Resource not found"):
+        super().__init__(message, code="NOT_FOUND")
 
 
 class ValidationError(AppException):
-    """Raised when input fails validation."""
+    """Raised when incoming data fails business-rule or format validation.
 
-    pass
+    Maps to HTTP 422 via the FastAPI exception handler registered in
+    ``app.main``.  Prefer this over Pydantic's own ValidationError when the
+    constraint is domain-specific (e.g. unsupported input format).
+
+    Args:
+        message: A description of the validation failure.
+    """
+
+    def __init__(self, message: str = "Validation failed"):
+        super().__init__(message, code="VALIDATION_ERROR")
+
+
+class InfrastructureError(AppException):
+    """Raised when an external dependency (database, Qdrant, Gemini) fails.
+
+    Service-layer code should catch low-level exceptions from third-party
+    clients and re-raise them as InfrastructureError so that callers receive a
+    consistent exception type and HTTP 500 responses are generated uniformly.
+
+    Args:
+        message: Details about the infrastructure failure (safe to log).
+    """
+
+    def __init__(self, message: str = "Infrastructure error"):
+        super().__init__(message, code="INFRASTRUCTURE_ERROR")
