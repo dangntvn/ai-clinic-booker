@@ -18,6 +18,7 @@
 
 from fastapi import APIRouter
 
+from modules.booking.controller import router as booking_router
 from modules.doctor.controller import router as doctor_router
 
 
@@ -25,4 +26,5 @@ def build_router() -> APIRouter:
     """Assemble the /api/v1 router from modules/ sub-routers."""
     router = APIRouter(prefix="/api/v1")
     router.include_router(doctor_router)
+    router.include_router(booking_router)
     return router

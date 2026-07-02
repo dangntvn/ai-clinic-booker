@@ -12,10 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: REST CRUD controller for the internal booking admin screen — no agent/LLM involved (ARCH-001 §4).
+# Description: REST CRUD controller for the internal booking admin screen —
+#              no agent/LLM involved (ARCH-001 §4). CRUD/orchestration only.
 ###############################################################################
 
+from datetime import date, datetime
 
-def register_routes(router):
-    """Register booking admin CRUD routes on the given router."""
-    raise NotImplementedError
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from common.database import get_session
+from core.exceptions import AppException
+from modules.booking import services
+
+router = APIRouter(prefix="/bookings", tags=["bookings"])
+
+
+class RescheduleIn(BaseModel):
+    new_slot_time: datetime
+
+
+@router.get("")
+async def list_bookings(
+    doctor_id: int | None = None,
+    target_date: date | None = None,
+    status: str | None = None,
+    session: AsyncSession = Depends(get_session),
+):
+    return await services.list_bookings(
+        session, doctor_id=doctor_id, target_date=target_date, status=status
+    )
+
+
+@router.post("/{booking_id}/cancel")
+async def cancel_booking(booking_id: int, session: AsyncSession = Depends(get_session)):
+    try:
+        return await services.cancel_booking(session, booking_id)
+    except AppException as e:
+        raise HTTPException(status_code=404, detail=e.message) from e
+
+
+@router.post("/{booking_id}/reschedule")
+async def reschedule_booking(
+    booking_id: int, body: RescheduleIn, session: AsyncSession = Depends(get_session)
+):
+    try:
+        return await services.reschedule_booking(session, booking_id, body.new_slot_time)
+    except AppException as e:
+        code = 404 if e.code == "NOT_FOUND" else 409
+        raise HTTPException(status_code=code, detail=e.message) from e

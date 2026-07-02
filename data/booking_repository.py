@@ -107,6 +107,27 @@ class BookingRepository(BaseRepository[Booking]):
 
     model = Booking
 
+    async def list_filtered(
+        self,
+        doctor_id: int | None = None,
+        target_date: date | None = None,
+        status: str | None = None,
+    ) -> list[Booking]:
+        """List bookings for the admin screen, filtered by any combination of
+        doctor/date/status (ARCH-001 §4 — modules/booking never writes SQL itself).
+        """
+        stmt = select(Booking)
+        if doctor_id is not None:
+            stmt = stmt.where(Booking.doctor_id == doctor_id)
+        if target_date is not None:
+            day_start = datetime.combine(target_date, time.min)
+            day_end = datetime.combine(target_date, time.max)
+            stmt = stmt.where(Booking.slot_time >= day_start, Booking.slot_time <= day_end)
+        if status is not None:
+            stmt = stmt.where(Booking.status == status)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def check_available_slots(self, doctor_id: int, target_date: date) -> list[datetime]:
         """Return open slots for a doctor on a date.
 
