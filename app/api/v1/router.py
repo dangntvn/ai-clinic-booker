@@ -20,6 +20,7 @@ from fastapi import APIRouter
 
 from modules.booking.controller import router as booking_router
 from modules.doctor.controller import router as doctor_router
+from modules.knowledge.controller import router as knowledge_router
 
 
 def build_router() -> APIRouter:
@@ -27,4 +28,5 @@ def build_router() -> APIRouter:
     router = APIRouter(prefix="/api/v1")
     router.include_router(doctor_router)
     router.include_router(booking_router)
+    router.include_router(knowledge_router)
     return router
