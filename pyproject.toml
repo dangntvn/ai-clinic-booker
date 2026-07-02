@@ -31,6 +31,7 @@ dependencies = [
     "langchain-experimental",
     "langchain-google-genai",
     "pyyaml",
+    "httpx",
 ]
 
 [project.optional-dependencies]
