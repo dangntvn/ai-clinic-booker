@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: BaseAgent — lifecycle and session-transfer contract shared by every ADK agent (ARCH-001 §4, §8).
+# Description: BaseAgent — lifecycle and session-transfer contract shared
+#              by every ADK agent (ARCH-001 §4, §8). Currently unused —
+#              every agent so far builds a google.adk.agents.Agent directly
+#              and hasn't needed a shared base beyond what ADK provides.
 ###############################################################################
 
 

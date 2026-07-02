@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Pure business-rule package — no I/O, unit-testable offline (ARCH-001 §7 Domain isolation).
+# Description: Pure business-rule package — no I/O, unit-testable offline
+#              (ARCH-001 §7 Domain isolation).
 ###############################################################################

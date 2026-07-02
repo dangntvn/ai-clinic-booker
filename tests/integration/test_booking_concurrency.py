@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Integration test — concurrent booking requests must not double-book (ARCH-001 §5.1, ADR-0009).
+# Description: Integration test — concurrent booking requests must not
+#              double-book (ARCH-001 §5.1, ADR-0009). Needs a live Postgres
+#              to actually exercise the race; eval/golden_set_booking.yaml
+#              + eval/runner.py::run_booking_eval() already implements this
+#              logic for real — this file stays a placeholder until a
+#              dedicated pytest-level version is worth writing separately.
 ###############################################################################
 
 
