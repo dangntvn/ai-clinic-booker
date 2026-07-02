@@ -66,6 +66,23 @@ class ValidationError(AppException):
         super().__init__(message, code="VALIDATION_ERROR")
 
 
+class SlotTakenError(AppException):
+    """Raised when a booking slot is no longer available (ADR-0009).
+
+    Lives here rather than ai-agents/core/exceptions.py — ARCH-001 §4
+    explicitly allows either location, and data/booking_repository.py (a
+    lower layer than ai-agents/) needs to raise this without depending
+    upward on the AI layer, and without the ai-agents/ hyphen import
+    workaround (common/module_loader.py) for something this hot-path.
+
+    Args:
+        message: Optional override for the default message.
+    """
+
+    def __init__(self, message: str = "Slot is no longer available"):
+        super().__init__(message, code="SLOT_TAKEN")
+
+
 class InfrastructureError(AppException):
     """Raised when an external dependency (database, Qdrant, Gemini) fails.
 

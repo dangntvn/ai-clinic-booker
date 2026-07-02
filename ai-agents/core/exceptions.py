@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: AI-specific exceptions raised by the agent/tool layer (SlotTakenError, LowConfidenceError — ARCH-001 §8).
+# Description: AI-specific exceptions raised by the agent/tool layer
+#              (ARCH-001 §8). SlotTakenError actually lives in
+#              core/exceptions.py (ARCH-001 §4 explicitly allows either
+#              location) — re-exported here so ai-agents/booking/tools.py
+#              can catch it with a normal relative import instead of the
+#              ai-agents/ hyphen workaround.
 ###############################################################################
 
+from core.exceptions import SlotTakenError
 
-class SlotTakenError(Exception):
-    """Raised when a proposed booking slot is no longer available."""
-
-    pass
+__all__ = ["SlotTakenError", "LowConfidenceError"]
 
 
 class LowConfidenceError(Exception):
