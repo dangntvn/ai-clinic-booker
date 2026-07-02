@@ -12,10 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: FastAPI app factory — creates the app instance, mounts routers, wires the lifespan (ADK runtime startup/shutdown).
+# Description: FastAPI app factory — creates the app instance, mounts the
+#              Web chat webhook route and the /api/v1 router. TASK-005 wires
+#              a minimal webhook route so app/webhook/handler.py is testable
+#              end-to-end over HTTP; TASK-016 adds startup readiness waits.
 ###############################################################################
 
+from fastapi import FastAPI
+from pydantic import BaseModel
 
-def create_app():
+from app.webhook.handler import handle_webhook
+
+
+class WebhookMessage(BaseModel):
+    """Inbound Web chat message payload."""
+
+    user_id: str
+    text: str
+
+
+class WebhookReply(BaseModel):
+    """Outbound reply payload."""
+
+    reply: str
+
+
+def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
-    raise NotImplementedError
+    app = FastAPI(title="AI Clinic Booking Agent")
+
+    @app.post("/webhook", response_model=WebhookReply)
+    async def webhook(message: WebhookMessage) -> WebhookReply:
+        reply = await handle_webhook(message.user_id, message.text)
+        return WebhookReply(reply=reply)
+
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    return app

@@ -14,9 +14,27 @@
 #
 # Description: DatabaseSessionService (ADK) factory pointed at the same
 #              Postgres instance used for transactional data (ADR-0015).
+#              This is the only file allowed to touch ADK's own
+#              sessions/events/app_states/user_states/adk_internal_metadata
+#              tables — always through the SessionService API, never raw SQL.
 ###############################################################################
 
+from google.adk.sessions import BaseSessionService, DatabaseSessionService
 
-def get_session_service():
-    """Return the ADK DatabaseSessionService bound to the shared Postgres instance (ADR-0015)."""
-    raise NotImplementedError
+from common.config import settings
+
+_session_service: BaseSessionService | None = None
+
+
+def get_session_service() -> BaseSessionService:
+    """Return the process-wide ADK session service, creating it on first use.
+
+    Uses ``settings.database_url`` (async driver) directly — DatabaseSessionService
+    creates its own async SQLAlchemy engine and, on first use, its 5 internal
+    tables (``sessions``, ``events``, ``app_states``, ``user_states``,
+    ``adk_internal_metadata``) in the same Postgres instance (ADR-0015).
+    """
+    global _session_service
+    if _session_service is None:
+        _session_service = DatabaseSessionService(settings.database_url)
+    return _session_service
