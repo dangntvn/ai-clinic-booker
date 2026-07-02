@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Webhook entrypoint for the Web chat channel. TASK-005 scope:
-#              receive an inbound message, resolve/create the ADK session,
-#              run it through the runtime, return the reply. TASK-006 adds
-#              the Layer-1 emergency_rules.is_emergency() check that must run
-#              here *before* the runtime call (ARCH-001 §5.4, ADR-0019).
+# Description: Webhook entrypoint for the Web chat channel. Runs Layer-1
+#              emergency screening (emergency_rules.is_emergency, rule code,
+#              zero LLM calls) *before* the ADK runtime — a match transfers
+#              straight to the Emergency Agent's dedicated runner, skipping
+#              the Orchestrator entirely (ARCH-001 §5.4, ADR-0019, BIZ-001 §3).
 ###############################################################################
 
 from google.genai import types
 
-from app.runtime import build_runtime
+from app.runtime import build_emergency_runtime, build_runtime
+from common.module_loader import load_ai_agents
 
 
 def _session_id_for_user(user_id: str) -> str:
@@ -32,12 +33,25 @@ def _session_id_for_user(user_id: str) -> str:
     return f"web-{user_id}"
 
 
+async def _run(runner, user_id: str, session_id: str, text: str) -> str:
+    message = types.Content(role="user", parts=[types.Part(text=text)])
+    reply = ""
+    events = runner.run_async(user_id=user_id, session_id=session_id, new_message=message)
+    async for event in events:
+        if event.content and event.content.parts:
+            reply = "".join(part.text or "" for part in event.content.parts)
+    return reply
+
+
 async def handle_webhook(user_id: str, text: str) -> str:
     """Handle one inbound Web chat message end-to-end.
 
-    Runs the message through the ADK Runner, which resolves-or-creates the
-    session via SessionService and appends both the user and agent events —
-    this file never touches the adk_* tables directly (ARCH-001 §6.1).
+    Layer 1 (rule code, no LLM call) runs first: if it matches a BIZ-001 §3
+    red flag, the message goes straight to the Emergency Agent's own runner.
+    Otherwise it falls through to the normal runtime (Orchestrator once
+    TASK-011 lands; a placeholder echo agent until then). Layer 2 (the
+    Orchestrator's own LLM-based emergency detection) lives inside that
+    normal runtime path, not here.
 
     Args:
         user_id: Stable identifier for the sender (e.g. the chat widget's visitor id).
@@ -46,15 +60,10 @@ async def handle_webhook(user_id: str, text: str) -> str:
     Returns:
         The agent's reply text (empty string if the run produced no text event).
     """
-    runner = build_runtime()
     session_id = _session_id_for_user(user_id)
 
-    message = types.Content(role="user", parts=[types.Part(text=text)])
+    emergency_rules = load_ai_agents("core.domain.emergency_rules")
+    if emergency_rules.is_emergency(text):
+        return await _run(build_emergency_runtime(), user_id, session_id, text)
 
-    reply = ""
-    events = runner.run_async(user_id=user_id, session_id=session_id, new_message=message)
-    async for event in events:
-        if event.content and event.content.parts:
-            reply = "".join(part.text or "" for part in event.content.parts)
-
-    return reply
+    return await _run(build_runtime(), user_id, session_id, text)

@@ -12,8 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Emergency Agent static response content — nearest facility / hotline guidance (ADR-0014).
+# Description: Emergency Agent static response content — nearest facility /
+#              hotline guidance (ADR-0014). Trusted here even though this is
+#              an LLM instruction, not a hard rule: the model only ever
+#              rephrases this fixed guidance, it does not decide medical
+#              action, per ADR-0014's explicit scope limit.
 ###############################################################################
 
+EMERGENCY_RESPONSE = (
+    "Đây có thể là một tình huống cấp cứu. Vui lòng GỌI NGAY 115 hoặc đến "
+    "cơ sở y tế/bệnh viện gần nhất ngay bây giờ. Nếu có thể, hãy để người "
+    "khác ở bên cạnh bạn/người bệnh trong lúc chờ hỗ trợ. Đây không phải là "
+    "chẩn đoán — chỉ là hướng dẫn an toàn ban đầu."
+)
 
-EMERGENCY_RESPONSE = ""
+EMERGENCY_INSTRUCTION = (
+    "Bạn là Emergency Agent. Nhiệm vụ DUY NHẤT của bạn là gửi lại đúng nội "
+    f"dung sau cho người dùng, có thể diễn đạt lại cho tự nhiên nhưng KHÔNG "
+    f"thay đổi ý nghĩa, KHÔNG thêm chẩn đoán, KHÔNG gọi tool nào: "
+    f"\"{EMERGENCY_RESPONSE}\""
+)
