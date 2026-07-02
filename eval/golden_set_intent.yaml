@@ -1,2 +1,32 @@
-# Golden set for intent-routing accuracy evaluation — TASK-001 scaffold, empty until populated.
-cases: []
+# Golden set for intent-routing accuracy evaluation (ARCH-001 §7).
+# expected_intent is the sub-agent name the Orchestrator must transfer to:
+# faq_agent | symptom_agent | booking_agent | emergency_agent. At least one
+# case per intent, plus a few paraphrased-emergency cases to check the
+# Layer-2 safety net (ADR-0019) — Layer-1 already covers literal keywords
+# (see ai-agents/core/domain/emergency_rules.py), this golden set targets
+# the LLM-based fallback for indirect language.
+cases:
+  - message: "Khám nội soi dạ dày ở đây giá bao nhiêu?"
+    expected_intent: faq_agent
+  - message: "Phòng khám có bảo hiểm y tế không?"
+    expected_intent: faq_agent
+  - message: "Mấy giờ phòng khám mở cửa?"
+    expected_intent: faq_agent
+  - message: "Tôi bị đau bụng âm ỉ vùng thượng vị mấy ngày nay, nên khám khoa nào?"
+    expected_intent: symptom_agent
+  - message: "Con tôi 5 tuổi bị ho sổ mũi, cho hỏi khám ở đâu?"
+    expected_intent: symptom_agent
+  - message: "Bác sĩ nào khám thứ 7 vậy?"
+    expected_intent: symptom_agent
+  - message: "Tôi muốn đặt lịch khám với bác sĩ Tim mạch sáng mai 9h"
+    expected_intent: booking_agent
+  - message: "Cho tôi đổi lịch khám ngày mai sang chiều thứ 5"
+    expected_intent: booking_agent
+  - message: "Tôi muốn hủy lịch khám đã đặt"
+    expected_intent: booking_agent
+  - message: "Ba tôi đột nhiên không nói được, méo miệng một bên"
+    expected_intent: emergency_agent
+  - message: "Em thấy khó thở lắm, không biết sao, tự nhiên vậy"
+    expected_intent: emergency_agent
+  - message: "Chồng em ôm ngực nói đau lan lên vai, người vã mồ hôi"
+    expected_intent: emergency_agent

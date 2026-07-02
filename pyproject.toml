@@ -30,6 +30,7 @@ dependencies = [
     "langchain-text-splitters",
     "langchain-experimental",
     "langchain-google-genai",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]

@@ -1,2 +1,40 @@
-# Golden set for retrieval evaluation (Hit Rate@k, MRR) — TASK-001 scaffold, empty until populated.
-cases: []
+# Golden set for retrieval evaluation (Hit Rate@k, MRR — ARCH-001 §7).
+# Each case: a query, the category to search, and the knowledge_id(s) that
+# should appear in the top-k results. knowledge_id values are placeholders
+# (-1) until a real knowledge_base has been seeded and published — swap them
+# for real ids once TASK-016's smoke-test data exists. Reviewed against
+# SRS-001/BIZ-001 for realism (policy/clinic_info/medical_guide categories).
+cases:
+  - query: "Nội soi dạ dày giá bao nhiêu"
+    category: policy
+    relevant_knowledge_ids: [-1]
+  - query: "Phòng khám có nhận bảo hiểm y tế không"
+    category: policy
+    relevant_knowledge_ids: [-1]
+  - query: "Khám ngoài giờ có phụ thu không"
+    category: policy
+    relevant_knowledge_ids: [-1]
+  - query: "Chính sách hủy lịch khám trước bao lâu thì không mất phí"
+    category: policy
+    relevant_knowledge_ids: [-1]
+  - query: "Phòng khám mở cửa mấy giờ"
+    category: clinic_info
+    relevant_knowledge_ids: [-1]
+  - query: "Có chỗ đậu xe không"
+    category: clinic_info
+    relevant_knowledge_ids: [-1]
+  - query: "Phòng khám nghỉ lễ Tết ngày nào"
+    category: clinic_info
+    relevant_knowledge_ids: [-1]
+  - query: "Đang có khuyến mãi khám tổng quát không"
+    category: clinic_info
+    relevant_knowledge_ids: [-1]
+  - query: "Trước khi xét nghiệm máu có cần nhịn ăn không"
+    category: medical_guide
+    relevant_knowledge_ids: [-1]
+  - query: "Chuẩn bị gì trước khi siêu âm bụng"
+    category: medical_guide
+    relevant_knowledge_ids: [-1]
+  - query: "Nội soi đại tràng có cần nhịn ăn trước không"
+    category: medical_guide
+    relevant_knowledge_ids: [-1]

@@ -12,14 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: The real AI quality gate — pytest.mark.eval, calls eval/runner.py, exits 1 on FAIL (ARCH-001 §7, §8).
+# Description: The real AI quality gate — pytest.mark.eval, calls
+#              eval/runner.py against live Gemini/Qdrant/Postgres, asserts
+#              real thresholds, exits 1 on FAIL (ARCH-001 §7, §8). Only runs
+#              via `pytest -m eval`, never picked up by a plain `pytest`.
 ###############################################################################
-
 
 import pytest
 
+from common.config import settings
+
 
 @pytest.mark.eval
-@pytest.mark.skip(reason="TASK-001 scaffold - implementation pending")
-def test_placeholder():
-    pass
+@pytest.mark.skipif(not settings.gemini_api_key, reason="requires a live GEMINI_API_KEY")
+def test_eval_gate():
+    from eval.runner import run_eval
+
+    exit_code = run_eval()
+    assert exit_code == 0, "eval/REPORT.md has the metric that missed its threshold"

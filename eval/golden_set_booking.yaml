@@ -1,2 +1,60 @@
-# Golden set for booking-concurrency evaluation — TASK-001 scaffold, empty until populated.
-cases: []
+# Golden set for booking-concurrency evaluation (ARCH-001 §7, ADR-0009).
+# Each case describes N concurrent create_booking calls for the SAME
+# (doctor_id, slot_time) — the gate asserts exactly one succeeds and the
+# rest raise SlotTakenError under real concurrent load (TASK-008 DoD).
+# doctor_id is a placeholder (1) until real seed data exists — swap for a
+# real active doctor id once TASK-016's smoke-test seed data is in place.
+cases:
+  - name: "two_way_race_same_slot"
+    doctor_id: 1
+    slot_time: "2026-07-10T09:00:00"
+    concurrent_requests: 2
+    expected_successes: 1
+  - name: "five_way_race_same_slot"
+    doctor_id: 1
+    slot_time: "2026-07-10T09:30:00"
+    concurrent_requests: 5
+    expected_successes: 1
+  - name: "ten_way_race_same_slot"
+    doctor_id: 1
+    slot_time: "2026-07-10T10:00:00"
+    concurrent_requests: 10
+    expected_successes: 1
+  - name: "different_slots_all_succeed"
+    doctor_id: 1
+    slot_time: "2026-07-10T10:30:00"
+    concurrent_requests: 1
+    expected_successes: 1
+  - name: "cancel_then_immediate_rebook_succeeds"
+    doctor_id: 1
+    slot_time: "2026-07-10T11:00:00"
+    concurrent_requests: 1
+    expected_successes: 1
+    setup: "cancel_existing_booking_for_this_slot_first"
+  - name: "two_way_race_different_doctor_same_time_both_succeed"
+    doctor_id: 2
+    slot_time: "2026-07-10T09:00:00"
+    concurrent_requests: 1
+    expected_successes: 1
+  - name: "race_at_lunch_boundary_slot"
+    doctor_id: 1
+    slot_time: "2026-07-10T11:30:00"
+    concurrent_requests: 3
+    expected_successes: 1
+  - name: "race_at_closing_slot"
+    doctor_id: 1
+    slot_time: "2026-07-10T16:30:00"
+    concurrent_requests: 3
+    expected_successes: 1
+  - name: "race_on_doctor_non_work_day"
+    doctor_id: 1
+    slot_time: "2026-07-11T09:00:00"
+    concurrent_requests: 2
+    expected_successes: 0
+    note: "assumes doctor_id=1 does not work this weekday in seed data"
+  - name: "reschedule_race_into_taken_slot"
+    doctor_id: 1
+    slot_time: "2026-07-10T09:00:00"
+    concurrent_requests: 2
+    expected_successes: 1
+    note: "one call is update_booking into an already-booked slot, not create_booking"
