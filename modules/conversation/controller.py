@@ -12,18 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Chat entrypoint for the "booker" agent (Web channel). Runs
-#              Layer-1 emergency screening (emergency_rules.is_emergency, rule
-#              code, zero LLM calls) *before* the ADK runtime — a match
+# Description: REST controller for the booker agent's chat API, mounted
+#              under /api/v1 like every other module controller (doctor,
+#              booking, knowledge) — the standard place to attach auth
+#              (Depends()) later without touching app/main.py again.
+#
+#              Runs Layer-1 emergency screening (emergency_rules.is_emergency,
+#              rule code, zero LLM calls) *before* the ADK runtime — a match
 #              transfers straight to the Emergency Agent's dedicated runner,
 #              skipping the Orchestrator entirely (ARCH-001 §5.4, ADR-0019,
 #              BIZ-001 §3).
 ###############################################################################
 
+from fastapi import APIRouter
 from google.genai import types
+from pydantic import BaseModel
 
 from app.runtime import build_emergency_runtime, build_runtime
 from common.module_loader import load_ai_agents
+
+router = APIRouter(prefix="/agents/booker/conversations", tags=["conversations"])
+
+
+class ConversationMessageRequest(BaseModel):
+    """Inbound chat message payload."""
+
+    text: str
+
+
+class ConversationMessageResponse(BaseModel):
+    """Outbound reply payload."""
+
+    reply: str
 
 
 def _session_id_for_conversation(conversation_id: str) -> str:
@@ -71,3 +91,11 @@ async def handle_message(conversation_id: str, text: str) -> str:
         return await _run(build_emergency_runtime(), conversation_id, session_id, text)
 
     return await _run(build_runtime(), conversation_id, session_id, text)
+
+
+@router.post("/{conversation_id}/messages", response_model=ConversationMessageResponse)
+async def post_message(
+    conversation_id: str, message: ConversationMessageRequest
+) -> ConversationMessageResponse:
+    reply = await handle_message(conversation_id, message.text)
+    return ConversationMessageResponse(reply=reply)

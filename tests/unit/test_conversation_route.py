@@ -22,8 +22,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi.testclient import TestClient
 
-import app.conversation.controller as controller_module
 import app.main as main_module
+import modules.conversation.controller as controller_module
 
 
 def test_conversation_message_returns_reply(monkeypatch):

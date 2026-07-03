@@ -14,7 +14,7 @@
 #
 # Description: Emergency Agent — static safety response only, no tools, no
 #              data/ access (ADR-0014). Reached two ways: Layer 1
-#              (app/conversation/handler.py, before the ADK runtime even starts —
+#              (modules/conversation/controller.py, before the ADK runtime even starts —
 #              see emergency_rules.is_emergency) or Layer 2 (Orchestrator
 #              transfer, TASK-011) for paraphrased red-flag language.
 ###############################################################################

@@ -19,8 +19,8 @@
 
 from fastapi import APIRouter
 
-from app.conversation.controller import router as conversation_router
 from modules.booking.controller import router as booking_router
+from modules.conversation.controller import router as conversation_router
 from modules.doctor.controller import router as doctor_router
 from modules.knowledge.controller import router as knowledge_router
 
