@@ -16,7 +16,9 @@
 #              the main runner (now the real Orchestrator Agent, TASK-011)
 #              and a dedicated emergency runner (ADR-0019) so Layer-1
 #              red-flag matches skip the Orchestrator entirely, as
-#              ARCH-001 §5.4 requires.
+#              ARCH-001 §5.4 requires. auto_create_session=True (TASK-019)
+#              because the webhook never pre-creates a session — ADK raises
+#              SessionNotFoundError on a brand-new user_id otherwise.
 ###############################################################################
 
 from google.adk.runners import Runner
@@ -39,6 +41,7 @@ def build_runtime() -> Runner:
             agent=orchestrator_module.orchestrator_agent,
             app_name=APP_NAME,
             session_service=get_session_service(),
+            auto_create_session=True,
         )
     return _runner
 
@@ -57,5 +60,6 @@ def build_emergency_runtime() -> Runner:
             agent=emergency_module.emergency_agent,
             app_name=APP_NAME,
             session_service=get_session_service(),
+            auto_create_session=True,
         )
     return _emergency_runner
