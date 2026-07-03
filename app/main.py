@@ -13,12 +13,18 @@
 # limitations under the License.
 #
 # Description: FastAPI app factory — creates the app instance, mounts the
-#              Web chat webhook route and the /api/v1 router. TASK-005 wires
-#              a minimal webhook route so app/webhook/handler.py is testable
-#              end-to-end over HTTP; TASK-016 adds startup readiness waits.
-#              TASK-018: lifespan starts/stops the ingestion cron scheduler
+#              booker agent conversation route and the /api/v1 router.
+#              TASK-005 wires a minimal chat route so
+#              app/conversation/handler.py is testable end-to-end over HTTP;
+#              TASK-016 adds startup readiness waits. TASK-018: lifespan
+#              starts/stops the ingestion cron scheduler
 #              (modules/knowledge_ingestion/cron.setup_scheduler), which was
-#              defined but never invoked anywhere until now.
+#              defined but never invoked anywhere until now. TASK-021: route
+#              renamed from `/webhook` to `/agents/booker/conversations/{id}/
+#              messages` — this is a client-invoked chat API, not a webhook
+#              (no third party pushes events into it), matching the
+#              conversation-resource convention used by AWS Bedrock Agents /
+#              OpenAI Threads.
 ###############################################################################
 
 from contextlib import asynccontextmanager
@@ -27,18 +33,17 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.api.v1.router import build_router
-from app.webhook.handler import handle_webhook
+from app.conversation.handler import handle_message
 from modules.knowledge_ingestion.cron import setup_scheduler
 
 
-class WebhookMessage(BaseModel):
-    """Inbound Web chat message payload."""
+class ConversationMessageRequest(BaseModel):
+    """Inbound chat message payload."""
 
-    user_id: str
     text: str
 
 
-class WebhookReply(BaseModel):
+class ConversationMessageResponse(BaseModel):
     """Outbound reply payload."""
 
     reply: str
@@ -58,10 +63,15 @@ def create_app() -> FastAPI:
     app = FastAPI(title="AI Clinic Booking Agent", lifespan=_lifespan)
     app.include_router(build_router())
 
-    @app.post("/webhook", response_model=WebhookReply)
-    async def webhook(message: WebhookMessage) -> WebhookReply:
-        reply = await handle_webhook(message.user_id, message.text)
-        return WebhookReply(reply=reply)
+    @app.post(
+        "/agents/booker/conversations/{conversation_id}/messages",
+        response_model=ConversationMessageResponse,
+    )
+    async def post_message(
+        conversation_id: str, message: ConversationMessageRequest
+    ) -> ConversationMessageResponse:
+        reply = await handle_message(conversation_id, message.text)
+        return ConversationMessageResponse(reply=reply)
 
     @app.get("/health")
     async def health() -> dict[str, str]:

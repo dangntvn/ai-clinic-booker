@@ -21,7 +21,7 @@ Full rationale in ARCH-001 §4/§8. Short version:
 
 | Path | What's there |
 |---|---|
-| `app/` | FastAPI composition root — app factory, ADK runtime (Orchestrator + placeholder-free real agents), webhook (Layer-1 emergency screening + ADK Runner), `/api/v1` router. |
+| `app/` | FastAPI composition root — app factory, ADK runtime (Orchestrator + placeholder-free real agents), booker agent conversation route (Layer-1 emergency screening + ADK Runner), `/api/v1` router. |
 | `ai-agents/` | AI layer — Orchestrator + 4 domain agents (faq, symptom, booking, emergency), each with `agent.py`/`tools.py`/`prompt.py`. Note: this directory's hyphenated name can't be reached by a normal `import` statement — see `common/module_loader.py`. |
 | `modules/` | Non-AI business layer — CRUD admin (booking, doctor, knowledge) + the RAG ingestion pipeline (chunk/embed/cron), adapted from `rag-health`. |
 | `core/` | Generic CRUD base classes + `SlotTakenError`/`NotFoundError`/etc. Reused from `rag-health`. |
