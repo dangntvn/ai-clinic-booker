@@ -20,6 +20,7 @@
 ###############################################################################
 
 from google.adk.agents import Agent
+from google.genai import types
 
 from common.config import settings
 
@@ -30,7 +31,11 @@ def build_emergency_agent() -> Agent:
     """Build the Emergency Agent — no tools, no sub_agents, no dal/ calls."""
     return Agent(
         name="emergency_agent",
-        model=settings.gemini_llm_model,
+        model=settings.emergency_llm_model,
+        generate_content_config=types.GenerateContentConfig(
+            temperature=settings.emergency_llm_temperature,
+            max_output_tokens=settings.emergency_llm_max_tokens,
+        ),
         instruction=EMERGENCY_INSTRUCTION,
         disallow_transfer_to_peers=True,
     )

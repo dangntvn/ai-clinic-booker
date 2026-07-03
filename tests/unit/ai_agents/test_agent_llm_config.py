@@ -17,6 +17,8 @@
 #              never the shared gemini_llm_model/llm_temperature/llm_max_tokens.
 ###############################################################################
 
+import importlib
+
 import pytest
 
 from common.config import settings
@@ -30,6 +32,12 @@ AGENTS = [
     ("emergency.agent", "build_emergency_agent", "emergency"),
 ]
 
+# orchestrator.agent's module-level `orchestrator_agent` singleton (built at
+# first import) already parents the faq/symptom/booking/emergency singletons.
+# Rebuilding it in a test needs those sub-agent modules reloaded first so ADK
+# doesn't reject re-parenting an agent that already has a parent.
+_ORCHESTRATOR_SUB_AGENT_MODULES = ["faq.agent", "symptom.agent", "booking.agent", "emergency.agent"]
+
 
 @pytest.mark.parametrize("module_path, builder_name, prefix", AGENTS)
 def test_agent_uses_its_own_llm_config(monkeypatch, module_path, builder_name, prefix):
@@ -38,6 +46,15 @@ def test_agent_uses_its_own_llm_config(monkeypatch, module_path, builder_name, p
     monkeypatch.setattr(settings, f"{prefix}_llm_max_tokens", 999)
 
     module = load_ai_agents(module_path)
+
+    if prefix == "orchestrator":
+        # Re-import (import, not reload here) may have already built the
+        # module-level `orchestrator_agent` singleton, parenting the
+        # sub-agent singletons. Reload the sub-agents now, right before our
+        # own explicit build call, so they're unparented again.
+        for sub_module_path in _ORCHESTRATOR_SUB_AGENT_MODULES:
+            importlib.reload(load_ai_agents(sub_module_path))
+
     agent = getattr(module, builder_name)()
 
     assert agent.model == "test-model-x"

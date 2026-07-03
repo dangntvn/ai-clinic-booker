@@ -21,6 +21,7 @@
 
 from google.adk.agents import Agent
 from google.adk.agents.readonly_context import ReadonlyContext
+from google.genai import types
 
 from common.config import settings
 
@@ -67,7 +68,11 @@ def build_symptom_agent() -> Agent:
     """Build the Symptom Agent with a dynamic, DB-backed instruction."""
     return Agent(
         name="symptom_agent",
-        model=settings.gemini_llm_model,
+        model=settings.symptom_llm_model,
+        generate_content_config=types.GenerateContentConfig(
+            temperature=settings.symptom_llm_temperature,
+            max_output_tokens=settings.symptom_llm_max_tokens,
+        ),
         instruction=_build_instruction,
         tools=[search_knowledge_base],
     )

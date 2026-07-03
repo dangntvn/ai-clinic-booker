@@ -20,6 +20,7 @@
 ###############################################################################
 
 from google.adk.agents import Agent
+from google.genai import types
 
 from common.config import settings
 
@@ -55,7 +56,11 @@ def build_orchestrator_agent() -> Agent:
     """Build the Orchestrator — sub_agents gives it ADK's built-in transfer tool."""
     return Agent(
         name="orchestrator_agent",
-        model=settings.gemini_llm_model,
+        model=settings.orchestrator_llm_model,
+        generate_content_config=types.GenerateContentConfig(
+            temperature=settings.orchestrator_llm_temperature,
+            max_output_tokens=settings.orchestrator_llm_max_tokens,
+        ),
         instruction=ORCHESTRATOR_INSTRUCTION,
         sub_agents=_load_sub_agents(),
     )
