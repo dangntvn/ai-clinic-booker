@@ -20,6 +20,7 @@
 ###############################################################################
 
 from qdrant_client import QdrantClient, models
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 from common.config import settings
 
@@ -82,17 +83,27 @@ def search(query_vector: list[float], category: str, top_k: int | None = None) -
         top_k: Max results; defaults to ``settings.top_k``.
 
     Returns:
-        List of ``{score, payload}`` dicts, best match first.
+        List of ``{score, payload}`` dicts, best match first. Empty if the
+        collection doesn't exist yet (fresh deploy, nothing ingested) — same
+        as "no grounded results" so callers fall through to the ADR-0008
+        not-found fallback instead of crashing.
     """
     client = get_qdrant_client()
-    results = client.query_points(
-        collection_name=settings.qdrant_collection,
-        query=query_vector,
-        query_filter=models.Filter(
-            must=[models.FieldCondition(key="category", match=models.MatchValue(value=category))]
-        ),
-        limit=top_k or settings.top_k,
-    )
+    try:
+        results = client.query_points(
+            collection_name=settings.qdrant_collection,
+            query=query_vector,
+            query_filter=models.Filter(
+                must=[
+                    models.FieldCondition(key="category", match=models.MatchValue(value=category))
+                ]
+            ),
+            limit=top_k or settings.top_k,
+        )
+    except UnexpectedResponse as e:
+        if e.status_code == 404:
+            return []
+        raise
     return [{"score": point.score, "payload": point.payload} for point in results.points]
 
 
