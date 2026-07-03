@@ -17,6 +17,8 @@
 #              model fields via env var, not hardcoded (TASK-002 DoD).
 ###############################################################################
 
+import pytest
+
 from common.config import Settings
 
 
@@ -35,3 +37,41 @@ def test_settings_gemini_model_is_env_overridable(monkeypatch):
     settings = Settings(_env_file=None)
 
     assert settings.gemini_llm_model == "gemini-2.5-pro"
+
+
+AGENT_PREFIXES = ["orchestrator", "booking", "symptom", "faq", "emergency"]
+
+
+@pytest.mark.parametrize("prefix", AGENT_PREFIXES)
+def test_per_agent_llm_defaults_match_global_defaults(prefix):
+    settings = Settings(_env_file=None)
+
+    assert getattr(settings, f"{prefix}_llm_model") == "gemini-2.0-flash"
+    assert getattr(settings, f"{prefix}_llm_temperature") == 0.0
+    assert getattr(settings, f"{prefix}_llm_max_tokens") == 2048
+
+
+@pytest.mark.parametrize("prefix", AGENT_PREFIXES)
+def test_per_agent_llm_fields_are_independently_env_overridable(monkeypatch, prefix):
+    monkeypatch.setenv(f"{prefix.upper()}_LLM_MODEL", "custom-model")
+    monkeypatch.setenv(f"{prefix.upper()}_LLM_TEMPERATURE", "0.7")
+    monkeypatch.setenv(f"{prefix.upper()}_LLM_MAX_TOKENS", "512")
+
+    settings = Settings(_env_file=None)
+
+    assert getattr(settings, f"{prefix}_llm_model") == "custom-model"
+    assert getattr(settings, f"{prefix}_llm_temperature") == 0.7
+    assert getattr(settings, f"{prefix}_llm_max_tokens") == 512
+
+    other_prefixes = [p for p in AGENT_PREFIXES if p != prefix]
+    for other in other_prefixes:
+        assert getattr(settings, f"{other}_llm_model") == "gemini-2.0-flash"
+
+
+def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
+    for prefix in AGENT_PREFIXES:
+        monkeypatch.setenv(f"{prefix.upper()}_LLM_MODEL", "some-agent-model")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.gemini_embedding_model == "text-embedding-004"
