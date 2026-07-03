@@ -16,13 +16,19 @@
 #              Web chat webhook route and the /api/v1 router. TASK-005 wires
 #              a minimal webhook route so app/webhook/handler.py is testable
 #              end-to-end over HTTP; TASK-016 adds startup readiness waits.
+#              TASK-018: lifespan starts/stops the ingestion cron scheduler
+#              (modules/knowledge_ingestion/cron.setup_scheduler), which was
+#              defined but never invoked anywhere until now.
 ###############################################################################
+
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.api.v1.router import build_router
 from app.webhook.handler import handle_webhook
+from modules.knowledge_ingestion.cron import setup_scheduler
 
 
 class WebhookMessage(BaseModel):
@@ -38,9 +44,18 @@ class WebhookReply(BaseModel):
     reply: str
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Start the ingestion cron scheduler on boot, stop it on shutdown."""
+    scheduler = setup_scheduler()
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
-    app = FastAPI(title="AI Clinic Booking Agent")
+    app = FastAPI(title="AI Clinic Booking Agent", lifespan=_lifespan)
     app.include_router(build_router())
 
     @app.post("/webhook", response_model=WebhookReply)
