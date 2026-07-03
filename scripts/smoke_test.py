@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Smoke test — sends one webhook message per intent (faq,
+# Description: Smoke test — sends one chat message per intent (faq,
 #              symptom, booking, emergency) against a running stack and
 #              asserts each gets a non-empty reply (TASK-016 DoD). Run after
 #              `docker compose up`, not as part of `pytest` — it needs a
@@ -24,7 +24,7 @@ import uuid
 
 import httpx
 
-WEBHOOK_URL = "http://localhost:8000/webhook"
+BASE_URL = "http://localhost:8000/agents/booker/conversations"
 
 CASES = {
     "faq": "Phòng khám mở cửa mấy giờ?",
@@ -39,8 +39,10 @@ def main() -> int:
     failures = []
     with httpx.Client(timeout=60.0) as client:
         for intent, message in CASES.items():
-            user_id = f"smoke-{intent}-{uuid.uuid4()}"
-            response = client.post(WEBHOOK_URL, json={"user_id": user_id, "text": message})
+            conversation_id = f"smoke-{intent}-{uuid.uuid4()}"
+            response = client.post(
+                f"{BASE_URL}/{conversation_id}/messages", json={"text": message}
+            )
             ok = response.status_code == 200 and bool(response.json().get("reply", "").strip())
             print(f"[{'PASS' if ok else 'FAIL'}] {intent}: {message!r}")
             if not ok:

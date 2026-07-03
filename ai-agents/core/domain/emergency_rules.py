@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Description: Layer-1 emergency red-flag screening, called from
-#              app/webhook/handler.py before the ADK runtime — rule code
+#              app/conversation/handler.py before the ADK runtime — rule code
 #              only, no LLM call (BIZ-001 §3, ADR-0019). Pure function, zero
 #              I/O, unit-testable offline. Better a false positive (routes an
 #              ordinary message to the Emergency Agent) than a false

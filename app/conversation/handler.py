@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Webhook entrypoint for the Web chat channel. Runs Layer-1
-#              emergency screening (emergency_rules.is_emergency, rule code,
-#              zero LLM calls) *before* the ADK runtime — a match transfers
-#              straight to the Emergency Agent's dedicated runner, skipping
-#              the Orchestrator entirely (ARCH-001 §5.4, ADR-0019, BIZ-001 §3).
+# Description: Chat entrypoint for the "booker" agent (Web channel). Runs
+#              Layer-1 emergency screening (emergency_rules.is_emergency, rule
+#              code, zero LLM calls) *before* the ADK runtime — a match
+#              transfers straight to the Emergency Agent's dedicated runner,
+#              skipping the Orchestrator entirely (ARCH-001 §5.4, ADR-0019,
+#              BIZ-001 §3).
 ###############################################################################
 
 from google.genai import types
@@ -25,12 +26,13 @@ from app.runtime import build_emergency_runtime, build_runtime
 from common.module_loader import load_ai_agents
 
 
-def _session_id_for_user(user_id: str) -> str:
-    """One session per user_id for the Web chat channel — keeps the webhook
-    stateless (no client-managed session_id) while still giving every user a
-    continuous conversation across messages.
+def _session_id_for_conversation(conversation_id: str) -> str:
+    """Map a client-supplied conversation_id to an ADK session_id.
+
+    conversation_id doubles as the ADK user_id too (TASK-021) — the Web
+    channel has no separate notion of "user" distinct from "conversation".
     """
-    return f"web-{user_id}"
+    return f"web-{conversation_id}"
 
 
 async def _run(runner, user_id: str, session_id: str, text: str) -> str:
@@ -43,8 +45,8 @@ async def _run(runner, user_id: str, session_id: str, text: str) -> str:
     return reply
 
 
-async def handle_webhook(user_id: str, text: str) -> str:
-    """Handle one inbound Web chat message end-to-end.
+async def handle_message(conversation_id: str, text: str) -> str:
+    """Handle one inbound message for the booker agent, end-to-end.
 
     Layer 1 (rule code, no LLM call) runs first: if it matches a BIZ-001 §3
     red flag, the message goes straight to the Emergency Agent's own runner.
@@ -54,16 +56,18 @@ async def handle_webhook(user_id: str, text: str) -> str:
     normal runtime path, not here.
 
     Args:
-        user_id: Stable identifier for the sender (e.g. the chat widget's visitor id).
+        conversation_id: Client-supplied id identifying the conversation;
+            the session auto-creates on first use (TASK-019) so no separate
+            "create conversation" call is needed.
         text: The raw inbound message text.
 
     Returns:
         The agent's reply text (empty string if the run produced no text event).
     """
-    session_id = _session_id_for_user(user_id)
+    session_id = _session_id_for_conversation(conversation_id)
 
     emergency_rules = load_ai_agents("core.domain.emergency_rules")
     if emergency_rules.is_emergency(text):
-        return await _run(build_emergency_runtime(), user_id, session_id, text)
+        return await _run(build_emergency_runtime(), conversation_id, session_id, text)
 
-    return await _run(build_runtime(), user_id, session_id, text)
+    return await _run(build_runtime(), conversation_id, session_id, text)
