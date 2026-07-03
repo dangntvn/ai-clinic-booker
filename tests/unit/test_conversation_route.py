@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Unit test for TASK-021 — the chat entrypoint moved from
-#              `POST /webhook` to `POST /agents/booker/conversations/{id}/messages`,
-#              a client-supplied conversation_id that auto-creates on first use
-#              (same semantics as the old per-user_id session, renamed to match
-#              industry convention for agent chat APIs).
+# Description: Unit test for TASK-022 — the conversation route moved into a
+#              proper controller.py (matching modules/*/controller.py) and
+#              under /api/v1, same as every other API in this app (TASK-021
+#              had it inline in app/main.py, outside /api/v1).
 ###############################################################################
 
 from unittest.mock import AsyncMock, MagicMock
@@ -24,17 +23,18 @@ from unittest.mock import AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 
 import app.main as main_module
+import modules.conversation.controller as controller_module
 
 
 def test_conversation_message_returns_reply(monkeypatch):
     monkeypatch.setattr(main_module, "setup_scheduler", lambda: MagicMock())
     fake_handle_message = AsyncMock(return_value="hello back")
-    monkeypatch.setattr(main_module, "handle_message", fake_handle_message)
+    monkeypatch.setattr(controller_module, "handle_message", fake_handle_message)
 
     app = main_module.create_app()
     with TestClient(app) as client:
         response = client.post(
-            "/agents/booker/conversations/conv-1/messages",
+            "/api/v1/agents/booker/conversations/conv-1/messages",
             json={"text": "hi"},
         )
 
@@ -46,15 +46,26 @@ def test_conversation_message_returns_reply(monkeypatch):
 def test_conversation_message_reuses_same_conversation_id(monkeypatch):
     monkeypatch.setattr(main_module, "setup_scheduler", lambda: MagicMock())
     fake_handle_message = AsyncMock(side_effect=["first", "second"])
-    monkeypatch.setattr(main_module, "handle_message", fake_handle_message)
+    monkeypatch.setattr(controller_module, "handle_message", fake_handle_message)
 
     app = main_module.create_app()
     with TestClient(app) as client:
-        client.post("/agents/booker/conversations/conv-2/messages", json={"text": "a"})
-        client.post("/agents/booker/conversations/conv-2/messages", json={"text": "b"})
+        client.post("/api/v1/agents/booker/conversations/conv-2/messages", json={"text": "a"})
+        client.post("/api/v1/agents/booker/conversations/conv-2/messages", json={"text": "b"})
 
     assert fake_handle_message.await_args_list[0].args == ("conv-2", "a")
     assert fake_handle_message.await_args_list[1].args == ("conv-2", "b")
+
+
+def test_route_without_v1_prefix_no_longer_exists(monkeypatch):
+    monkeypatch.setattr(main_module, "setup_scheduler", lambda: MagicMock())
+    app = main_module.create_app()
+    with TestClient(app) as client:
+        response = client.post(
+            "/agents/booker/conversations/conv-3/messages", json={"text": "hi"}
+        )
+
+    assert response.status_code == 404
 
 
 def test_old_webhook_route_no_longer_exists(monkeypatch):

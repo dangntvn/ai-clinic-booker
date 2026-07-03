@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Booker agent conversation channel package (Web chat).
+# Description: Booker agent conversation module (Web chat channel).
 ###############################################################################

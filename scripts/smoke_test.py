@@ -24,7 +24,7 @@ import uuid
 
 import httpx
 
-BASE_URL = "http://localhost:8000/agents/booker/conversations"
+BASE_URL = "http://localhost:8000/api/v1/agents/booker/conversations"
 
 CASES = {
     "faq": "Phòng khám mở cửa mấy giờ?",
