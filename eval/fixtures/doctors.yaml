@@ -1,0 +1,184 @@
+# Fixture bác sĩ thật — nguồn: https://phongkham5sao.vn/bac-si/ (trang 1+2), xác minh qua WebFetch 2026-07-08 (TASK-024/025).
+# Field khớp đúng tên cột model `data/doctor_repository.py::Doctor`.
+# specialty PHẢI là 1 trong 14 giá trị enum SPECIALTIES — validate cứng ở modules/doctor/services.py::validate_specialty.
+# work_days: trang nguồn không công khai lịch làm việc cụ thể theo ngày cho bác sĩ nào — để null, KHÔNG tự bịa (xem eval/data_requirements.md mục 5.1, quyết định phương án thuộc TASK-026).
+# fee: trang nguồn không công khai giá khám theo từng bác sĩ (chỉ có bảng giá dịch vụ chung) — để null, không suy đoán.
+
+doctors:
+  - full_name: "Phạm Thị Lan Hương"
+    title: "Bác sĩ"
+    specialty: "Nội tổng quát"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null  # chưa trích xuất — trang danh sách không kèm bio, cần fetch trang cá nhân nếu cần
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Trần Thị Kim Anh"
+    title: "Bác sĩ"
+    specialty: "Nội tổng quát"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: "Có hơn 30 năm kinh nghiệm trong lĩnh vực chuyên khoa."
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/page/2/"
+
+  - full_name: "Hoàng Đức Hạnh"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Nhi"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Nguyễn Thị Thúy"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Sản – Phụ khoa"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: "Có hơn 30 năm kinh nghiệm trong lĩnh vực khám và điều trị các bệnh về sản phụ khoa."
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/page/2/"
+
+  - full_name: "Đỗ Như Chinh"
+    title: "Thạc sĩ, Bác sĩ chuyên khoa"
+    specialty: "Thần kinh"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: "Hơn 30 năm kinh nghiệm trong nghề."
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/page/2/"
+
+  - full_name: "Đào Thanh Thủy"
+    title: "Bác sĩ"
+    specialty: "Da liễu"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Đoàn Việt Hùng"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Tai Mũi Họng"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Nguyễn Thị Hải"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Mắt"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Lê Thị Huyền Trang"
+    title: "Bác sĩ"
+    specialty: "Răng Hàm Mặt"
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Phạm Sơn Tùng"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Cơ xương khớp"
+    specialty_note: "MAP GẦN ĐÚNG — nhãn gốc trong bio là 'Chấn thương Chỉnh hình', không phải tên chính xác trong enum SPECIALTIES. Cần TASK-026 xác nhận chấp nhận map này hay loại."
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Lê Vân Nam"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Cơ xương khớp"
+    specialty_note: "MAP GẦN ĐÚNG — nhãn gốc trong bio là 'Chấn thương Chỉnh hình', không phải tên chính xác trong enum SPECIALTIES. Cần TASK-026 xác nhận chấp nhận map này hay loại."
+    phone: null
+    work_days: null  # chưa xác nhận từ nguồn thật
+    room: null
+    shift: null
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+# --- Bác sĩ KHÔNG đưa vào seed (nhãn chuyên khoa trong bio không map được 1 trong 14 giá trị SPECIALTIES) ---
+# Nội dung liên quan (khoa Ngoại/Chẩn đoán hình ảnh/Xét nghiệm) vẫn dùng được làm clinic_info, chỉ không seed thành doctor thật.
+excluded_doctors:
+  - full_name: "Vũ Huy Nùng"
+    title: "Giám đốc chuyên môn"
+    original_specialty_label: "Chuyên khoa Ngoại"
+    reason: "Nhãn 'Ngoại'/'Ngoại tổng hợp' không có trong enum SPECIALTIES"
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Đỗ Long Thành"
+    title: "Bác sĩ Chuyên khoa"
+    original_specialty_label: "Chuyên khoa Ngoại"
+    reason: "Nhãn 'Ngoại'/'Ngoại tổng hợp' không có trong enum SPECIALTIES"
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Phùng Thị Thúy"
+    title: "Bác sĩ"
+    original_specialty_label: "Chẩn đoán hình ảnh"
+    reason: "Không có enum tương ứng (X-Quang/Siêu âm không phải giá trị SPECIALTIES)"
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+  - full_name: "Ngô Quang Minh"
+    title: "Bác sĩ"
+    original_specialty_label: "Chuyên khoa Xét nghiệm"
+    reason: "'Xét nghiệm' không có trong enum SPECIALTIES"
+    source_url: "https://phongkham5sao.vn/bac-si/"
+
+# --- Ghi chú chất lượng dữ liệu (không phải bác sĩ để seed) ---
+data_quality_notes:
+  - "Trang khoa 'Khoa Nội Tổng Hợp' (https://phongkham5sao.vn/chuyen-khoa-y-te/khoa-noi/) nhắc tên bác sĩ thứ 3 'Phạm Quốc Cường', nhưng người này KHÔNG xuất hiện trong danh sách 15 bác sĩ thật ở /bac-si/ (trang 1, 2, hoặc form đặt lịch trang 3) — xác minh 2026-07-08. Không đưa vào doctors.yaml; ghi nhận đây là dữ liệu không nhất quán trên chính site nguồn, không phải bỏ sót của quy trình thu thập."
+  - "9/14 giá trị enum SPECIALTIES có bác sĩ ứng viên từ nguồn này (1 cặp map gần đúng — xem specialty_note ở trên). 5/14 giá trị enum không có bác sĩ thật từ nguồn này: Tim mạch, Tiêu hóa, Hô hấp, Nội tiết, Tiết niệu – Nam khoa."
+  - "bio hầu hết để null vì trang danh sách /bac-si/ chỉ hiện tên/chức danh/chuyên khoa cho đa số bác sĩ trang 1, không có đoạn mô tả — chỉ 3 bác sĩ trang 2 có trích dẫn kinh nghiệm rõ trong bio. Không tự viết thêm bio không có nguồn."
