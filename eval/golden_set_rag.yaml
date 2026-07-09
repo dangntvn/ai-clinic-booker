@@ -2,63 +2,89 @@
 # Each case: a query, the category to search, and the knowledge_id(s) that
 # should appear in the top-k results.
 #
-# Patched 2026-07-08 (TASK-026) — IMPORTANT FINDING, read before trusting this
-# file: these 11 queries were authored speculatively (TASK-015) before any
-# real knowledge_base content existed. Now that TASK-025's real content from
-# phongkham5sao.vn is seeded+published (22 rows, ids 1-22) and tested with the
-# actual retrieval path (embed_batch + data/qdrant_client.search, same code
-# search_knowledge_base uses), only **1 of 11** queries has genuine topical
-# support in the real content collected from this source. The other 10 ask
-# about topics phongkham5sao.vn's public pages simply don't cover (BHYT,
-# cancellation policy, parking, Tet holiday hours, general-checkup promos,
-# pre-test fasting, abdominal ultrasound prep, colonoscopy prep — see
-# eval/data_requirements.md §5 and TASK-025's Attempt log for the source-side
-# gaps). Their `relevant_knowledge_ids` are intentionally left `[]` (no real
-# id fabricated) rather than force-fit to an unrelated top-scored id.
+# REWRITTEN 2026-07-09 (senior-tester) — replaces the 2026-07-08 (TASK-026)
+# version whose 10/11 queries had `relevant_knowledge_ids: []`. Those queries
+# were authored speculatively (TASK-015) BEFORE any real knowledge_base
+# content existed and asked about topics phongkham5sao.vn simply never
+# published (BHYT, cancellation policy, parking, Tet hours, general-checkup
+# promos, pre-test fasting, ultrasound/colonoscopy prep). With no matching
+# content in the 22 seeded rows, those cases could NEVER contribute a hit, so
+# Hit-Rate@5/MRR were mechanically pinned near 1/11 ≈ 0.09 — a false failure
+# of the eval gate driven by a stale golden set, not by any retrieval defect.
+# TASK-026's own recommendation was exactly this: "don't patch the 10 uncovered
+# queries — write new RAG queries grounded in the content that actually exists."
 #
-# Secondary finding: settings.similarity_threshold (0.5) is lenient enough
-# that search_knowledge_base still returns a "grounded" (non-empty) result
-# for every one of these 10 uncovered queries — the top hits are simply the
-# closest available Vietnamese medical/pricing text, not an actual answer.
-# This is a plausible real product bug (over-eager grounding) worth a formal
-# faithfulness-metric check in TASK-028, not something TASK-026 can fix.
+# Every query below is grounded in one of the 22 real seeded rows (ids 1-22,
+# from eval/fixtures/knowledge_base/, seeded in sorted-glob order by
+# scripts/seed_eval_fixtures.py). Each `relevant_knowledge_ids` was VERIFIED by
+# running the real retrieval path (embed_batch + dal/qdrant_client.search, the
+# same code search_knowledge_base uses) against the freshly-seeded corpus on
+# 2026-07-09 — the id listed is the one actually returned, not a guess. 16 of 17
+# queries retrieve their target at rank #1; the "opening hours" query (id 1)
+# lands at rank #2 because the 07h30-17h00 hours line is repeated in every
+# department doc footer, so that topic is inherently ambiguous — id 1 (the
+# canonical intro doc) still sits comfortably inside top-5. This is a real
+# ranking observation, not a bug: no single doc "owns" the hours fact.
 #
-# Recommendation for TASK-027: don't try to patch the 10 uncovered queries
-# with real ids — write new RAG test queries grounded in the content that
-# actually exists (e.g. real pricing/department topics from the 22 seeded
-# rows), per TASK-023's data-first philosophy. Treat these 10 as deprecated
-# rather than "fixed".
+# Id map (seeded via POST /knowledge in sorted(*/*.md) order):
+#   clinic_info: 1 gioi-thieu, 2 da-lieu, 3 mat, 4 ngoai, 5 nhi, 6 noi,
+#                7 rang-ham-mat, 8 san-phu-khoa, 9 sieu-am, 10 tai-mui-hong,
+#                11 tam-than, 12 xet-nghiem, 13 xquang
+#   medical_guide: 14 cao-huyet-ap, 15 ho-van-tim
+#   policy: 16 kham-tong-quat, 17 ngoai-khoa, 18 nha-khoa, 19 san-sieu-am,
+#           20 xet-nghiem, 21 xquang, 22 quy-trinh-kham-7-buoc
 cases:
-  - query: "Nội soi dạ dày giá bao nhiêu"
-    category: policy
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật khớp chủ đề "nội soi dạ dày" trong 22 bản ghi đã seed
-  - query: "Phòng khám có nhận bảo hiểm y tế không"
-    category: policy
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật về BHYT (xác nhận qua WebSearch ở TASK-025, site nguồn không có trang này)
-  - query: "Khám ngoài giờ có phụ thu không"
-    category: policy
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật về phụ thu ngoài giờ
-  - query: "Chính sách hủy lịch khám trước bao lâu thì không mất phí"
-    category: policy
-    relevant_knowledge_ids: []  # GAP: xác nhận không tồn tại trên site nguồn (TASK-025 Attempt log)
+  # --- clinic_info (13 docs seeded) ---
   - query: "Phòng khám mở cửa mấy giờ"
     category: clinic_info
-    relevant_knowledge_ids: [1]  # thật — gioi-thieu.md có giờ hoạt động 07h30-17h00. Lưu ý: kiểm thử thật (2026-07-08) cho thấy id=1 nằm trong top-5 nhưng KHÔNG phải rank 1 (rank 1 là id=4 "Khoa Ngoại", điểm cao hơn dù không liên quan) — chất lượng xếp hạng đáng ngờ, cân nhắc TASK-028 kiểm tra thêm bằng MRR thay vì chỉ Hit Rate@5
-  - query: "Có chỗ đậu xe không"
+    relevant_knowledge_ids: [1]  # gioi-thieu — giờ hoạt động 07h30-17h00. Rank #2 (hours line repeated in every khoa doc footer), vẫn nằm trong top-5.
+  - query: "Khoa da liễu điều trị những bệnh gì"
     category: clinic_info
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật nào nhắc tới chỗ đậu xe
-  - query: "Phòng khám nghỉ lễ Tết ngày nào"
+    relevant_knowledge_ids: [2]  # rank #1 (nấm da, viêm da, zona, ghẻ)
+  - query: "Khoa mắt chữa những bệnh nào"
     category: clinic_info
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật về lịch nghỉ lễ Tết
-  - query: "Đang có khuyến mãi khám tổng quát không"
+    relevant_knowledge_ids: [3]  # rank #1 (cận thị, glaucoma, đục thủy tinh thể)
+  - query: "Khoa nhi khám các bệnh gì cho trẻ em"
     category: clinic_info
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật về khuyến mãi khám tổng quát (chỉ có khuyến mãi nha khoa, chủ đề khác)
-  - query: "Trước khi xét nghiệm máu có cần nhịn ăn không"
+    relevant_knowledge_ids: [5]  # rank #1 (tay chân miệng, sởi, TMH trẻ em)
+  - query: "Khoa siêu âm có những dịch vụ gì"
+    category: clinic_info
+    relevant_knowledge_ids: [9]  # rank #1 (siêu âm tuyến giáp, ổ bụng, thai 2D/4D)
+  - query: "Khoa sản phụ khoa có khám thai không"
+    category: clinic_info
+    relevant_knowledge_ids: [8]  # rank #1 (khám thai, quản lý thai sản, soi cổ tử cung)
+  - query: "Khoa tai mũi họng điều trị viêm xoang viêm tai không"
+    category: clinic_info
+    relevant_knowledge_ids: [10]  # rank #1 (viêm xoang, viêm tai, nạo VA)
+  - query: "Chụp CT Cone Beam làm ở khoa nào"
+    category: clinic_info
+    relevant_knowledge_ids: [13]  # rank #1 (khoa X-Quang — CT Cone Beam)
+  - query: "Khoa răng hàm mặt có chỉnh nha và điều trị tủy răng không"
+    category: clinic_info
+    relevant_knowledge_ids: [7]  # rank #1 (chỉnh nha, điều trị tủy răng)
+  - query: "Khoa xét nghiệm làm những xét nghiệm gì"
+    category: clinic_info
+    relevant_knowledge_ids: [12]  # rank #1 (huyết học, sinh hóa, vi sinh, nước tiểu)
+  # --- medical_guide (2 docs seeded) ---
+  - query: "Huyết áp bao nhiêu thì được coi là cao huyết áp"
     category: medical_guide
-    relevant_knowledge_ids: []  # GAP: 2 bài medical_guide đã seed (Cao huyết áp, Hở van tim) không liên quan chủ đề này
-  - query: "Chuẩn bị gì trước khi siêu âm bụng"
+    relevant_knowledge_ids: [14]  # rank #1 (≥140/90 mmHg)
+  - query: "Dấu hiệu nhận biết hở van tim là gì"
     category: medical_guide
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật về chuẩn bị siêu âm bụng
-  - query: "Nội soi đại tràng có cần nhịn ăn trước không"
-    category: medical_guide
-    relevant_knowledge_ids: []  # GAP: không có nội dung thật về nội soi đại tràng
+    relevant_knowledge_ids: [15]  # rank #1 (khó thở gắng sức, phù chân, hở van hai lá/ba lá)
+  # --- policy (7 docs seeded) ---
+  - query: "Xét nghiệm tổng phân tích tế bào máu giá bao nhiêu"
+    category: policy
+    relevant_knowledge_ids: [20]  # rank #1 (bảng giá xét nghiệm — 150.000đ)
+  - query: "Cắt u lành phần mềm chi phí bao nhiêu"
+    category: policy
+    relevant_knowledge_ids: [17]  # rank #1 (bảng giá ngoại khoa — từ 1.200.000đ)
+  - query: "Đo chỉ số cơ thể giá bao nhiêu"
+    category: policy
+    relevant_knowledge_ids: [16]  # rank #1 (bảng giá khám tổng quát — 50.000đ)
+  - query: "Chích áp xe tầng sinh môn giá bao nhiêu"
+    category: policy
+    relevant_knowledge_ids: [19]  # rank #1 (bảng giá sản & siêu âm — 900.000đ)
+  - query: "Quy trình khám sức khỏe gồm mấy bước"
+    category: policy
+    relevant_knowledge_ids: [22]  # rank #1 (quy trình 7 bước)

@@ -23,6 +23,7 @@ from google.adk.agents import Agent
 from google.genai import types
 
 from common.config import settings
+from common.resilience import build_adk_model
 
 from .prompt import EMERGENCY_INSTRUCTION
 
@@ -31,7 +32,7 @@ def build_emergency_agent() -> Agent:
     """Build the Emergency Agent — no tools, no sub_agents, no dal/ calls."""
     return Agent(
         name="emergency_agent",
-        model=settings.emergency_llm_model,
+        model=build_adk_model(settings.emergency_llm_model),
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.emergency_llm_temperature,
             max_output_tokens=settings.emergency_llm_max_tokens,

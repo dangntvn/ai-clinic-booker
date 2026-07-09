@@ -23,6 +23,7 @@ from google.adk.agents import Agent
 from google.genai import types
 
 from common.config import settings
+from common.resilience import build_adk_model
 
 from .prompt import ORCHESTRATOR_INSTRUCTION
 
@@ -56,7 +57,7 @@ def build_orchestrator_agent() -> Agent:
     """Build the Orchestrator — sub_agents gives it ADK's built-in transfer tool."""
     return Agent(
         name="orchestrator_agent",
-        model=settings.orchestrator_llm_model,
+        model=build_adk_model(settings.orchestrator_llm_model),
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.orchestrator_llm_temperature,
             max_output_tokens=settings.orchestrator_llm_max_tokens,

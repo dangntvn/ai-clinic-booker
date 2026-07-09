@@ -57,7 +57,10 @@ def test_agent_uses_its_own_llm_config(monkeypatch, module_path, builder_name, p
 
     agent = getattr(module, builder_name)()
 
-    assert agent.model == "test-model-x"
+    # model is now an ADK `Gemini` instance (built via common.resilience.build_adk_model
+    # so ADK-driven calls inherit the retry policy) rather than a bare model-name
+    # string — the configured model id lives on `agent.model.model`.
+    assert agent.model.model == "test-model-x"
     assert agent.generate_content_config.temperature == 0.42
     assert agent.generate_content_config.max_output_tokens == 999
 
@@ -70,6 +73,6 @@ def test_overriding_one_agent_does_not_affect_another(monkeypatch):
     faq_agent = faq_module.build_faq_agent()
     booking_agent = booking_module.build_booking_agent()
 
-    assert faq_agent.model == "faq-only-model"
-    assert booking_agent.model == settings.booking_llm_model
-    assert booking_agent.model != "faq-only-model"
+    assert faq_agent.model.model == "faq-only-model"
+    assert booking_agent.model.model == settings.booking_llm_model
+    assert booking_agent.model.model != "faq-only-model"

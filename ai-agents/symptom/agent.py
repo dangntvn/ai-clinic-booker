@@ -24,6 +24,7 @@ from google.adk.agents.readonly_context import ReadonlyContext
 from google.genai import types
 
 from common.config import settings
+from common.resilience import build_adk_model
 
 from .prompt import SYMPTOM_INSTRUCTION_TEMPLATE, TRIAGE_TABLE
 from .tools import search_knowledge_base
@@ -68,7 +69,7 @@ def build_symptom_agent() -> Agent:
     """Build the Symptom Agent with a dynamic, DB-backed instruction."""
     return Agent(
         name="symptom_agent",
-        model=settings.symptom_llm_model,
+        model=build_adk_model(settings.symptom_llm_model),
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.symptom_llm_temperature,
             max_output_tokens=settings.symptom_llm_max_tokens,

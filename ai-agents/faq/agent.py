@@ -22,6 +22,7 @@ from google.adk.agents import Agent
 from google.genai import types
 
 from common.config import settings
+from common.resilience import build_adk_model
 
 from .prompt import FAQ_INSTRUCTION
 from .tools import search_knowledge_base
@@ -31,7 +32,7 @@ def build_faq_agent() -> Agent:
     """Build the FAQ Agent with its single grounded-search tool."""
     return Agent(
         name="faq_agent",
-        model=settings.faq_llm_model,
+        model=build_adk_model(settings.faq_llm_model),
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.faq_llm_temperature,
             max_output_tokens=settings.faq_llm_max_tokens,

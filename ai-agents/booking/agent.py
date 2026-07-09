@@ -22,6 +22,7 @@ from google.adk.agents import Agent
 from google.genai import types
 
 from common.config import settings
+from common.resilience import build_adk_model
 
 from .prompt import BOOKING_INSTRUCTION
 from .tools import cancel_booking, check_available_slots, create_booking, update_booking
@@ -31,7 +32,7 @@ def build_booking_agent() -> Agent:
     """Build the Booking Agent with its four booking tools."""
     return Agent(
         name="booking_agent",
-        model=settings.booking_llm_model,
+        model=build_adk_model(settings.booking_llm_model),
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.booking_llm_temperature,
             max_output_tokens=settings.booking_llm_max_tokens,
