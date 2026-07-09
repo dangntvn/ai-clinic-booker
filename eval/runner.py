@@ -147,9 +147,14 @@ def run_eval() -> int:
     real quality gate (ARCH-001 §7), invoked via `pytest -m eval`, never as
     part of a normal `pytest` run.
     """
-    hit_rate, mrr_score, _ = asyncio.run(run_rag_eval())
-    intent_accuracy, _ = asyncio.run(run_intent_eval())
-    booking_pass_rate, _ = asyncio.run(run_booking_eval())
+    async def _run_all():
+        return (
+            await run_rag_eval(),
+            await run_intent_eval(),
+            await run_booking_eval(),
+        )
+
+    (hit_rate, mrr_score, _), (intent_accuracy, _), (booking_pass_rate, _) = asyncio.run(_run_all())
 
     results = {
         "retrieval_hit_rate@5": (hit_rate, HIT_RATE_THRESHOLD, hit_rate >= HIT_RATE_THRESHOLD),
