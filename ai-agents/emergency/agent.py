@@ -35,6 +35,7 @@ def build_emergency_agent() -> Agent:
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.emergency_llm_temperature,
             max_output_tokens=settings.emergency_llm_max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
         instruction=EMERGENCY_INSTRUCTION,
         disallow_transfer_to_peers=True,

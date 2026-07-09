@@ -72,6 +72,7 @@ def build_symptom_agent() -> Agent:
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.symptom_llm_temperature,
             max_output_tokens=settings.symptom_llm_max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
         instruction=_build_instruction,
         tools=[search_knowledge_base],

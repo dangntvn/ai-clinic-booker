@@ -35,6 +35,7 @@ def build_faq_agent() -> Agent:
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.faq_llm_temperature,
             max_output_tokens=settings.faq_llm_max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
         instruction=FAQ_INSTRUCTION,
         tools=[search_knowledge_base],

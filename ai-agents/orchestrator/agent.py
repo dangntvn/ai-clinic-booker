@@ -60,6 +60,7 @@ def build_orchestrator_agent() -> Agent:
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.orchestrator_llm_temperature,
             max_output_tokens=settings.orchestrator_llm_max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
         instruction=ORCHESTRATOR_INSTRUCTION,
         sub_agents=_load_sub_agents(),

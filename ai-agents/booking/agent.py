@@ -35,6 +35,7 @@ def build_booking_agent() -> Agent:
         generate_content_config=types.GenerateContentConfig(
             temperature=settings.booking_llm_temperature,
             max_output_tokens=settings.booking_llm_max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
         instruction=BOOKING_INSTRUCTION,
         tools=[check_available_slots, create_booking, update_booking, cancel_booking],

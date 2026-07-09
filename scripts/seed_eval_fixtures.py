@@ -49,8 +49,27 @@ TEST_WORK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 DOCTOR_ID_SEQUENCE_START = 3
 
 
+_SAFE_APP_ENVS = {"local", "eval", "test"}
+
+
+def _guard_against_production() -> None:
+    """Refuse to run against anything that isn't explicitly a throwaway env.
+
+    This script TRUNCATEs every domain table — a wrong `.env` pointed at a
+    real deployment would be an unrecoverable data-loss incident, not just a
+    failed eval run.
+    """
+    if settings.app_env not in _SAFE_APP_ENVS:
+        raise RuntimeError(
+            f"settings.app_env={settings.app_env!r} is not one of {_SAFE_APP_ENVS} — "
+            "refusing to truncate domain tables. Set APP_ENV explicitly if this really "
+            "is a throwaway eval environment."
+        )
+
+
 async def wipe() -> None:
     """Delete every row from the domain tables and the Qdrant collection."""
+    _guard_against_production()
     async with AsyncSessionFactory() as session:
         await session.execute(
             text(
