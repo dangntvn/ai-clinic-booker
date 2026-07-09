@@ -83,6 +83,21 @@ class SlotTakenError(AppException):
         super().__init__(message, code="SLOT_TAKEN")
 
 
+class InvalidSlotError(AppException):
+    """Raised when a slot violates a doctor's work_days/clinic hours (BUG-007).
+
+    Distinct from SlotTakenError: this means the requested slot could never
+    be valid (wrong weekday, outside clinic hours, or off the slot grid),
+    not merely that someone else already holds it.
+
+    Args:
+        message: Optional override for the default message.
+    """
+
+    def __init__(self, message: str = "Requested slot is not a valid clinic slot"):
+        super().__init__(message, code="INVALID_SLOT")
+
+
 class InfrastructureError(AppException):
     """Raised when an external dependency (database, Qdrant, Gemini) fails.
 

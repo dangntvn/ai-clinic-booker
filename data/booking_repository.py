@@ -15,24 +15,27 @@
 # Description: Booking repository — ORM model + CRUD; correctness relies on
 #              the partial unique index UNIQUE(doctor_id, slot_time) WHERE
 #              status != 'cancelled' (ADR-0009) — the only place a constraint
-#              violation becomes SlotTakenError. No "is this a valid time"
-#              reasoning here beyond generating slot candidates from the
-#              doctor's own work_days/clinic hours; conflict detection is
-#              entirely the DB's job (ADR-0009), never a check-then-insert.
-#              Also holds ChatSessionLink — a thin mapping table so
+#              violation becomes SlotTakenError. Slot validity (work_days/
+#              clinic hours, BUG-007) is checked here before the INSERT/
+#              UPDATE, distinct from conflict detection which is entirely
+#              the DB's job (ADR-0009), never a check-then-insert. All
+#              slot_time values are normalized to UTC-aware (BUG-006 —
+#              the column is TIMESTAMPTZ, naive datetimes silently never
+#              compared-equal to the aware rows read back from it). Also
+#              holds ChatSessionLink — a thin mapping table so
 #              modules/booking can look up a booking's chat history via
 #              ADK's SessionService, without storing message content here.
 ###############################################################################
 
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 
-from sqlalchemy import ForeignKey, Index, Integer, String, select, text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
-from core.exceptions import SlotTakenError
+from core.exceptions import InvalidSlotError, SlotTakenError
 from data.doctor_repository import Doctor
 
 # Clinic hours (ARCH-001 doesn't pin these — a single-branch clinic default;
@@ -68,7 +71,10 @@ class Booking(BaseModel):
     doctor_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("doctors.id", ondelete="RESTRICT"), nullable=False
     )
-    slot_time: Mapped[datetime] = mapped_column(nullable=False)
+    # DateTime(timezone=True) must be explicit — Mapped[datetime] alone infers
+    # a naive DateTime(), mismatching the TIMESTAMPTZ column (BUG-006) and
+    # making asyncpg reject aware-datetime bind parameters outright.
+    slot_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="confirmed")
 
 
@@ -90,16 +96,25 @@ class ChatSessionLink(BaseModel):
 
 
 def _candidate_slots(target_date: date) -> list[datetime]:
-    """Generate every clinic-hour slot for a date, lunch break excluded."""
+    """Generate every clinic-hour slot for a date, lunch break excluded.
+
+    UTC-aware (BUG-006) so membership checks against ``bookings.slot_time``
+    (a TIMESTAMPTZ column) compare aware-to-aware, never naive-to-aware.
+    """
     slots = []
-    current = datetime.combine(target_date, time(hour=CLINIC_OPEN_HOUR))
-    end = datetime.combine(target_date, time(hour=CLINIC_CLOSE_HOUR))
+    current = datetime.combine(target_date, time(hour=CLINIC_OPEN_HOUR, tzinfo=UTC))
+    end = datetime.combine(target_date, time(hour=CLINIC_CLOSE_HOUR, tzinfo=UTC))
     step = timedelta(minutes=SLOT_DURATION_MINUTES)
     while current < end:
         if not (LUNCH_START_HOUR <= current.hour < LUNCH_END_HOUR):
             slots.append(current)
         current += step
     return slots
+
+
+def _to_utc(dt: datetime) -> datetime:
+    """Normalize to a UTC-aware datetime (BUG-006), treating naive input as UTC."""
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
 
 
 class BookingRepository(BaseRepository[Booking]):
@@ -120,8 +135,8 @@ class BookingRepository(BaseRepository[Booking]):
         if doctor_id is not None:
             stmt = stmt.where(Booking.doctor_id == doctor_id)
         if target_date is not None:
-            day_start = datetime.combine(target_date, time.min)
-            day_end = datetime.combine(target_date, time.max)
+            day_start = datetime.combine(target_date, time.min, tzinfo=UTC)
+            day_end = datetime.combine(target_date, time.max, tzinfo=UTC)
             stmt = stmt.where(Booking.slot_time >= day_start, Booking.slot_time <= day_end)
         if status is not None:
             stmt = stmt.where(Booking.status == status)
@@ -148,8 +163,8 @@ class BookingRepository(BaseRepository[Booking]):
         if weekday_abbr not in doctor.work_days:
             return []
 
-        day_start = datetime.combine(target_date, time.min)
-        day_end = datetime.combine(target_date, time.max)
+        day_start = datetime.combine(target_date, time.min, tzinfo=UTC)
+        day_end = datetime.combine(target_date, time.max, tzinfo=UTC)
         stmt = select(Booking.slot_time).where(
             Booking.doctor_id == doctor_id,
             Booking.status != "cancelled",
@@ -160,14 +175,38 @@ class BookingRepository(BaseRepository[Booking]):
 
         return [slot for slot in _candidate_slots(target_date) if slot not in taken]
 
+    async def _validate_slot(self, doctor_id: int, slot_time: datetime) -> None:
+        """Reject slot_time if the doctor doesn't work that day/hour (BUG-007).
+
+        This is validity, not availability — it does not check for conflicts
+        with existing bookings (that stays the DB constraint's job, ADR-0009).
+        """
+        doctor = await self.session.get(Doctor, doctor_id)
+        if doctor is None or not doctor.is_active:
+            raise InvalidSlotError(f"Doctor {doctor_id} not found or inactive")
+
+        weekday_abbr = slot_time.strftime("%a")
+        if weekday_abbr not in doctor.work_days:
+            raise InvalidSlotError(f"Doctor {doctor_id} does not work on {weekday_abbr}")
+
+        if slot_time not in _candidate_slots(slot_time.date()):
+            raise InvalidSlotError(f"{slot_time.isoformat()} is not a valid clinic-hour slot")
+
     async def create_booking(
         self, patient_name: str, phone: str, doctor_id: int, slot_time: datetime
     ) -> Booking:
-        """Create a booking. Raises SlotTakenError on a partial-unique-index hit.
+        """Create a booking. Raises InvalidSlotError if the slot violates the
+        doctor's work_days/clinic hours (BUG-007), or SlotTakenError on a
+        partial-unique-index hit.
 
-        No check-then-insert: the INSERT either succeeds or the DB constraint
-        rejects it — this is the only correctness mechanism (ADR-0009).
+        No check-then-insert for conflicts: the INSERT either succeeds or the
+        DB constraint rejects it — that remains the only conflict-detection
+        mechanism (ADR-0009). Slot validity is a separate, cheaper check done
+        up front since it doesn't race with concurrent callers.
         """
+        slot_time = _to_utc(slot_time)
+        await self._validate_slot(doctor_id, slot_time)
+
         booking = Booking(
             patient_name=patient_name, phone=phone, doctor_id=doctor_id, slot_time=slot_time
         )
@@ -181,12 +220,15 @@ class BookingRepository(BaseRepository[Booking]):
         return booking
 
     async def update_booking(self, booking_id: int, new_slot_time: datetime) -> Booking:
-        """Reschedule a booking to a new slot. Same conflict handling as create."""
+        """Reschedule a booking to a new slot. Same validity/conflict handling as create."""
         booking = await self.get(booking_id)
         if booking is None:
             from core.exceptions import NotFoundError
 
             raise NotFoundError(f"Booking {booking_id} not found")
+
+        new_slot_time = _to_utc(new_slot_time)
+        await self._validate_slot(booking.doctor_id, new_slot_time)
 
         booking.slot_time = new_slot_time
         try:
