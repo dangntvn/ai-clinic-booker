@@ -51,7 +51,7 @@ def _render_doctors_context(doctors: list) -> str:
 async def _build_instruction(ctx: ReadonlyContext) -> str:
     """ADK instruction provider — queries doctors fresh on every invocation."""
     from common.database import AsyncSessionFactory
-    from data.doctor_repository import DoctorRepository
+    from dal.doctor_repository import DoctorRepository
 
     async with AsyncSessionFactory() as session:
         repo = DoctorRepository(session)

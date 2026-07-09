@@ -50,7 +50,7 @@ def _load_cases(filename: str) -> list[dict]:
 async def run_rag_eval() -> tuple[float, float, list[dict]]:
     """Run golden_set_rag.yaml against live Qdrant, return (hit_rate, mrr, raw_cases)."""
     from common.gemini_client import embed_batch
-    from data.qdrant_client import search
+    from dal.qdrant_client import search
 
     cases = _load_cases("golden_set_rag.yaml")
     scored = []
@@ -92,7 +92,7 @@ async def run_booking_eval() -> tuple[float, list[dict]]:
 
     from common.database import AsyncSessionFactory
     from core.exceptions import SlotTakenError
-    from data.booking_repository import BookingRepository
+    from dal.booking_repository import BookingRepository
 
     cases = _load_cases("golden_set_booking.yaml")
     scored = []

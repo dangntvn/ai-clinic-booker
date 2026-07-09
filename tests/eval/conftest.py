@@ -16,7 +16,7 @@
 #              real ADK runtime (app/runtime.py, same one the conversation
 #              controller uses) end-to-end, no mocking of agent/LLM/DB/Qdrant.
 #              Captures retrieval_context by wrapping the real
-#              data/qdrant_client.search() call each agent's tools module
+#              dal/qdrant_client.search() call each agent's tools module
 #              binds at import time (TASK-027 DoD: don't mock actual_output).
 ###############################################################################
 
@@ -66,8 +66,8 @@ class RetrievalCapture:
     """Wraps a tools module's `search` binding to record real Qdrant results.
 
     `ai-agents/faq/tools.py` and `ai-agents/symptom/tools.py` both do
-    `from data.qdrant_client import search` at import time, so patching
-    `data.qdrant_client.search` itself would miss calls made through those
+    `from dal.qdrant_client import search` at import time, so patching
+    `dal.qdrant_client.search` itself would miss calls made through those
     already-bound names. Patching the *tools module's* `search` attribute
     works because `search_knowledge_base` resolves `search` from its own
     module globals at call time, not at def time.

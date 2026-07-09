@@ -13,14 +13,14 @@
 # limitations under the License.
 #
 # Description: FAQ Agent tools — search_knowledge_base(query, category)
-#              wrapper over data/qdrant_client, no raw SQL/filter here.
+#              wrapper over dal/qdrant_client, no raw SQL/filter here.
 #              Enforces grounding (ADR-0008) before returning anything to
 #              the LLM — below-threshold results never reach the prompt.
 ###############################################################################
 
 from common.config import settings
 from common.gemini_client import embed_batch
-from data.qdrant_client import search
+from dal.qdrant_client import search
 
 from ..core.domain.grounding import (
     NOT_FOUND_MESSAGE,

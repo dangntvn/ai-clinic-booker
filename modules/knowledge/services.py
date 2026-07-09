@@ -21,10 +21,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import NotFoundError, ValidationError
-from data.chunk_repository import ChunkRepository
-from data.ingestion_job_repository import IngestionJob, IngestionJobRepository
-from data.knowledge_repository import KNOWLEDGE_CATEGORIES, KnowledgeBase, KnowledgeRepository
-from data.qdrant_client import delete_by_knowledge_id
+from dal.chunk_repository import ChunkRepository
+from dal.ingestion_job_repository import IngestionJob, IngestionJobRepository
+from dal.knowledge_repository import KNOWLEDGE_CATEGORIES, KnowledgeBase, KnowledgeRepository
+from dal.qdrant_client import delete_by_knowledge_id
 
 
 def _validate_category(category: str) -> None:

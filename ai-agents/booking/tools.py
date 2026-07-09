@@ -13,8 +13,8 @@
 # limitations under the License.
 #
 # Description: Booking Agent tools — thin wrappers over
-#              data/booking_repository; no SQL, no race-condition handling
-#              here (constraint lives in data/, ARCH-001 §4). Each tool owns
+#              dal/booking_repository; no SQL, no race-condition handling
+#              here (constraint lives in dal/, ARCH-001 §4). Each tool owns
 #              its own DB session since ADK tool functions are called
 #              independently by the LLM, not injected with a shared request
 #              session the way FastAPI Depends() works.
@@ -24,7 +24,7 @@ from datetime import datetime
 
 from common.database import AsyncSessionFactory
 from core.exceptions import InvalidSlotError, SlotTakenError
-from data.booking_repository import BookingRepository
+from dal.booking_repository import BookingRepository
 
 
 async def check_available_slots(doctor_id: int, date_iso: str) -> list[str]:

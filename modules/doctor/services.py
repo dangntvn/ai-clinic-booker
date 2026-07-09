@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Doctor admin service — calls data/doctor_repository, manages
+# Description: Doctor admin service — calls dal/doctor_repository, manages
 #              both operational fields and profile fields (ADR-0020). Never
 #              opens a DB connection itself; the session is injected by the
 #              controller via common/database.get_session.
@@ -21,7 +21,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import ValidationError
-from data.doctor_repository import SPECIALTIES, Doctor, DoctorRepository
+from dal.doctor_repository import SPECIALTIES, Doctor, DoctorRepository
 
 
 def validate_specialty(specialty: str) -> None:

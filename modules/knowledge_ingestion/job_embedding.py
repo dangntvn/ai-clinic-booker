@@ -20,7 +20,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.observability import get_logger
-from data.ingestion_job_repository import IngestionJobRepository
+from dal.ingestion_job_repository import IngestionJobRepository
 from modules.knowledge_ingestion.embedding_service import EmbeddingService
 
 logger = get_logger(__name__)

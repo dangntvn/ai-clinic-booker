@@ -14,7 +14,7 @@
 #
 # Description: Alembic migration environment — target_metadata is
 #              core.base_model.Base, populated by importing every concrete
-#              model module in data/ so autogenerate sees the full schema.
+#              model module in dal/ so autogenerate sees the full schema.
 #              Uses settings.database_url (sync psycopg driver, not asyncpg)
 #              since Alembic itself runs synchronously.
 ###############################################################################
@@ -29,7 +29,7 @@ from core.base_model import Base
 
 # Import every concrete model module so Base.metadata is fully populated
 # before autogenerate compares it against the live database.
-from data import (  # noqa: F401
+from dal import (  # noqa: F401
     booking_repository,
     chunk_repository,
     doctor_repository,

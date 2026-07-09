@@ -25,7 +25,7 @@ Full rationale in ARCH-001 §4/§8. Short version:
 | `ai-agents/` | AI layer — Orchestrator + 4 domain agents (faq, symptom, booking, emergency), each with `agent.py`/`tools.py`/`prompt.py`. Note: this directory's hyphenated name can't be reached by a normal `import` statement — see `common/module_loader.py`. |
 | `modules/` | Non-AI business layer — CRUD admin (booking, doctor, knowledge) + the RAG ingestion pipeline (chunk/embed/cron), adapted from `rag-health`. |
 | `core/` | Generic CRUD base classes + `SlotTakenError`/`NotFoundError`/etc. Reused from `rag-health`. |
-| `data/` | Data-access layer — one repository per table/collection (`booking_repository.py`, `doctor_repository.py`, `knowledge_repository.py`, `chunk_repository.py`, `ingestion_job_repository.py`, `qdrant_client.py`, `session.py`). |
+| `dal/` | Data-access layer — one repository per table/collection (`booking_repository.py`, `doctor_repository.py`, `knowledge_repository.py`, `chunk_repository.py`, `ingestion_job_repository.py`, `qdrant_client.py`, `session.py`). |
 | `common/` | Cross-cutting infra — `config.py`, `database.py`, `gemini_client.py`, `observability.py`, `resilience.py`, `module_loader.py`. |
 | `eval/` | AI quality gate — 3 golden sets (≥10 items each, placeholder ids), `metrics.py` (formulas verified by real unit tests), `runner.py` (needs live infra, unexecuted). |
 | `alembic/` | One hand-written revision (`0001_initial_schema.py`) covering all 6 tables, including the partial unique index for no-double-booking. Verified with `alembic upgrade/downgrade --sql` (offline SQL generation) — never run against a real Postgres. |
@@ -103,6 +103,6 @@ See `.env.example` for the full list with defaults.
 - `ai-agents/`'s hyphenated directory name blocks normal `import` statements from outside
   it — worked around with `common/module_loader.py`, but a rename to `ai_agents` would be
   cleaner if the team decides to update ARCH-001 to match.
-- Clinic hours/slot duration (`data/booking_repository.py`'s `CLINIC_OPEN_HOUR` etc.) are a
+- Clinic hours/slot duration (`dal/booking_repository.py`'s `CLINIC_OPEN_HOUR` etc.) are a
   judgment call — no doc pins these values.
 - Golden sets in `eval/` use placeholder ids until real seed data exists.

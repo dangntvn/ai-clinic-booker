@@ -20,7 +20,7 @@
 
 from common.config import settings
 from common.gemini_client import embed_batch
-from data.qdrant_client import search
+from dal.qdrant_client import search
 
 from ..core.domain.grounding import NOT_FOUND_MESSAGE, build_context_text, filter_grounded_results
 
