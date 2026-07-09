@@ -87,24 +87,31 @@ async def run_intent_eval() -> tuple[float, list[dict]]:
 
 
 async def run_booking_eval() -> tuple[float, list[dict]]:
-    """Run golden_set_booking.yaml as real concurrent create_booking calls."""
+    """Run golden_set_booking.yaml as real concurrent create_booking calls.
+
+    BUG-008: every booking created here is cancelled again before returning,
+    so a repeat run against the same DB starts from the same "slot is free"
+    state instead of finding yesterday's run's slots already taken.
+    """
     from datetime import datetime
 
     from common.database import AsyncSessionFactory
-    from core.exceptions import SlotTakenError
+    from core.exceptions import InvalidSlotError, SlotTakenError
     from dal.booking_repository import BookingRepository
 
     cases = _load_cases("golden_set_booking.yaml")
     scored = []
 
-    async def _one_attempt(doctor_id: int, slot_time: datetime) -> bool:
+    async def _one_attempt(doctor_id: int, slot_time: datetime) -> int | None:
         async with AsyncSessionFactory() as session:
             repo = BookingRepository(session)
             try:
-                await repo.create_booking("Eval Patient", "0000000000", doctor_id, slot_time)
-                return True
-            except SlotTakenError:
-                return False
+                booking = await repo.create_booking(
+                    "Eval Patient", "0000000000", doctor_id, slot_time
+                )
+                return booking.id
+            except (SlotTakenError, InvalidSlotError):
+                return None
 
     for case in cases:
         slot_time = datetime.fromisoformat(case["slot_time"])
@@ -112,10 +119,15 @@ async def run_booking_eval() -> tuple[float, list[dict]]:
             _one_attempt(case["doctor_id"], slot_time) for _ in range(case["concurrent_requests"])
         ]
         results = await asyncio.gather(*attempts)
-        actual_successes = sum(1 for r in results if r)
+        created_ids = [booking_id for booking_id in results if booking_id is not None]
+        actual_successes = len(created_ids)
         scored.append(
             {"expected_successes": case["expected_successes"], "actual_successes": actual_successes}
         )
+
+        for booking_id in created_ids:
+            async with AsyncSessionFactory() as session:
+                await BookingRepository(session).cancel_booking(booking_id)
 
     return booking_concurrency_pass_rate(scored), scored
 

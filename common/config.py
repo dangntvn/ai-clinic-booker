@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
     qdrant_collection: str = "ai_clinic_knowledge"
-    similarity_threshold: float = 0.5
+    similarity_threshold: float = 0.72  # BUG-002: 0.5 let every irrelevant-topic query "ground"
     top_k: int = 6
 
     # Ingestion (ADR-0021) — chunk_max_size/overlap match ARCH-001 §5.5.
