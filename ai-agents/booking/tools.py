@@ -23,7 +23,7 @@
 from datetime import datetime
 
 from common.database import AsyncSessionFactory
-from core.exceptions import SlotTakenError
+from core.exceptions import InvalidSlotError, SlotTakenError
 from data.booking_repository import BookingRepository
 
 
@@ -49,9 +49,11 @@ async def create_booking(doctor_id: int, slot_time_iso: str, patient_name: str, 
     """Create a booking. The DB constraint is the only conflict guard (ADR-0009).
 
     Returns:
-        {"status": "confirmed", "booking_id": int} on success, or
-        {"status": "slot_taken"} if the slot was taken between check and create —
-        the agent must call check_available_slots again and re-offer, never retry blindly.
+        {"status": "confirmed", "booking_id": int} on success,
+        {"status": "slot_taken"} if the slot was taken between check and create, or
+        {"status": "invalid_slot", "reason": str} if the slot violates the doctor's
+        work_days/clinic hours — in either failure case the agent must call
+        check_available_slots again and re-offer, never retry blindly.
     """
     slot_time = datetime.fromisoformat(slot_time_iso)
     async with AsyncSessionFactory() as session:
@@ -60,11 +62,13 @@ async def create_booking(doctor_id: int, slot_time_iso: str, patient_name: str, 
             booking = await repo.create_booking(patient_name, phone, doctor_id, slot_time)
         except SlotTakenError:
             return {"status": "slot_taken"}
+        except InvalidSlotError as e:
+            return {"status": "invalid_slot", "reason": e.message}
     return {"status": "confirmed", "booking_id": booking.id}
 
 
 async def update_booking(booking_id: int, new_slot_time_iso: str) -> dict:
-    """Reschedule an existing booking to a new slot. Same conflict handling as create."""
+    """Reschedule an existing booking to a new slot. Same validity/conflict handling as create."""
     new_slot_time = datetime.fromisoformat(new_slot_time_iso)
     async with AsyncSessionFactory() as session:
         repo = BookingRepository(session)
@@ -72,6 +76,8 @@ async def update_booking(booking_id: int, new_slot_time_iso: str) -> dict:
             booking = await repo.update_booking(booking_id, new_slot_time)
         except SlotTakenError:
             return {"status": "slot_taken"}
+        except InvalidSlotError as e:
+            return {"status": "invalid_slot", "reason": e.message}
     return {"status": "confirmed", "booking_id": booking.id}
 
 

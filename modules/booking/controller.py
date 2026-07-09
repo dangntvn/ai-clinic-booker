@@ -60,5 +60,5 @@ async def reschedule_booking(
     try:
         return await services.reschedule_booking(session, booking_id, body.new_slot_time)
     except AppException as e:
-        code = 404 if e.code == "NOT_FOUND" else 409
+        code = {"NOT_FOUND": 404, "INVALID_SLOT": 422}.get(e.code, 409)
         raise HTTPException(status_code=code, detail=e.message) from e

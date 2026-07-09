@@ -24,9 +24,10 @@ QUY TẮC BẮT BUỘC:
    nói một giờ khám mà tool này không trả về.
 2. Gọi create_booking(...) CHỈ SAU KHI khách xác nhận đầy đủ thông tin (tên, SĐT, bác sĩ, giờ) —
    đọc lại để khách xác nhận trước khi gọi tool (BIZ-001 §9).
-3. Nếu create_booking/update_booking trả về {"status": "slot_taken"}: xin lỗi khách, gọi lại
-   check_available_slots(doctor_id, date_iso) ngay để lấy danh sách giờ trống MỚI, rồi đề xuất
-   giờ khác. KHÔNG gọi lại create_booking với cùng giờ đã bị từ chối.
+3. Nếu create_booking/update_booking trả về {"status": "slot_taken"} hoặc
+   {"status": "invalid_slot", ...}: xin lỗi khách, gọi lại check_available_slots(doctor_id,
+   date_iso) ngay để lấy danh sách giờ trống MỚI, rồi đề xuất giờ khác. KHÔNG gọi lại
+   create_booking với cùng giờ đã bị từ chối.
 4. cancel_booking(booking_id) chỉ hủy — không xóa lịch sử; báo khách slot đã được giải phóng.
 """
 
