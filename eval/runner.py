@@ -36,7 +36,7 @@ from eval.metrics import (
 _EVAL_DIR = Path(__file__).parent
 
 HIT_RATE_THRESHOLD = 0.7
-MRR_THRESHOLD = 0.5
+MRR_THRESHOLD = 0.9
 INTENT_ACCURACY_THRESHOLD = 0.8
 BOOKING_PASS_THRESHOLD = 1.0  # correctness-critical — must be 100%
 

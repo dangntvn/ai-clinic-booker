@@ -1,117 +1,301 @@
-# AI Clinic Booking Agent — Backend
+# AI Clinic Booking Agent
 
-Backend for an AI-first, multi-agent clinic booking assistant (FastAPI + Google ADK +
-Gemini + Postgres + Qdrant). Design lives in
-[ARCH-001](../../../01-docs/02-design/01-architecture.md); this README covers what
-actually exists in this source tree today and how to run it locally.
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Google ADK](https://img.shields.io/badge/Google_ADK-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-DC244C?logo=qdrant&logoColor=white)](https://qdrant.tech/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-D22128?logo=apache&logoColor=white)](http://www.apache.org/licenses/LICENSE-2.0)
 
-## Status
+A multi-agent conversational backend for a clinic booking assistant. Patients talk to it in
+natural language — ask about policy/insurance, describe a symptom to get routed to the right
+doctor, book/reschedule/cancel an appointment, or trigger emergency screening — while every
+write that has to be correct (bookings) is enforced by the database, not by the model's good
+behavior.
 
-All 16 backlog tasks in
-[01-docs/99-project-management/backlog](../../../01-docs/99-project-management/backlog)
-have code written. **Important:** tasks TASK-003 through TASK-016 were implemented in one
-unattended overnight run, verified only by static checks (imports, ruff, synthetic-input unit
-tests) — no live Postgres/Qdrant/Gemini was available in that session. Every task file's
-Attempt log says exactly what was and wasn't checked. Treat this as "should work, not yet
-proven against real infrastructure" until someone runs it end-to-end.
+A portfolio project focused on architecting an AI system the way a non-AI system would be
+held to: explicit module boundaries, correctness pushed down to constraints instead of
+trusted to LLM output, and — the part most agent demos skip — an **automated evaluation
+harness that gates retrieval, routing, and faithfulness quality**, not just uptime. It is
+intentionally scoped to the booking-assistant core; see [Out of scope](#out-of-scope) for what
+a production deployment would add.
 
-## Layout
+**Stack:** FastAPI · Google ADK (multi-agent) · Gemini · Qdrant · PostgreSQL · APScheduler ·
+Alembic · structlog · DeepEval
 
-Full rationale in ARCH-001 §4/§8. Short version:
+---
 
-| Path | What's there |
+## What this project demonstrates
+
+- **Modular monolith with a multi-agent AI core** — one deployable, five layers separated by
+  rate of change and risk (not by what's technically mergeable), with a clear extraction path
+  to services later without paying microservice tax up front today.
+- **The model never gets the final say on anything transactional** — booking correctness is a
+  Postgres constraint, not an instruction the agent is trusted to follow. See
+  [Not trusting the LLM](#not-trusting-the-llm-with-anything-that-has-to-be-true).
+- **Grounded generation with a designed failure mode** — below a similarity threshold, the
+  FAQ/symptom agents say "I don't have that information" instead of generating a
+  plausible-sounding answer. Abstaining is a contract, not a hope.
+- **Layered safety, not a single confident check** — emergency detection runs as deterministic
+  keyword rules *before* the LLM is invoked, and again as an LLM safety net for phrasing the
+  rules didn't anticipate.
+- **Measured, not asserted** — retrieval, intent routing, booking concurrency, and answer
+  faithfulness are CI-shaped gates with fixed thresholds, run against a live stack with real
+  Gemini calls. See [Evaluation](#evaluation).
+
+---
+
+## Architecture
+
+Modular monolith — an **AI layer** and a **business layer**, both calling down into a single
+**data-access layer**, on a shared config/infra layer. Neither top layer opens a database
+connection directly, and neither imports the other.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  app/            FastAPI composition root — ADK runtime,    │
+│                  webhook, /api/v1 router                    │
+└─────────┬─────────────────────────────────┬─────────────────┘
+          │                                 │
+┌─────────▼─────────────┐        ┌──────────▼──────────────┐
+│  ai-agents/            │        │  modules/                │
+│  orchestrator + 4      │        │  admin CRUD +             │
+│  domain agents (faq,   │        │  knowledge ingestion      │
+│  symptom, booking,     │        │  pipeline (cron-polled)   │
+│  emergency)            │        │                           │
+└─────────┬──────────────┘        └──────────┬────────────────┘
+          │                                  │
+          └────────────────┬─────────────────┘
+                            ▼
+┌───────────────────────────────────────────────────────────────┐
+│  dal/   only layer that knows a real table/collection name.   │
+│         booking's no-double-booking constraint lives here.    │
+├───────────────────────────────────────────────────────────────┤
+│  common/  config · logging/tracing · retry/timeout wrappers   │
+└───────────────────────────────────────────────────────────────┘
+```
+
+Within `ai-agents/`, agents never import each other either — the orchestrator is the only
+thing that transfers a session to a domain agent.
+
+### Project layout
+
+```
+app/
+├── api/v1/           REST routers
+├── main.py           app factory
+└── runtime.py        ADK runtime wiring
+
+ai-agents/
+├── orchestrator/     intent routing
+├── faq/ symptom/ booking/ emergency/   agent.py · tools.py · prompt.py
+└── core/             base agent/tool, domain rules
+
+modules/
+├── booking/ doctor/ knowledge/         admin CRUD
+├── conversation/     chat controller
+└── knowledge_ingestion/   chunk_service · embedding_service · cron.py
+
+core/       base_model · base_repository · base_service · exceptions
+dal/        booking_repository · doctor_repository · knowledge_repository ·
+            chunk_repository · ingestion_job_repository · qdrant_client
+common/     config · database · gemini_client · observability · resilience
+eval/       golden_set_*.yaml · metrics.py · runner.py · REPORT.md
+docs/       01-architecture.md
+tests/      unit/ · integration/ · eval/
+alembic/    versions/
+```
+
+**Key design choices**
+
+| Choice | Why |
 |---|---|
-| `app/` | FastAPI composition root — app factory, ADK runtime (Orchestrator + placeholder-free real agents), booker agent conversation route (Layer-1 emergency screening + ADK Runner), `/api/v1` router. |
-| `ai-agents/` | AI layer — Orchestrator + 4 domain agents (faq, symptom, booking, emergency), each with `agent.py`/`tools.py`/`prompt.py`. Note: this directory's hyphenated name can't be reached by a normal `import` statement — see `common/module_loader.py`. |
-| `modules/` | Non-AI business layer — CRUD admin (booking, doctor, knowledge) + the RAG ingestion pipeline (chunk/embed/cron), adapted from `rag-health`. |
-| `core/` | Generic CRUD base classes + `SlotTakenError`/`NotFoundError`/etc. Reused from `rag-health`. |
-| `dal/` | Data-access layer — one repository per table/collection (`booking_repository.py`, `doctor_repository.py`, `knowledge_repository.py`, `chunk_repository.py`, `ingestion_job_repository.py`, `qdrant_client.py`, `session.py`). |
-| `common/` | Cross-cutting infra — `config.py`, `database.py`, `gemini_client.py`, `observability.py`, `resilience.py`, `module_loader.py`. |
-| `eval/` | AI quality gate — 3 golden sets (≥10 items each, placeholder ids), `metrics.py` (formulas verified by real unit tests), `runner.py` (needs live infra, unexecuted). |
-| `alembic/` | One hand-written revision (`0001_initial_schema.py`) covering all 6 tables, including the partial unique index for no-double-booking. Verified with `alembic upgrade/downgrade --sql` (offline SQL generation) — never run against a real Postgres. |
-| `tests/` | Real assertions in `unit/test_settings_defaults.py` and `eval/test_retrieval_metrics.py`; everything else is either a skipped placeholder or gated behind live infra (`@pytest.mark.eval`, `@pytest.mark.llm`). |
+| No Port/Adapter abstraction per datastore provider | Stack is already fixed (ADK + Postgres + Qdrant); `dal/` alone already buys "swap the implementation in one place" without a speculative interface nothing else will implement. |
+| Booking correctness = DB constraint, not app-level lock | A partial `UNIQUE(doctor_id, slot_time) WHERE status != 'cancelled'` is correct on *every* write, independent of what any agent believed a moment earlier. Partial, not plain unique, because cancelling only flips `status` — a plain unique index would permanently block rebooking a cancelled slot. |
+| Doctor roster rendered into context, not retrieved via Qdrant | A clinic has a few dozen doctors — small enough to put the entire roster in the symptom agent's prompt. Trades a slightly larger prompt for zero retrieval-miss risk on "which of your doctors handles X," which top-K search quietly gets wrong. |
+| Two-layer emergency detection | Layer 1: deterministic keyword rules, no LLM round-trip, catches the common case instantly. Layer 2: the orchestrator LLM still screens for indirect phrasing the rule list didn't anticipate. A false positive costs an unnecessary message; a false negative costs a real emergency going to a FAQ answer. |
+| Knowledge ingestion is a 2-phase, cron-polled pipeline, not synchronous on publish | Publishing returns immediately; a worker claims jobs with `SKIP LOCKED`, idempotent — safe to retry, safe to scale to multiple instances. Same `run(job_id)` contract is also invoked directly for immediate re-index/retry — no separate code path for "manual" vs. "automatic." |
+| RAG grounding mandatory, threshold-gated abstention | Similarity below threshold → "no information found," not a generated guess. Wrong medical/policy info is a liability, not a feature. |
 
-## Requirements
+Full design doc: [`docs/01-architecture.md`](docs/01-architecture.md) — decision log with rationale in [§11](docs/01-architecture.md#decision-log).
 
-- Python 3.12+
-- Docker (for Postgres + Qdrant via `docker-compose.yml`)
-- A Gemini API key
+### Not trusting the LLM with anything that has to be true
 
-## Local setup
+```
+check_available_slots()  →  agent proposes a time  →  create_booking()
+                                                              │
+                                     INSERT competes against a partial
+                                     UNIQUE(doctor_id, slot_time)
+                                     WHERE status != 'cancelled'
+                                              │
+                              second writer's INSERT fails at the DB,
+                              agent catches SlotTakenError and re-proposes
+```
+
+`check_available_slots` and `create_booking` are two separate calls — there's a real race
+window between them. The system doesn't try to close that race with application-level
+locking; the database's constraint is the final word every time, regardless of what any agent
+believed a moment earlier.
+
+Emergency handling applies the same instinct in a different shape — two independent checks
+instead of one confident one:
+
+```
+message → keyword rules (no LLM, Layer 1) → match → static emergency response
+              │
+              no match
+              ▼
+         orchestrator LLM classifies intent → still screens for
+         indirect emergency phrasing (Layer 2, safety net)
+              │
+              no match at either layer → normal FAQ/symptom/booking flow
+```
+
+---
+
+## Evaluation
+
+Unit tests catch it if a function returns the wrong type. They don't catch it if the FAQ
+agent starts fabricating clinic policy, or if a prompt change quietly drops intent-routing
+accuracy from 95% to 80%. That needs its own gate, run against the live stack with real
+Gemini calls (`pytest -m eval`) — no mocks, because the thing being measured *is* the model's
+behavior.
+
+| Metric | What it catches | Threshold | Current |
+|---|---|---|---|
+| Retrieval Hit Rate@5 | Relevant knowledge chunk isn't in the top 5 retrieved | ≥ 0.70 | ✅ 1.000 |
+| Retrieval MRR | Relevant chunk retrieved but ranked poorly | ≥ 0.90 | ✅ 0.971 |
+| Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 1.000 |
+| Booking Concurrency Pass Rate | Concurrent bookings on the same slot both succeed | = 1.00 | ✅ 1.000 |
+| DeepEval judge suite (9 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ✅ 9/9 |
+
+`scripts/seed_eval_fixtures.py` wipes and reseeds fixed fixture data before a run, so results
+are comparable across runs instead of drifting with leftover state. Full methodology and the
+one interesting LLM-judge false negative I dug into (traced to the judge quoting a sentence
+that never appeared in the agent's actual output) are in
+[`eval/REPORT.md`](eval/REPORT.md) and [`eval/EVAL_FINDINGS.md`](eval/EVAL_FINDINGS.md).
+
+That gate also caught a real production bug, not manual testing: the agents' ADK-internal
+Gemini client bypassed the app's retry wrapper (it uses google-adk's own client, not
+`common/gemini_client.py`), so a single transient 503 from Google could fail an entire eval
+run and look like a routing regression. Fixed with the library's own native retry mechanism
+and covered by a unit test that simulates the failure
+(`tests/unit/ai_agents/test_adk_model_retry.py`).
+
+---
+
+## Quick Start
 
 ```bash
 python -m venv .venv
-.venv/Scripts/activate      # Windows
+.venv/Scripts/activate       # Windows
 # source .venv/bin/activate  # macOS/Linux
 
 pip install -e ".[dev]"
-
-cp .env.example .env        # fill in GEMINI_API_KEY, set a real POSTGRES_PASSWORD
+cp .env.example .env          # add GEMINI_API_KEY, set a real POSTGRES_PASSWORD
 ```
 
-Bring up the full stack:
-
 ```bash
-docker compose up -d
+docker compose up -d          # Postgres + Qdrant + app; app runs migrations on boot
+python scripts/smoke_test.py  # one message per intent against the running stack
 ```
 
-`app` waits for Postgres/Qdrant to report healthy (compose healthchecks) before starting, and
-runs `alembic upgrade head` automatically before serving (see `Dockerfile`'s `CMD`) — no manual
-migration step.
+---
 
-Run the smoke test (one message per intent — faq/symptom/booking/emergency) against the running
-stack:
+## API Reference
 
-```bash
-python scripts/smoke_test.py
-```
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/agents/booker/conversations/{conversation_id}/messages` | Send a message to the booking agent, get the agent's reply |
+| GET | `/api/v1/doctors` | List doctors |
+| GET | `/api/v1/doctors/{doctor_id}` | Doctor details |
+| POST | `/api/v1/doctors` | Create doctor |
+| PATCH | `/api/v1/doctors/{doctor_id}` | Update doctor |
+| POST | `/api/v1/doctors/{doctor_id}/deactivate` | Deactivate doctor |
+| GET | `/api/v1/bookings` | List bookings (admin) |
+| POST | `/api/v1/bookings/{booking_id}/cancel` | Cancel a booking |
+| POST | `/api/v1/bookings/{booking_id}/reschedule` | Reschedule a booking |
+| POST | `/api/v1/knowledge` | Create a knowledge entry (draft) |
+| GET | `/api/v1/knowledge` | List knowledge entries |
+| PATCH | `/api/v1/knowledge/{knowledge_id}` | Update a knowledge entry |
+| POST | `/api/v1/knowledge/{knowledge_id}/publish` | Publish — triggers chunk + embed pipeline |
+| DELETE | `/api/v1/knowledge/{knowledge_id}` | Delete + remove its vectors from Qdrant |
+| GET | `/health` | Liveness |
 
-Run the (offline-safe) test suite:
+Interactive docs: `http://localhost:8000/docs`
 
-```bash
-pytest
-```
+---
 
-Run the real AI quality gate (needs the live stack + `GEMINI_API_KEY`):
-
-```bash
-pytest -m eval
-```
-
-Before an eval run, reset the environment to a known-clean state (BUG-001/BUG-008: a prior run's
-leftover bookings/knowledge rows/Qdrant collection otherwise make results non-repeatable). This
-wipes every domain table plus the Qdrant collection, then reseeds from `eval/fixtures/` via the
-real API (TASK-025/026's process, now scripted):
-
-```bash
-python scripts/seed_eval_fixtures.py
-```
-
-Lint:
+## Development
 
 ```bash
+pytest                        # offline-safe unit tests
+python scripts/seed_eval_fixtures.py   # reset to known-clean state before an eval run
+pytest -m eval                 # real AI quality gate — needs the live stack + GEMINI_API_KEY
 ruff check .
 ```
 
+---
+
 ## Configuration
 
-All settings are in `common/config.py` (Pydantic Settings, loaded from `.env`). Notably:
+All settings are Pydantic `Settings` loaded from `.env` (`common/config.py`). Full list with
+defaults in `.env.example`; the ones worth knowing about:
 
-- `GEMINI_API_KEY`, `GEMINI_LLM_MODEL`, `GEMINI_EMBEDDING_MODEL` — model choice is
-  env-driven, never hardcoded (ADR-0006).
-- `POSTGRES_*` / `QDRANT_HOST`/`QDRANT_PORT`/`QDRANT_COLLECTION` — composed into
-  `database_url` / `qdrant_url` properties on `Settings`.
-- `SIMILARITY_THRESHOLD`/`TOP_K` — RAG grounding cutoff (ADR-0008) and result count.
-- `EMBEDDING_BATCH_SIZE` and the `semantic_chunker_*`/`chunk_*`/`cron_*` fields drive the
-  knowledge ingestion pipeline (`modules/knowledge_ingestion/`).
+| Variable | Default | Description |
+|---|---|---|
+| `GEMINI_API_KEY` | *(required)* | Gemini API key |
+| `{ORCHESTRATOR,BOOKING,SYMPTOM,FAQ,EMERGENCY}_LLM_MODEL` | `gemini-2.0-flash` | Each agent's model is independently configurable, not shared/hardcoded |
+| `GEMINI_EMBEDDING_MODEL` | `text-embedding-004` | Embedding model for RAG |
+| `SIMILARITY_THRESHOLD` | `0.7` | RAG grounding cutoff — below this, agents abstain instead of answering |
+| `TOP_K` | `6` | Chunks retrieved per query |
+| `POSTGRES_*` | — | Composed into `database_url` |
+| `QDRANT_HOST` / `QDRANT_PORT` / `QDRANT_COLLECTION` | — | Composed into `qdrant_url` |
+| `EMBEDDING_BATCH_SIZE` | `100` | Chunks per embedding batch during ingestion |
 
-See `.env.example` for the full list with defaults.
+---
 
-## Known gaps (see `.claude/memory/` for the full write-up)
+## Out of scope
 
-- `ai-agents/`'s hyphenated directory name blocks normal `import` statements from outside
-  it — worked around with `common/module_loader.py`, but a rename to `ai_agents` would be
-  cleaner if the team decides to update ARCH-001 to match.
-- Clinic hours/slot duration (`dal/booking_repository.py`'s `CLINIC_OPEN_HOUR` etc.) are a
-  judgment call — no doc pins these values.
-- Golden sets in `eval/` use placeholder ids until real seed data exists.
+Deliberately scoped to the booking-assistant core (agents, grounded RAG, transactional
+booking, evaluation). A production deployment would add — and these are intentionally **not**
+built here:
+
+- **AuthN / AuthZ** — no authentication, RBAC, or per-tenant isolation. Every endpoint is open.
+- **Rate limiting & quotas** — no abuse protection on the conversation or admin endpoints.
+- **Secret management** — keys come from `.env`; production would use a vault/secret manager.
+- **Long-term cross-session memory** — ADK's `MemoryService` would let an agent recognize a
+  returning patient weeks later; not built because there's no real requirement for it yet, and
+  a half-implementation would be worse than none.
+- **Admin/audit** — no audit log, no PII redaction for clinical data in transcripts.
+
+Calling these out explicitly is the point: the layering leaves clean seams for them
+(middleware in `app/`, policy in `core/`), but they are not implemented.
+
+## Roadmap
+
+- Rename `ai-agents/` → `ai_agents` — the hyphen currently blocks a normal Python `import`
+  and is worked around in `common/module_loader.py`; the rename is straightforward, just not
+  done yet.
+- Exercise the ADK retry fix against a real transient 503 in a live eval run — currently
+  proven only by a unit test that simulates the failure, not by an observed live occurrence.
+- `MemoryService`-backed long-term memory, if a real multi-visit personalization need shows up.
+
+---
+
+## About
+
+Built by **Dang NT** — a software engineer with 18 years of experience across system
+architecture, fullstack development, and AI applications. I design systems end to end:
+drawing the module boundaries, writing the code, and — as this project shows — proving the
+result with measurement rather than assertion.
+
+This repository is a portfolio piece. Every non-trivial architecture decision is recorded
+with its rationale in the [decision log](docs/01-architecture.md#decision-log),
+every quality claim is backed by the [evaluation harness](#evaluation), and every shortcut is
+named in [Out of scope](#out-of-scope).
+
+**Let's talk** — open to architecture, fullstack, and AI engineering roles.
+
+- LinkedIn: [linkedin.com/in/dangnt](https://www.linkedin.com/in/dangnt/)
+- Email: [dangnt.vn@gmail.com](mailto:dangnt.vn@gmail.com)
