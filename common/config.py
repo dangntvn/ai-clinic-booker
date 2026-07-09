@@ -50,7 +50,13 @@ class Settings(BaseSettings):
     gemini_llm_model: str = "gemini-2.0-flash"
     gemini_embedding_model: str = "text-embedding-004"
     llm_temperature: float = 0.0
-    llm_max_tokens: int = 2048
+    # 2048 was too small for callers needing long structured output (e.g. eval/deepeval_gemini.py's
+    # LLM-judge, which returns a JSON object with extracted facts/reasoning) — a `gemini-2.5-flash`
+    # "thinking" call can burn part of this budget on hidden reasoning tokens before ever writing
+    # the visible response, so a low ceiling risks silent mid-JSON truncation (BUG-003). 8192 gives
+    # real headroom; `generate()` still accepts a smaller override per-call for latency-sensitive
+    # short-reply callers.
+    llm_max_tokens: int = 8192
     llm_timeout_seconds: int = 120
     llm_retry_max: int = 3
 

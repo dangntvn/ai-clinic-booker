@@ -39,6 +39,7 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "ruff",
+    "deepeval",
 ]
 
 [tool.ruff]
@@ -58,3 +59,12 @@ markers = [
     "llm: tests that call a real LLM, run nightly",
 ]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+# Session-scoped loop: common/database.py's AsyncSessionFactory (and the ADK
+# Runner's own DB pool) are process-wide singletons created on first use and
+# bound to whatever event loop was running then. pytest-asyncio's default
+# "function" scope gives every async test a brand-new loop, which then hands
+# asyncpg connections created under an earlier loop to a different one —
+# "Future attached to a different loop". One shared loop for the whole
+# session avoids that, matching how the real app runs (one loop for good).
+asyncio_default_test_loop_scope = "session"

@@ -55,12 +55,25 @@ async def embed_batch(texts: list[str]) -> list[list[float]]:
 
 
 @gemini_retry
-async def generate(system_prompt: str, user_message: str) -> str:
+async def generate(
+    system_prompt: str,
+    user_message: str,
+    max_output_tokens: int | None = None,
+    disable_thinking: bool = False,
+) -> str:
     """Generate a chat completion with the configured Gemini LLM model.
 
     Args:
         system_prompt: System instruction for the call (agent prompt.py content).
         user_message: The user-turn content to respond to.
+        max_output_tokens: Override for ``settings.llm_max_tokens`` — callers
+            whose prompts demand long structured output (e.g. eval/deepeval_gemini.py's
+            judge, which needs room for both JSON reasoning and the verdict)
+            need more budget than a normal short chat reply.
+        disable_thinking: Zero out gemini-2.5-flash's thinking budget — the
+            judge prompts already ask the model to reason inside the JSON
+            response itself, so hidden thinking tokens just eat into
+            max_output_tokens for no visible benefit.
 
     Returns:
         The generated response text.
@@ -72,7 +85,8 @@ async def generate(system_prompt: str, user_message: str) -> str:
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=settings.llm_temperature,
-            max_output_tokens=settings.llm_max_tokens,
+            max_output_tokens=max_output_tokens or settings.llm_max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0) if disable_thinking else None,
         ),
     )
     return response.text

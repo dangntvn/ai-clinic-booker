@@ -2,58 +2,63 @@
 # Each case describes N concurrent create_booking calls for the SAME
 # (doctor_id, slot_time) — the gate asserts exactly one succeeds and the
 # rest raise SlotTakenError under real concurrent load (TASK-008 DoD).
-# doctor_id is a placeholder (1) until real seed data exists — swap for a
-# real active doctor id once TASK-016's smoke-test seed data is in place.
+# Patched 2026-07-08 (TASK-026): doctor_id 1/2 placeholders replaced with real
+# doctor ids seeded via POST /doctors (TASK-025 fixtures) — id 3 = "Phạm Thị
+# Lan Hương" (Nội tổng quát), id 4 = "Trần Thị Kim Anh" (Nội tổng quát).
+# work_days for all seeded doctors is a TEST-ONLY schedule (Mon-Sat, no
+# Sunday) chosen at seed time per eval/data_requirements.md mục 5.1 option
+# (a) — NOT the clinic's real per-doctor schedule (real per-doctor work_days
+# were not publicly available from phongkham5sao.vn, see TASK-025).
 cases:
   - name: "two_way_race_same_slot"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T09:00:00"
     concurrent_requests: 2
     expected_successes: 1
   - name: "five_way_race_same_slot"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T09:30:00"
     concurrent_requests: 5
     expected_successes: 1
   - name: "ten_way_race_same_slot"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T10:00:00"
     concurrent_requests: 10
     expected_successes: 1
   - name: "different_slots_all_succeed"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T10:30:00"
     concurrent_requests: 1
     expected_successes: 1
   - name: "cancel_then_immediate_rebook_succeeds"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T11:00:00"
     concurrent_requests: 1
     expected_successes: 1
     setup: "cancel_existing_booking_for_this_slot_first"
   - name: "two_way_race_different_doctor_same_time_both_succeed"
-    doctor_id: 2
+    doctor_id: 4
     slot_time: "2026-07-10T09:00:00"
     concurrent_requests: 1
     expected_successes: 1
   - name: "race_at_lunch_boundary_slot"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T11:30:00"
     concurrent_requests: 3
     expected_successes: 1
   - name: "race_at_closing_slot"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T16:30:00"
     concurrent_requests: 3
     expected_successes: 1
   - name: "race_on_doctor_non_work_day"
-    doctor_id: 1
-    slot_time: "2026-07-11T09:00:00"
+    doctor_id: 3
+    slot_time: "2026-07-12T09:00:00"
     concurrent_requests: 2
     expected_successes: 0
-    note: "assumes doctor_id=1 does not work this weekday in seed data"
+    note: "2026-07-12 is a Sunday — outside doctor_id=3's seeded test work_days (Mon-Sat). Date changed from the original 2026-07-11 (Saturday), which IS a work day under the real seeded schedule and would have made this case wrong."
   - name: "reschedule_race_into_taken_slot"
-    doctor_id: 1
+    doctor_id: 3
     slot_time: "2026-07-10T09:00:00"
     concurrent_requests: 2
     expected_successes: 1
