@@ -136,10 +136,12 @@ class BookingToolCapture:
         self._module = importlib.import_module("ai-agents.booking.tools")
         self._original_cls = self._module.BookingRepository
         self.calls: list[str] = []
+        self.results: list[tuple[str, object]] = []
 
     def __enter__(self):
         base_cls = self._original_cls
         calls = self.calls
+        results = self.results
         namespace = {}
         for name in self._METHODS:
             base_method = getattr(base_cls, name)
@@ -148,6 +150,7 @@ class BookingToolCapture:
                 async def _method(self, *args, **kwargs):
                     result = await base_method(self, *args, **kwargs)
                     calls.append(f"{name}(args={args}, kwargs={kwargs}) -> {result}")
+                    results.append((name, result))
                     return result
 
                 return _method

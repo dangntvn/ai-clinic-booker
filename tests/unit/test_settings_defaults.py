@@ -15,9 +15,43 @@
 # Description: Unit test for common/config.py — Settings must load with
 #              defaults alone (no .env required) and expose the Gemini
 #              model fields via env var, not hardcoded (TASK-002 DoD).
+#              `_env_file=None` only turns off pydantic-settings' own dotenv
+#              parsing — it can't stop a real os.environ value from another
+#              source (e.g. deepeval's pytest plugin calls python-dotenv's
+#              load_dotenv() on collection, which writes .env straight into
+#              os.environ). Every "defaults" test below explicitly delenv's
+#              the vars it asserts on so it stays correct regardless.
 ###############################################################################
 
+import pytest
+
 from common.config import Settings
+
+_ENV_VARS_UNDER_TEST = [
+    "GEMINI_LLM_MODEL",
+    "GEMINI_EMBEDDING_MODEL",
+    "ORCHESTRATOR_LLM_MODEL",
+    "ORCHESTRATOR_LLM_TEMPERATURE",
+    "ORCHESTRATOR_LLM_MAX_TOKENS",
+    "BOOKING_LLM_MODEL",
+    "BOOKING_LLM_TEMPERATURE",
+    "BOOKING_LLM_MAX_TOKENS",
+    "SYMPTOM_LLM_MODEL",
+    "SYMPTOM_LLM_TEMPERATURE",
+    "SYMPTOM_LLM_MAX_TOKENS",
+    "FAQ_LLM_MODEL",
+    "FAQ_LLM_TEMPERATURE",
+    "FAQ_LLM_MAX_TOKENS",
+    "EMERGENCY_LLM_MODEL",
+    "EMERGENCY_LLM_TEMPERATURE",
+    "EMERGENCY_LLM_MAX_TOKENS",
+]
+
+
+@pytest.fixture(autouse=True)
+def _clear_leaked_env_vars(monkeypatch):
+    for name in _ENV_VARS_UNDER_TEST:
+        monkeypatch.delenv(name, raising=False)
 
 
 def test_settings_defaults():
@@ -35,3 +69,41 @@ def test_settings_gemini_model_is_env_overridable(monkeypatch):
     settings = Settings(_env_file=None)
 
     assert settings.gemini_llm_model == "gemini-2.5-pro"
+
+
+AGENT_PREFIXES = ["orchestrator", "booking", "symptom", "faq", "emergency"]
+
+
+@pytest.mark.parametrize("prefix", AGENT_PREFIXES)
+def test_per_agent_llm_defaults_match_global_defaults(prefix):
+    settings = Settings(_env_file=None)
+
+    assert getattr(settings, f"{prefix}_llm_model") == "gemini-2.0-flash"
+    assert getattr(settings, f"{prefix}_llm_temperature") == 0.0
+    assert getattr(settings, f"{prefix}_llm_max_tokens") == 2048
+
+
+@pytest.mark.parametrize("prefix", AGENT_PREFIXES)
+def test_per_agent_llm_fields_are_independently_env_overridable(monkeypatch, prefix):
+    monkeypatch.setenv(f"{prefix.upper()}_LLM_MODEL", "custom-model")
+    monkeypatch.setenv(f"{prefix.upper()}_LLM_TEMPERATURE", "0.7")
+    monkeypatch.setenv(f"{prefix.upper()}_LLM_MAX_TOKENS", "512")
+
+    settings = Settings(_env_file=None)
+
+    assert getattr(settings, f"{prefix}_llm_model") == "custom-model"
+    assert getattr(settings, f"{prefix}_llm_temperature") == 0.7
+    assert getattr(settings, f"{prefix}_llm_max_tokens") == 512
+
+    other_prefixes = [p for p in AGENT_PREFIXES if p != prefix]
+    for other in other_prefixes:
+        assert getattr(settings, f"{other}_llm_model") == "gemini-2.0-flash"
+
+
+def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
+    for prefix in AGENT_PREFIXES:
+        monkeypatch.setenv(f"{prefix.upper()}_LLM_MODEL", "some-agent-model")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.gemini_embedding_model == "text-embedding-004"

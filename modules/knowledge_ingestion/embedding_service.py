@@ -29,7 +29,7 @@ from common.observability import get_logger
 from dal.chunk_repository import ChunkRepository
 from dal.ingestion_job_repository import IngestionJob
 from dal.knowledge_repository import KnowledgeRepository
-from dal.qdrant_client import upsert_chunks
+from dal.qdrant_client import ensure_collection, upsert_chunks
 
 logger = get_logger(__name__)
 
@@ -72,6 +72,7 @@ class EmbeddingService:
         for i in range(0, len(pending), settings.embedding_batch_size):
             batch = pending[i : i + settings.embedding_batch_size]
             vectors = await embed_batch([c.text for c in batch])
+            ensure_collection(len(vectors[0]))  # BUG-001: idempotent, no-op after first call
 
             points = [
                 {

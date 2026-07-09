@@ -12,18 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Resilience decorator for async functions — retry + timeout
-#              around every Gemini call (ARCH-001 §7 Resilience). Adapted
-#              from rag-health's openai_retry (ADR-0021), renamed to match
-#              the Gemini provider used in this project (ADR-0006).
+# Description: Retry policy for every Gemini call (ARCH-001 §7 Resilience).
+#              gemini_retry wraps the *direct* genai client in gemini_client.py
+#              (retry + timeout; adapted from rag-health's openai_retry,
+#              ADR-0021/ADR-0006). build_adk_model applies the same *retry*
+#              policy to *ADK-driven* calls (ai-agents/*/agent.py), which use
+#              google-adk's own genai client and never reach gemini_retry.
+#              Note: the ADK path carries retry only, not gemini_retry's
+#              asyncio timeout — see .claude/memory/2026-07-09-adk-model-retry-503.md.
 ###############################################################################
 
 import asyncio
 from functools import wraps
+from typing import TYPE_CHECKING
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from common.config import settings
+
+if TYPE_CHECKING:
+    from google.adk.models import Gemini
 
 
 def gemini_retry(func):
@@ -62,3 +70,42 @@ def gemini_retry(func):
         return await asyncio.wait_for(func(*args, **kwargs), timeout=settings.llm_timeout_seconds)
 
     return wrapper
+
+
+def build_adk_model(model_name: str) -> "Gemini":
+    """Build an ADK ``Gemini`` model instance wired with the project retry policy.
+
+    ``google.adk.agents.Agent(model="gemini-...")`` resolves a bare model-name
+    string through ADK's ``LLMRegistry``, which constructs ``Gemini(retry_options=None)``.
+    With ``retry_options=None`` the underlying google-genai client uses
+    ``stop_after_attempt(1)`` — i.e. **no retries at all** — so a single transient
+    ``503 UNAVAILABLE`` from Gemini fails the whole agent turn (see
+    ``eval/EVAL_FINDINGS.md`` §2). ``common/gemini_client.py``'s ``gemini_retry``
+    does not help here: ADK calls the model through its own genai client, never
+    through ``gemini_client.py``.
+
+    Passing an explicit ``Gemini`` instance with ``retry_options`` set makes
+    google-genai wrap each request in ``tenacity.AsyncRetrying`` whose default
+    retryable set already covers 408/429/500/502/503/504 plus httpx
+    timeout/connect errors — exactly the transient failures ``gemini_retry``
+    protects the direct-client path against. Attempts are sourced from
+    ``settings.llm_retry_max`` so both retry layers stay in lockstep; the
+    exponential backoff cap mirrors ``gemini_retry``'s ``wait_exponential(max=4)``.
+
+    Args:
+        model_name: The Gemini model id (e.g. ``settings.orchestrator_llm_model``).
+
+    Returns:
+        A ``Gemini`` model instance ready to pass as ``Agent(model=...)``.
+    """
+    from google.adk.models import Gemini
+    from google.genai import types
+
+    return Gemini(
+        model=model_name,
+        retry_options=types.HttpRetryOptions(
+            attempts=settings.llm_retry_max,
+            initial_delay=1.0,
+            max_delay=4.0,
+        ),
+    )

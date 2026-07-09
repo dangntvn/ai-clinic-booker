@@ -68,7 +68,13 @@ async def test_booking_proposes_only_real_available_slot(booking_capture):
 @pytest.mark.eval
 @pytest.mark.llm
 async def test_booking_confirms_before_create_then_creates_real_booking(booking_capture):
-    """Exercises the full BIZ-001 §9 confirm-then-execute round trip."""
+    """Exercises the full BIZ-001 §9 confirm-then-execute round trip.
+
+    BUG-008: create_booking here creates a real, permanent row — cancel it in
+    `finally` so a repeat run against the same DB finds the slot free again.
+    """
+    from common.database import AsyncSessionFactory
+    from dal.booking_repository import BookingRepository
     from tests.eval.conftest import run_conversation_turns
 
     turn_1 = (
@@ -76,35 +82,43 @@ async def test_booking_confirms_before_create_then_creates_real_booking(booking_
         f"bác sĩ có mã doctor_id={REAL_DOCTOR_ID} vào lúc 09:00 ngày {WORK_DAY}."
     )
     turn_2 = "Đúng rồi, xác nhận đặt lịch giúp tôi."
-    first_reply, second_reply = await run_conversation_turns([turn_1, turn_2])
+    try:
+        first_reply, second_reply = await run_conversation_turns([turn_1, turn_2])
 
-    assert "create_booking" in booking_capture.context_text(), (
-        "create_booking was never called across the 2-turn conversation — "
-        f"captured calls: {booking_capture.context_text()}"
-    )
+        assert "create_booking" in booking_capture.context_text(), (
+            "create_booking was never called across the 2-turn conversation — "
+            f"captured calls: {booking_capture.context_text()}"
+        )
 
-    test_case = LLMTestCase(
-        input=f"{turn_1}\n{turn_2}",
-        actual_output=f"[turn 1] {first_reply}\n[turn 2] {second_reply}",
-        context=[booking_capture.context_text()],
-    )
-    judge = build_judge()
-    faithful_to_tool = GEval(
-        name="FaithfulToBookingOutcome",
-        criteria=(
-            "'context' contains the real create_booking(...) tool call and its "
-            "actual return value (either {'status': 'confirmed', 'booking_id': "
-            "N} or {'status': 'slot_taken'}). 'actual_output' passes only if it "
-            "accurately reports that exact outcome (confirmed with a booking "
-            "reference, or apologizes and offers another time if slot_taken) "
-            "and does not claim success if the real result was slot_taken, or "
-            "vice versa."
-        ),
-        evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
-        threshold=THRESHOLD,
-        model=judge,
-    )
-    assert_test(test_case, [faithful_to_tool])
+        test_case = LLMTestCase(
+            input=f"{turn_1}\n{turn_2}",
+            actual_output=f"[turn 1] {first_reply}\n[turn 2] {second_reply}",
+            context=[booking_capture.context_text()],
+        )
+        judge = build_judge()
+        faithful_to_tool = GEval(
+            name="FaithfulToBookingOutcome",
+            criteria=(
+                "'context' contains the real create_booking(...) tool call and its "
+                "actual return value (either {'status': 'confirmed', 'booking_id': "
+                "N} or {'status': 'slot_taken'}). 'actual_output' passes only if it "
+                "accurately reports that exact outcome (confirmed with a booking "
+                "reference, or apologizes and offers another time if slot_taken) "
+                "and does not claim success if the real result was slot_taken, or "
+                "vice versa."
+            ),
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
+            threshold=THRESHOLD,
+            model=judge,
+        )
+        assert_test(test_case, [faithful_to_tool])
+    finally:
+        created_ids = [
+            result.id for name, result in booking_capture.results if name == "create_booking"
+        ]
+        for booking_id in created_ids:
+            async with AsyncSessionFactory() as session:
+                await BookingRepository(session).cancel_booking(booking_id)
 
 
 @pytest.mark.eval

@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     app_port: int = 8000
 
     # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
+    # gemini_llm_model/llm_temperature/llm_max_tokens below are legacy shared
+    # defaults, superseded by the per-agent fields (TASK-017) that every
+    # ai-agents/*/agent.py now reads instead. gemini_embedding_model is RAG's
+    # own model (used only by common/gemini_client.embed_batch) and is
+    # intentionally independent of every per-agent chat field below it.
     gemini_api_key: str = ""
     gemini_llm_model: str = "gemini-2.0-flash"
     gemini_embedding_model: str = "text-embedding-004"
@@ -60,6 +65,28 @@ class Settings(BaseSettings):
     llm_timeout_seconds: int = 120
     llm_retry_max: int = 3
 
+    # Per-agent LLM config (TASK-017) — each agent's model/temperature/
+    # max_tokens is tunable independently via its own env var.
+    orchestrator_llm_model: str = "gemini-2.0-flash"
+    orchestrator_llm_temperature: float = 0.0
+    orchestrator_llm_max_tokens: int = 2048
+
+    booking_llm_model: str = "gemini-2.0-flash"
+    booking_llm_temperature: float = 0.0
+    booking_llm_max_tokens: int = 2048
+
+    symptom_llm_model: str = "gemini-2.0-flash"
+    symptom_llm_temperature: float = 0.0
+    symptom_llm_max_tokens: int = 2048
+
+    faq_llm_model: str = "gemini-2.0-flash"
+    faq_llm_temperature: float = 0.0
+    faq_llm_max_tokens: int = 2048
+
+    emergency_llm_model: str = "gemini-2.0-flash"
+    emergency_llm_temperature: float = 0.0
+    emergency_llm_max_tokens: int = 2048
+
     # Postgres — composed into database_url below.
     postgres_host: str = "localhost"
     postgres_port: int = 5432
@@ -71,7 +98,7 @@ class Settings(BaseSettings):
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
     qdrant_collection: str = "ai_clinic_knowledge"
-    similarity_threshold: float = 0.5
+    similarity_threshold: float = 0.7  # BUG-002: 0.5 let every irrelevant-topic query "ground"
     top_k: int = 6
 
     # Ingestion (ADR-0021) — chunk_max_size/overlap match ARCH-001 §5.5.
