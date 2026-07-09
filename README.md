@@ -78,6 +78,15 @@ Run the real AI quality gate (needs the live stack + `GEMINI_API_KEY`):
 pytest -m eval
 ```
 
+Before an eval run, reset the environment to a known-clean state (BUG-001/BUG-008: a prior run's
+leftover bookings/knowledge rows/Qdrant collection otherwise make results non-repeatable). This
+wipes every domain table plus the Qdrant collection, then reseeds from `eval/fixtures/` via the
+real API (TASK-025/026's process, now scripted):
+
+```bash
+python scripts/seed_eval_fixtures.py
+```
+
 Lint:
 
 ```bash
