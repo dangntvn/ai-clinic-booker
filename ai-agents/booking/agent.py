@@ -13,9 +13,9 @@
 # limitations under the License.
 #
 # Description: Booking Agent — books/reschedules/cancels appointments via
-#              data/booking_repository (ARCH-001 §5.1, §5.3). No SQL and no
+#              dal/booking_repository (ARCH-001 §5.1, §5.3). No SQL and no
 #              conflict-handling logic here beyond interpreting tool results
-#              — that all lives in data/booking_repository.py (ADR-0009).
+#              — that all lives in dal/booking_repository.py (ADR-0009).
 ###############################################################################
 
 from google.adk.agents import Agent

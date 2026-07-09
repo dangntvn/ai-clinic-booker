@@ -24,7 +24,7 @@
 from google.adk.runners import Runner
 
 from common.module_loader import load_ai_agents
-from data.session import get_session_service
+from dal.session import get_session_service
 
 APP_NAME = "ai-clinic-agent"
 

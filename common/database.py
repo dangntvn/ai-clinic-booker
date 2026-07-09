@@ -13,11 +13,11 @@
 # limitations under the License.
 #
 # Description: SQLAlchemy async database engine and session factory — the
-#              generic get_session dependency used by data/*_repository.py
+#              generic get_session dependency used by dal/*_repository.py
 #              (ADR-0013) and core/base_repository.py. Reused verbatim from
 #              rag-health (ADR-0021); not listed explicitly in ARCH-001 §8,
 #              added here because core/base_repository.py needs a session
-#              provider and this is domain-agnostic infra, not a data/ concern.
+#              provider and this is domain-agnostic infra, not a dal/ concern.
 ###############################################################################
 
 from collections.abc import AsyncGenerator

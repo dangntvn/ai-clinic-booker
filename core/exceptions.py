@@ -70,7 +70,7 @@ class SlotTakenError(AppException):
     """Raised when a booking slot is no longer available (ADR-0009).
 
     Lives here rather than ai-agents/core/exceptions.py — ARCH-001 §4
-    explicitly allows either location, and data/booking_repository.py (a
+    explicitly allows either location, and dal/booking_repository.py (a
     lower layer than ai-agents/) needs to raise this without depending
     upward on the AI layer, and without the ai-agents/ hyphen import
     workaround (common/module_loader.py) for something this hot-path.

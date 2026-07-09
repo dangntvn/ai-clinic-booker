@@ -24,7 +24,7 @@ import httpx
 import pytest
 from qdrant_client.http.exceptions import UnexpectedResponse
 
-from data import qdrant_client
+from dal import qdrant_client
 
 
 def _make_unexpected_response(status_code: int) -> UnexpectedResponse:

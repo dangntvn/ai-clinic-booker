@@ -26,7 +26,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 class Base(DeclarativeBase):
     """SQLAlchemy declarative base shared by every ORM model in the application.
 
-    Every concrete ORM model (defined under ``data/``) must inherit from this
+    Every concrete ORM model (defined under ``dal/``) must inherit from this
     class so that Alembic's autogenerate and ``Base.metadata`` operations cover
     the full schema.
     """

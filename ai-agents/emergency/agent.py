@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Description: Emergency Agent — static safety response only, no tools, no
-#              data/ access (ADR-0014). Reached two ways: Layer 1
+#              dal/ access (ADR-0014). Reached two ways: Layer 1
 #              (modules/conversation/controller.py, before the ADK runtime even starts —
 #              see emergency_rules.is_emergency) or Layer 2 (Orchestrator
 #              transfer, TASK-011) for paraphrased red-flag language.
@@ -27,7 +27,7 @@ from .prompt import EMERGENCY_INSTRUCTION
 
 
 def build_emergency_agent() -> Agent:
-    """Build the Emergency Agent — no tools, no sub_agents, no data/ calls."""
+    """Build the Emergency Agent — no tools, no sub_agents, no dal/ calls."""
     return Agent(
         name="emergency_agent",
         model=settings.gemini_llm_model,

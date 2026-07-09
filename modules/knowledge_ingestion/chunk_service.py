@@ -29,9 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.config import settings
 from common.observability import get_logger
-from data.chunk_repository import ChunkRepository, KnowledgeChunk
-from data.ingestion_job_repository import IngestionJob
-from data.knowledge_repository import KnowledgeRepository
+from dal.chunk_repository import ChunkRepository, KnowledgeChunk
+from dal.ingestion_job_repository import IngestionJob
+from dal.knowledge_repository import KnowledgeRepository
 
 logger = get_logger(__name__)
 

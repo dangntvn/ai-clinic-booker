@@ -24,8 +24,8 @@ import argparse
 import asyncio
 
 from common.database import AsyncSessionFactory
-from data.ingestion_job_repository import IngestionJob, IngestionJobRepository
-from data.knowledge_repository import KnowledgeRepository
+from dal.ingestion_job_repository import IngestionJob, IngestionJobRepository
+from dal.knowledge_repository import KnowledgeRepository
 from modules.knowledge_ingestion import job_chunk, job_embedding
 
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Booking admin service — calls data/booking_repository
+# Description: Booking admin service — calls dal/booking_repository
 #              directly, the same repository ai-agents/booking will use
 #              (ARCH-001 §4). No SQL here — filtering lives in the
 #              repository so both entry points share one query shape.
@@ -22,7 +22,7 @@ from datetime import date, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from data.booking_repository import Booking, BookingRepository
+from dal.booking_repository import Booking, BookingRepository
 
 
 async def list_bookings(

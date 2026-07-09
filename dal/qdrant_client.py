@@ -15,7 +15,7 @@
 # Description: Qdrant client factory + collection helpers — connection,
 #              upsert, category-filtered search, delete_by_knowledge_id
 #              (ARCH-001 §6.2/§7, ADR-0007). Adapted from rag-health's
-#              common/qdrant.py (ADR-0021), relocated to data/ per ARCH-001
+#              common/qdrant.py (ADR-0021), relocated to dal/ per ARCH-001
 #              §4/§8 — this is the data-access boundary, not shared infra.
 ###############################################################################
 

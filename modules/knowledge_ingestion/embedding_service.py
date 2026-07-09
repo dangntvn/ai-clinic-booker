@@ -26,10 +26,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.gemini_client import embed_batch
 from common.observability import get_logger
-from data.chunk_repository import ChunkRepository
-from data.ingestion_job_repository import IngestionJob
-from data.knowledge_repository import KnowledgeRepository
-from data.qdrant_client import upsert_chunks
+from dal.chunk_repository import ChunkRepository
+from dal.ingestion_job_repository import IngestionJob
+from dal.knowledge_repository import KnowledgeRepository
+from dal.qdrant_client import upsert_chunks
 
 logger = get_logger(__name__)
 

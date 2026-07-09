@@ -36,7 +36,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
 from core.exceptions import InvalidSlotError, SlotTakenError
-from data.doctor_repository import Doctor
+from dal.doctor_repository import Doctor
 
 # Clinic hours (ARCH-001 doesn't pin these — a single-branch clinic default;
 # revisit if per-doctor shifts need finer-grained slotting than "work_days").
