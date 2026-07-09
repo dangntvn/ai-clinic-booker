@@ -22,12 +22,12 @@ Single clean run, `test_eval_gate` PASSED (exit 0):
 | Metric | Score | Threshold | Result | Notes |
 |---|---|---|---|---|
 | `retrieval_hit_rate@5` (17 RAG cases) | 1.000 | 0.7 | **PASS** | Rewritten grounded golden set (EVAL_FINDINGS #1) |
-| `retrieval_mrr` (17 RAG cases) | 0.971 | 0.5 | **PASS** | 16/17 hit rank #1; id 1 at rank #2 (expected, EVAL_FINDINGS #1) |
+| `retrieval_mrr` (17 RAG cases) | 0.971 | 0.9 | **PASS** | 16/17 hit rank #1; id 1 at rank #2 (expected, EVAL_FINDINGS #1) |
 | `intent_routing_accuracy` (12 intent cases) | 1.000 | 0.8 | **PASS** | 12/12, no 503 this run (EVAL_FINDINGS #2) |
 | `booking_concurrency_pass_rate` (10 booking cases) | 1.000 | 1.0 | **PASS** | BUG-006/007/008 fixed; runner self-cleans (EVAL_FINDINGS #3) |
 
 **No threshold was changed at any point** — every number above is measured against the thresholds
-already in `runner.py` (0.7 / 0.5 / 0.8 / 1.0).
+already in `runner.py` (0.7 / 0.9 / 0.8 / 1.0).
 
 ## 2. DeepEval LLM-judge suite (`test_deepeval_{faq,symptom,booking}.py`, 9 cases)
 

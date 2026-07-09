@@ -9,7 +9,7 @@
 > | Metric | 2026-07-08 | 2026-07-09 re-run | Threshold |
 > |---|---|---|---|
 > | `retrieval_hit_rate@5` | 0.091 (stale set) | **1.000** | 0.7 |
-> | `retrieval_mrr` | 0.023 (stale set) | **0.971** | 0.5 |
+> | `retrieval_mrr` | 0.023 (stale set) | **0.971** | 0.9 |
 > | `intent_routing_accuracy` | 0.917 / 503 crash | **1.000** (12/12, 4 clean runs) | 0.8 |
 > | `booking_concurrency_pass_rate` | 0.800 → 0.1 | **1.000** | 1.0 |
 >
@@ -39,7 +39,7 @@ promotions, pre-test/scan prep). A query with `relevant_knowledge_ids: []` can n
 hit, so `mean_hit_rate_at_k`/`mrr` were mechanically bounded near `1/11 ≈ 0.09` no matter how good
 retrieval was. This was a **false failure driven by a stale golden set**, not a retrieval defect —
 the queries were authored speculatively in TASK-015 before any real content existed, and the
-threshold (0.7 / 0.5) was never the problem.
+threshold (0.7 / 0.9) was never the problem.
 
 **Resolution (2026-07-09, senior-tester)**: rewrote `golden_set_rag.yaml` per TASK-026's own
 recommendation ("don't patch the 10 uncovered queries — write new RAG queries grounded in the
@@ -49,7 +49,7 @@ retrieval path (`embed_batch` + `dal/qdrant_client.search`) on a freshly-seeded 
 guessed. Real re-run result:
 
 - `retrieval_hit_rate@5 = 1.000` (>= 0.7) **PASS**
-- `retrieval_mrr = 0.971` (>= 0.5) **PASS**
+- `retrieval_mrr = 0.971` (>= 0.9) **PASS**
 
 16 of 17 queries retrieve their target doc at rank #1; the "opening hours" query (id 1) lands at
 rank #2 because the `07h30-17h00` hours line is duplicated in every department doc's footer, so no
