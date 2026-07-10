@@ -32,7 +32,10 @@ async def check_available_slots(doctor_id: int, date_iso: str) -> list[str]:
 
     Args:
         doctor_id: The doctor's id (from the Symptom Agent's rendered context).
-        date_iso: Date in "YYYY-MM-DD" format.
+        date_iso: Target date as "YYYY-MM-DD". The agent must resolve any
+            relative expression ("hôm nay"/"mai"/"thứ 2"...) into this format
+            first using the reference date in its instruction (BUG-009) — this
+            tool does not parse relative or free-text dates.
 
     Returns:
         ISO datetime strings for every open slot. Empty list if the doctor

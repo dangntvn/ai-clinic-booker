@@ -22,6 +22,9 @@
 #              no metric added "for the sake of it").
 ###############################################################################
 
+import re
+from datetime import UTC, date, datetime, timedelta
+
 import pytest
 from deepeval import assert_test
 from deepeval.metrics import GEval
@@ -150,3 +153,91 @@ async def test_booking_non_work_day_no_fabricated_slots(booking_capture):
         model=judge,
     )
     assert_test(test_case, [faithful_to_empty_result])
+
+
+def _exact_relative_cases() -> list[tuple[str, date]]:
+    """Unambiguous (phrase -> resolved date) pairs, computed off the SAME UTC anchor
+    the Booking Agent uses (datetime.now(UTC).date(), see booking/agent.py).
+
+    Only phrases with a single correct answer live here. "thứ N tuần sau" is
+    deliberately excluded — from e.g. a Friday, whether "thứ 2 tuần sau" means
+    the coming Monday or the one after is a genuine Vietnamese ambiguity, so it's
+    checked separately (a future Monday, no ISO-format demand) rather than pinned
+    to one date.
+    """
+    today = datetime.now(UTC).date()
+    return [
+        ("hôm nay", today),
+        ("ngày mai", today + timedelta(days=1)),
+    ]
+
+
+def _dates_passed_to_check_slots(captured: str) -> list[date]:
+    """Pull every datetime.date the agent passed to check_available_slots out of
+    the BookingToolCapture log (calls are recorded as repr strings)."""
+    pattern = r"check_available_slots\(args=\(\d+, datetime\.date\((\d+), (\d+), (\d+)\)"
+    return [
+        date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        for m in re.finditer(pattern, captured)
+    ]
+
+
+@pytest.mark.eval
+@pytest.mark.llm
+async def test_booking_resolves_relative_date_before_checking_slots(booking_capture):
+    """BUG-009: a relative Vietnamese date must be resolved to YYYY-MM-DD and passed
+    to check_available_slots — the bot must NOT demand the patient type an ISO date.
+
+    Deterministic (no LLM judge needed): asserts the real BookingRepository call
+    captured by `booking_capture` used the date each phrase resolves to.
+    """
+    from tests.eval.conftest import run_conversation
+
+    for phrase, expected_date in _exact_relative_cases():
+        question = f"Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống {phrase} không?"
+        actual_output = await run_conversation(question)
+        captured = booking_capture.context_text()
+
+        assert "check_available_slots" in captured, (
+            f'"{phrase}": agent never called check_available_slots — it likely '
+            f"fell back to demanding a date format. Reply: {actual_output!r}"
+        )
+        # BookingRepository.check_available_slots(doctor_id, target_date) is called
+        # with a datetime.date, so its repr is what lands in the capture string.
+        assert repr(expected_date) in captured, (
+            f'"{phrase}": expected resolved date {expected_date.isoformat()} '
+            f"({expected_date!r}) not found in captured calls:\n{captured}"
+        )
+        assert "YYYY-MM-DD" not in actual_output, (
+            f'"{phrase}": bot still demanded the YYYY-MM-DD format instead of '
+            f"resolving the relative date. Reply: {actual_output!r}"
+        )
+
+
+@pytest.mark.eval
+@pytest.mark.llm
+async def test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday(booking_capture):
+    """BUG-009: "thứ 2 tuần sau" must still be resolved (to some future Monday),
+    not bounced back as "give me YYYY-MM-DD". The exact week offset is a real NL
+    ambiguity, so assert the *shape* (a Monday, strictly after today), not a date.
+    """
+    from tests.eval.conftest import run_conversation
+
+    today = datetime.now(UTC).date()
+    phrase = "thứ 2 tuần sau"
+    question = f"Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống {phrase} không?"
+    actual_output = await run_conversation(question)
+    captured = booking_capture.context_text()
+
+    assert "YYYY-MM-DD" not in actual_output, (
+        f'"{phrase}": bot demanded an ISO date instead of resolving it. '
+        f"Reply: {actual_output!r}"
+    )
+    resolved = _dates_passed_to_check_slots(captured)
+    assert resolved, (
+        f'"{phrase}": agent never called check_available_slots with a date. '
+        f"Captured: {captured}"
+    )
+    assert any(d.weekday() == 0 and d > today for d in resolved), (
+        f'"{phrase}": expected a future Monday, got {[d.isoformat() for d in resolved]}'
+    )
