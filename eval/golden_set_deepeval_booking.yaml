@@ -8,14 +8,25 @@
 # BookingToolCapture spy at test time, and still cancels any booking it
 # creates so a repeat run starts from the same free-slot state (BUG-008).
 #
-# `{REAL_DOCTOR_ID}` / `{WORK_DAY}` / `{NON_WORK_DAY}` are literal
-# placeholders substituted at test time from the same Python constants the
-# pre-refactor test file hardcoded as f-string interpolations
-# (REAL_DOCTOR_ID=3, WORK_DAY="2026-07-13", NON_WORK_DAY="2026-07-19" — see
-# test_deepeval_booking.py) — plain string .replace(), not str.format(),
-# because the "FaithfulToBookingOutcome" criteria below contains literal
-# `{'status': ...}` dict-repr text that str.format() would misparse as a
-# format field.
+# UPDATED 2026-07-10 (senior-tester, CEO request via Team Lead) — the 3
+# questions below now name the real doctor "Phạm Thị Lan Hương" directly
+# (natural phrasing a real patient would type — nobody messages a clinic
+# saying "mã doctor_id=3") instead of the internal-only
+# `doctor_id={REAL_DOCTOR_ID}` placeholder the cases used pre-refactor.
+# `{WORK_DAY}` / `{NON_WORK_DAY}` are still literal placeholders substituted
+# at test time from the same Python constants the pre-refactor test file
+# hardcoded as f-string interpolations (WORK_DAY="2026-07-13",
+# NON_WORK_DAY="2026-07-19" — see test_deepeval_booking.py) — plain string
+# .replace(), not str.format(), because the "FaithfulToBookingOutcome"
+# criteria below contains literal `{'status': ...}` dict-repr text that
+# str.format() would misparse as a format field. REAL_DOCTOR_ID=3 (Phạm Thị
+# Lan Hương, Nội tổng quát) is still defined in test_deepeval_booking.py and
+# still passed into the substitution dict for this file, but `{REAL_DOCTOR_ID}`
+# no longer appears anywhere in the text below — an intentionally harmless
+# no-op key (str.replace() on an absent token is a no-op), kept because the
+# same _PLACEHOLDERS dict is also used by the 2 deterministic (non-DeepEval,
+# BUG-009) tests further down that same .py file, which still ask by
+# doctor_id and are out of scope for this data-only change.
 #
 # context_kind: "booking_tool" attaches booking_capture.context_text() as
 # `context=[...]` (BookingToolCapture has no context_kind: "none" case in
@@ -30,7 +41,7 @@
 # itself part of any GEval metric.
 cases:
   - name: test_booking_proposes_only_real_available_slot
-    input: "Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống ngày {WORK_DAY} không?"
+    input: "Cho em hỏi bác sĩ Phạm Thị Lan Hương ngày {WORK_DAY} còn giờ trống không ạ?"
     context_kind: booking_tool
     metrics:
       - type: geval
@@ -46,7 +57,7 @@ cases:
 
   - name: test_booking_confirms_before_create_then_creates_real_booking
     turns:
-      - "Tôi tên Nguyễn Văn A, số điện thoại 0912345678. Tôi muốn đặt lịch khám với bác sĩ có mã doctor_id={REAL_DOCTOR_ID} vào lúc 09:00 ngày {WORK_DAY}."
+      - "Tôi tên Nguyễn Văn A, số điện thoại 0912345678. Tôi muốn đặt lịch khám với bác sĩ Phạm Thị Lan Hương vào lúc 09:00 ngày {WORK_DAY}."
       - "Đúng rồi, xác nhận đặt lịch giúp tôi."
     context_kind: booking_tool
     requires_tool_call: create_booking
@@ -65,7 +76,7 @@ cases:
         threshold: 0.7
 
   - name: test_booking_non_work_day_no_fabricated_slots
-    input: "Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống ngày {NON_WORK_DAY} không?"
+    input: "Bác sĩ Phạm Thị Lan Hương còn giờ trống ngày {NON_WORK_DAY} không ạ?"
     context_kind: booking_tool
     metrics:
       - type: geval

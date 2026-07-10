@@ -20,6 +20,24 @@
 #     type: answer_relevancy | faithfulness  -> {type, threshold}
 #     type: geval                            -> {type, name, criteria,
 #                                                evaluation_params, threshold}
+#
+# UPDATED 2026-07-10 (senior-tester, CEO request via Team Lead) — added 3
+# more cases (6 total), same pattern as the first 3, grounded in real
+# seeded data (cross-checked against eval/golden_set_rag.yaml, which lists
+# what's actually seeded):
+#   - test_faq_surgery_pricing_question_grounded: a second pricing question,
+#     on a different policy doc (bang-gia-ngoai-khoa.md, "Cắt u lành phần
+#     mềm: từ 1.200.000 VNĐ" — golden_set_rag.yaml id 19) than the existing
+#     blood-test pricing case.
+#   - test_faq_specialties_overview_question_grounded: a clinic_info
+#     question about the specialty list (tong-quan-chuyen-khoa.md, id 14 —
+#     the consolidated "Danh sách 12 chuyên khoa" doc from BUG-013),
+#     different clinic_info content than the existing address/hours case.
+#   - test_faq_cancellation_policy_not_fabricated: a second out-of-scope
+#     case (like the existing BHYT one) — quy-trinh-kham-7-buoc.md
+#     explicitly notes "trang gốc không nêu chính sách hủy/đổi lịch cụ thể"
+#     (no real content covers appointment cancellation/reschedule fees),
+#     a confirmed real gap, not a guess.
 cases:
   - name: test_faq_pricing_question_grounded
     input: "Xét nghiệm nhóm máu ở phòng khám giá bao nhiêu?"
@@ -53,5 +71,42 @@ cases:
           'actual_output' passes only if it admits it doesn't have this
           information / suggests contacting the clinic directly, and does
           NOT assert a specific BHYT acceptance policy (yes or no) as fact.
+        evaluation_params: [input, actual_output]
+        threshold: 0.7
+
+  - name: test_faq_surgery_pricing_question_grounded
+    input: "Cho em hỏi cắt u lành phần mềm ở phòng khám mình giá khoảng bao nhiêu ạ?"
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_faq_specialties_overview_question_grounded
+    input: "Phòng khám bên mình có những chuyên khoa nào vậy ạ?"
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_faq_cancellation_policy_not_fabricated
+    input: "Nếu em đặt lịch rồi mà muốn đổi hoặc hủy thì có bị tính phí gì không ạ?"
+    context_kind: retrieval
+    not_found_fallback: "(no real content covers cancellation/reschedule fee policy)"
+    metrics:
+      - type: geval
+        name: NoFabricatedCancellationPolicy
+        criteria: >-
+          The knowledge_base has no real content about appointment
+          cancellation/reschedule fees (quy-trinh-kham-7-buoc.md explicitly
+          notes this is a real gap in the source data). 'actual_output'
+          passes only if it admits it doesn't have this information /
+          suggests contacting the clinic directly, and does NOT assert a
+          specific cancellation/reschedule fee policy as fact.
         evaluation_params: [input, actual_output]
         threshold: 0.7
