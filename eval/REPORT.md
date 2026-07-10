@@ -1,73 +1,89 @@
 # Eval Report
 
-**Run**: 2026-07-09, real `pytest -m eval` executed end-to-end by senior-tester on the host
-`.venv` against the live dockerised stack (`ai-clinic-booker-{postgres,qdrant}-1`) + real Gemini
-(`gemini-2.5-flash` + `gemini-embedding-001`) — no mocks. This supersedes the 2026-07-08 run: the
-real product bugs that run found (BUG-006/007/008, plus BUG-001/002/005) have since been fixed and
-verified, and the stale RAG golden set was rewritten (17 grounded queries). Full per-case
-classification is in [`EVAL_FINDINGS.md`](./EVAL_FINDINGS.md).
+> **Run**: 2026-07-10, real `python -m eval.runner` executed end-to-end by senior-tester on the
+> host `.venv` against the live dockerised stack + real Gemini, right after TASK-015 batch 3/4
+> rewrote this report's format and closed the eval-metric gap (span-level retrieval, keyword
+> match, real LLM-judge faithfulness — see `eval/metrics.py`/`eval/runner.py`). This is the
+> **first run where "generation" for the RAG golden set goes through the real HTTP conversation
+> API** instead of being retrieval-only — that change is exactly what surfaced the two ❌ rows
+> below; the classic retrieval/intent/booking metrics (unaffected by this change) remain fully
+> green, matching the 2026-07-09 baseline.
+>
+> **Two new findings, not silently worked around** (full detail in
+> [`EVAL_FINDINGS.md` §6](./EVAL_FINDINGS.md)):
+> 1. **Orchestrator routing ambiguity**: 13/27 RAG golden-set queries phrased as "Khoa X điều trị
+>    bệnh gì / có dịch vụ gì" get routed to `symptom_agent` (which answers from its own hardcoded
+>    triage knowledge) instead of `faq_agent` (which is grounded in the real `clinic_info`/`policy`
+>    content these questions target) — dragging down Keyword Match/Faithfulness even though the
+>    underlying retrieval is correct.
+> 2. **Reproducible (2/2) category mismatch**: "Quy trình khám sức khỏe gồm mấy bước" consistently
+>    gets answered with a not-found fallback citing the wrong document (#15, contact info, not #24,
+>    the actual 7-step visiting procedure) — traced to the FAQ Agent's own prompt rule 1 plausibly
+>    classifying this query as `clinic_info` (a visiting-procedure question), while the doc itself
+>    is filed under `category: policy` in the knowledge base, so the agent's own
+>    `search_knowledge_base(query, category)` call never looks in the category the doc lives in,
+>    independent of the similarity threshold.
+>
+> **RAG_TARGETS provenance** (see `eval/runner.py` for the full note): the two doc-id rows keep
+> this project's pre-existing thresholds (0.70 / 0.90, unchanged); the five new metrics (Span
+> Hit Rate@5/MRR, Context Precision@5, Keyword Match, Faithfulness) use the rag-health reference
+> project's suggested targets as a starting point since this project never measured them before —
+> flagged for Team Lead review, not something to treat as already-validated.
 
-> Note: `runner.py::run_eval()` overwrites this file with a minimal 4-line dump each time it runs;
-> the curated narrative below is the human-maintained version — re-apply it after any raw gate run.
+RAG questions: 27 · cutoff k = 5
 
-Environment reproduction is documented in
-[`.claude/memory/2026-07-09-eval-run-host-environment.md`](../../../../.claude/memory/2026-07-09-eval-run-host-environment.md).
-Pre-run reset: `python scripts/seed_eval_fixtures.py` (wiped + reseeded to 11 doctors ids 3-13,
-22 knowledge rows ids 1-22) so the numbers below start from identical real data.
+## 1. RAG retrieval + generation quality
 
-## 1. Classic quality gate (`test_eval_gate.py` → `eval/runner.py::run_eval()`) — all PASS
+| Metric | Score | Target | Status |
+|--------|-------|--------|--------|
+| Span Hit Rate@5 | 1.000 | ≥ 0.80 | ✅ |
+| Span MRR | 0.812 | ≥ 0.60 | ✅ |
+| Context Precision@5 | 0.233 | ≥ 0.20 | ✅ |
+| Hit Rate@5 (doc-id) | 1.000 | ≥ 0.70 | ✅ |
+| MRR (doc-id) | 0.970 | ≥ 0.90 | ✅ |
+| Keyword Match | 0.503 | ≥ 0.70 | ❌ |
+| Faithfulness | 0.544 | ≥ 0.75 | ❌ |
 
-Single clean run, `test_eval_gate` PASSED (exit 0):
+### Per-question breakdown
 
-| Metric | Score | Threshold | Result | Notes |
-|---|---|---|---|---|
-| `retrieval_hit_rate@5` (17 RAG cases) | 1.000 | 0.7 | **PASS** | Rewritten grounded golden set (EVAL_FINDINGS #1) |
-| `retrieval_mrr` (17 RAG cases) | 0.971 | 0.9 | **PASS** | 16/17 hit rank #1; id 1 at rank #2 (expected, EVAL_FINDINGS #1) |
-| `intent_routing_accuracy` (12 intent cases) | 1.000 | 0.8 | **PASS** | 12/12, no 503 this run (EVAL_FINDINGS #2) |
-| `booking_concurrency_pass_rate` (10 booking cases) | 1.000 | 1.0 | **PASS** | BUG-006/007/008 fixed; runner self-cleans (EVAL_FINDINGS #3) |
+| # | Query | Span rank | Span Prec@5 | Keyword | Faithfulness |
+|---|-------|-----------|-------------|---------|--------------|
+| 1 | Phòng khám mở cửa mấy giờ | 3 | 0.40 | 1.00 | 1.00 |
+| 2 | Khoa da liễu điều trị những bệnh gì | 1 | 0.20 | 0.75 | 0.20 |
+| 3 | Khoa mắt chữa những bệnh nào | 1 | 0.20 | 0.00 | 0.00 |
+| 4 | Khoa nhi khám các bệnh gì cho trẻ em | 1 | 0.20 | 0.00 | 1.00 |
+| 5 | Khoa siêu âm có những dịch vụ gì | 1 | 0.20 | 0.00 | 0.00 |
+| 6 | Khoa sản phụ khoa có khám thai không | 3 | 0.20 | 0.33 | 1.00 |
+| 7 | Khoa tai mũi họng điều trị viêm xoang viêm tai không | 1 | 0.20 | 0.00 | 0.00 |
+| 8 | Chụp CT Cone Beam làm ở khoa nào | 1 | 0.20 | 0.50 | 0.00 |
+| 9 | Khoa răng hàm mặt có chỉnh nha và điều trị tủy răng không | 1 | 0.20 | 1.00 | 1.00 |
+| 10 | Khoa xét nghiệm làm những xét nghiệm gì | 1 | 0.20 | 1.00 | 1.00 |
+| 11 | bên bạn khám những gì | 1 | 0.20 | 0.00 | 0.50 |
+| 12 | có những chuyên khoa nào | 3 | 0.40 | 0.00 | 0.00 |
+| 13 | phòng khám có dịch vụ gì | 3 | 0.20 | 1.00 | 1.00 |
+| 14 | phòng khám có những khoa nào | 1 | 0.20 | 0.00 | 0.00 |
+| 15 | danh sách các chuyên khoa của phòng khám | 1 | 0.20 | 0.67 | 0.00 |
+| 16 | phòng khám có bao nhiêu chuyên khoa | 1 | 0.20 | 1.00 | 1.00 |
+| 17 | khi đến anh liên hệ ai? | 2 | 0.40 | 0.00 | 0.00 |
+| 18 | số điện thoại lễ tân | 2 | 0.40 | 1.00 | 1.00 |
+| 19 | liên hệ ai khi đến khám | 3 | 0.20 | 1.00 | 1.00 |
+| 20 | gặp ai khi tới phòng khám | 4 | 0.20 | 0.00 | 0.00 |
+| 21 | Huyết áp bao nhiêu thì được coi là cao huyết áp | 1 | 0.25 | 0.00 | 0.00 |
+| 22 | Dấu hiệu nhận biết hở van tim là gì | 1 | 0.25 | 0.33 | 0.50 |
+| 23 | Xét nghiệm tổng phân tích tế bào máu giá bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |
+| 24 | Cắt u lành phần mềm chi phí bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |
+| 25 | Đo chỉ số cơ thể giá bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |
+| 26 | Chích áp xe tầng sinh môn giá bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |
+| 27 | Quy trình khám sức khỏe gồm mấy bước | 1 | 0.20 | 0.00 | 0.50 |
 
-**No threshold was changed at any point** — every number above is measured against the thresholds
-already in `runner.py` (0.7 / 0.9 / 0.8 / 1.0).
+## 2. Intent routing
 
-## 2. DeepEval LLM-judge suite (`test_deepeval_{faq,symptom,booking}.py`, 9 cases)
+| Metric | Score | Target | Status |
+|--------|-------|--------|--------|
+| Intent Routing Accuracy | 1.000 | ≥ 0.80 | ✅ |
 
-Run right after the gate, same session:
+## 3. Booking concurrency
 
-| Test | Full-run result | Classification |
-|---|---|---|
-| `test_faq_pricing_question_grounded` | FAIL (AnswerRelevancy 0.5) → PASS on isolated re-run | LLM-judge nondeterminism (EVAL_FINDINGS #4) |
-| `test_faq_clinic_info_question_grounded` | PASS | — |
-| `test_faq_out_of_scope_question_not_fabricated` | FAIL (GEval 0.0) → PASS on isolated re-run | LLM-judge **false negative** — agent output verified correct & stable 4/4 (EVAL_FINDINGS #4) |
-| `test_symptom_medical_guide_question_grounded` | PASS | — |
-| `test_symptom_routes_to_real_doctor_for_covered_specialty` | PASS | — |
-| `test_symptom_does_not_invent_doctor_for_uncovered_specialty` | PASS | — |
-| `test_booking_proposes_only_real_available_slot` | PASS | Exercises `check_available_slots` — confirms BUG-006 fix |
-| `test_booking_confirms_before_create_then_creates_real_booking` | PASS | Was reproducible-FAIL 2026-07-08; BUG-006/008 fix restored it |
-| `test_booking_non_work_day_no_fabricated_slots` | PASS | Confirms BUG-007 fix |
-
-**7/9 passed on the first full run; the 2 that failed both flipped to PASS when re-run in isolation
-with no code change** — the LLM-judge nondeterminism signature. Note the *set* of flaky cases
-shifted vs. 2026-07-08 (then: pricing + 2 symptom cases; now: pricing + out-of-scope), which is
-itself evidence that any single DeepEval case can flip — the flakiness is judge-side, not tied to a
-specific agent behaviour.
-
-## Summary
-
-- **All 4 classic gate metrics PASS**, all 9 DeepEval cases pass once judge nondeterminism is
-  accounted for. This is the first fully-green real run and is the baseline this project should
-  track going forward.
-- **No new product bug found.** The single suspicious case (`test_faq_out_of_scope_...`, GEval 0.0)
-  was investigated directly: the agent's real reply, stable across 4 runs, correctly says it has no
-  BHYT information and does **not** assert a policy — the judge's failure reason quoted a sentence
-  ("Phòng khám không nhận... BHYT") that never appears in the agent output, i.e. the judge
-  hallucinated. Faithful agent behaviour, judge-side false negative.
-- **Retry-fix (senior-dev, `common/resilience.py::build_adk_model`) status**: 4 clean intent runs
-  this session (48 conversations) with zero crashes and zero 503s. Because no 503 actually occurred,
-  these live runs prove **stability** but do not themselves exercise the retry path — the
-  "503-once-then-success → retried" behaviour is proven by the unit test
-  `tests/unit/ai_agents/test_adk_model_retry.py`, not by this run (EVAL_FINDINGS #2).
-- **Reproducibility caveat**: `test_booking_confirms_before_create_...` creates a real confirmed
-  booking that persists. Always run `scripts/seed_eval_fixtures.py` before an eval run (as was done
-  here); the classic `run_booking_eval()` is self-cleaning but the DeepEval booking case is not.
-
-See [`eval/EVAL_FINDINGS.md`](./EVAL_FINDINGS.md) for full per-case detail.
+| Metric | Score | Target | Status |
+|--------|-------|--------|--------|
+| Booking Concurrency Pass Rate | 1.000 | = 1.00 | ✅ |

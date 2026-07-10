@@ -234,6 +234,75 @@ restore this test to a genuine pass/fail signal.
 
 ---
 
+## 6. 2026-07-10 (TASK-015 batch 3/4) — RAG generation now goes through the real API, surfacing 2 new findings — classification: **real product-level findings, escalated, not fixed by tester**
+
+Batches 1-3 of TASK-015 (senior-tester) rewrote `golden_set_rag.yaml` to add `answer_span`/
+`context`/`answer_keywords` (batch 1), converted `run_intent_eval()`/`run_rag_eval()` to call the
+real HTTP conversation API instead of in-process orchestrator/repository calls where feasible
+(batch 2), then added the span-level + keyword + real-LLM-judge faithfulness metrics and rewrote
+the report format (batch 3, this section). Batch 3 is the **first time this project's RAG eval
+computes a generated answer through the real end-user-facing API** rather than only measuring
+retrieval in isolation — and doing so immediately surfaced two real, reproducible findings that
+pure-retrieval testing had no way to see:
+
+**Classic gate result this run**: retrieval (Span Hit Rate@5 = 1.000, Span MRR = 0.812, Context
+Precision@5 = 0.233, doc-id Hit Rate@5 = 1.000, doc-id MRR = 0.970), intent routing (1.000), and
+booking concurrency (1.000) are all fully green — no regression on anything batches 1-2 touched.
+The two new generation-quality metrics FAIL: **Keyword Match = 0.503** (target 0.70), **Faithfulness
+= 0.544** (target 0.75).
+
+### 6a. Orchestrator routing ambiguity for "which conditions does department X treat" queries
+
+13 of the 27 RAG golden-set queries — every "Khoa X điều trị bệnh gì / có dịch vụ gì" style
+question (e.g. "Khoa mắt chữa những bệnh nào", "Khoa siêu âm có những dịch vụ gì") — get routed by
+the Orchestrator to `symptom_agent`, not `faq_agent`, confirmed by reading back the ADK session
+events (`dal/session.py::get_session_service().get_session(...)`, the same mechanism
+`run_intent_eval()` now uses). `symptom_agent` then answers from its own hardcoded
+symptom-to-specialty triage knowledge (ai-agents/symptom/prompt.py) — sometimes overlapping with
+the real `clinic_info` doc content, sometimes not (e.g. "Khoa mắt chữa những bệnh nào" got back
+"mờ mắt, giảm thị lực, đỏ mắt, cộm, chảy nước mắt, ngứa mắt dị ứng, lẹo, chắp mí, ruồi bay, chớp
+sáng" — none of which appears in the real `khoa-mat.md` doc's list of "cận thị, rách/bong võng
+mạc, viêm kết giác mạc, đục thủy tinh thể, glaucoma, rối loạn tuyến giáp"). This isn't necessarily
+a bug — a human could plausibly read "Khoa X điều trị bệnh gì" as symptom-triage-shaped too — but
+it means roughly half this golden set's "keyword"/"faithfulness" score is being measured against
+an answer that never went through the RAG-grounded FAQ path at all. **Not fixed here** — this is
+an Orchestrator-prompt design/routing-boundary question (ARCH-001 §7's multi-agent routing), for
+Team Lead to decide whether to escalate to `software-architect` (routing boundary) or `senior-dev`
+(prompt tuning), not something a tester should tune the Orchestrator's own instructions to fix.
+
+### 6b. Reproducible (2/2) category mismatch: "Quy trình khám sức khỏe gồm mấy bước"
+
+100% reproducible across 2 independent runs, this query gets answered:
+
+> "Hiện tại, tôi chưa có thông tin về quy trình khám sức khỏe gồm mấy bước. Tuy nhiên, khi bạn đến
+> Phòng khám Đa khoa 5 Sao Hà Nội, hãy đến quầy lễ tân ngay sảnh đón tiếp đầu tiên (theo tài liệu
+> #15)."
+
+— a not-found fallback that cites document **#15** (the contact/lễ tân doc), even though this
+project's own real-retrieval self-test (this session) confirms the correct document — **#24**,
+`policy/quy-trinh-kham-7-buoc.md`, "Quy trình khám sức khỏe — 7 bước" — is retrieved at **rank #1**
+when searched directly with `category="policy"`. Root cause traced to
+`ai-agents/faq/prompt.py::FAQ_INSTRUCTION` rule 1: *"category là 'policy' cho câu hỏi chính
+sách/bảo hiểm/giá, hoặc 'clinic_info' cho câu hỏi vận hành phòng khám"* — a question about the
+*visiting procedure/steps* plausibly reads as "vận hành phòng khám" (clinic operations) per the
+prompt's own definition, so the FAQ Agent likely calls `search_knowledge_base(query,
+category="clinic_info")` — a category that structurally cannot ever return doc #24, since that
+doc is filed under `category: policy` in the knowledge base, regardless of `SIMILARITY_THRESHOLD`.
+This looks like a genuine content-categorization vs. prompt-rule boundary mismatch (the doc could
+arguably be re-categorized as `clinic_info`, or rule 1's category guidance could be broadened, or
+`search_knowledge_base` could search both categories for ambiguous topics) — **not fixed here**,
+filed as a candidate real bug for Team Lead to route to `senior-dev` (or `software-architect` if
+the fix is "agents should search across categories," a boundary decision).
+
+**Not classified as an eval-methodology bug**: unlike §1/§3's stale-golden-set/non-repeatable-DB
+issues, both 6a and 6b are genuine, reproducible product-behaviour findings the OLD retrieval-only
+`run_rag_eval()` structurally could not see (it never called the real answering path at all) — this
+is exactly the kind of gap TASK-015 batch 2/3 was meant to close. **RAG_TARGETS were NOT lowered**
+to force a pass; the ❌ status on Keyword Match/Faithfulness is left as real, current signal for
+Team Lead to triage 6a/6b.
+
+---
+
 ## Conclusion
 
 **Updated 2026-07-09**: the fix iteration the original conclusion called for has been done and
