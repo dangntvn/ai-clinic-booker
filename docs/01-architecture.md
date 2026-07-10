@@ -4,14 +4,40 @@
 |---|---|
 | **Doc-ID** | ARCH-001 |
 | **Project** | `ai-clinic-agent` |
-| **Version** | 3.1 |
-| **Status** | Draft |
-| **Author** | TBD |
-| **Approved-by** | TBD |
-| **Date** | 2026-07-02 |
-| **Style** | Modular Monolith · Multi-Agent (ADK) · Polyglot Persistence by data characteristics |
+| **Version** | 3.2 |
+| **Status** | Accepted |
+| **Author** | _Pending author display-name confirmation (see README "About")_ |
+| **Approved-by** | _Portfolio project — self-reviewed; no separate approver_ |
+| **Date** | 2026-07-10 |
+| **Style** | Modular Monolith · Multi-Agent (ADK) · Relational + Vector persistence (PostgreSQL + Qdrant) |
 
-> This is a **design document** presenting the architectural approach; the scope is deliberately kept small to focus on design thinking and trade-offs. Major decisions are summarized in the table at [§11 — Decision Log](#decision-log) at the end of this document — each row states the *decision* and the *rationale*.
+> This is a **design document** presenting the architectural approach; the scope is deliberately kept small to focus on design thinking and trade-offs. Major decisions are summarized in the table at [§11 — Decision Log](#decision-log) near the end of this document — each row states the *decision* and the *rationale*. A short [version history](#version-history) closes the document.
+
+### System Context (C4 level 1)
+
+```
+        ┌──────────────┐                       ┌────────────────────┐
+        │  Patient      │  natural-language     │  Clinic staff       │
+        │  (web chat)   │  chat over HTTP       │  (admin CRUD UI)    │
+        └──────┬────────┘                       └─────────┬──────────┘
+               │  POST /api/v1/.../messages               │  /api/v1 CRUD
+               ▼                                          ▼
+        ┌──────────────────────────────────────────────────────────┐
+        │        AI Clinic Booking Agent  (this system)             │
+        │  FastAPI · ADK multi-agent · RAG · transactional booking  │
+        └───────┬─────────────────────┬─────────────────┬──────────┘
+                │                     │                 │
+                ▼                     ▼                 ▼
+         ┌────────────┐        ┌────────────┐    ┌──────────────┐
+         │ Gemini API │        │  Qdrant     │    │ PostgreSQL   │
+         │ (LLM +     │        │  (vectors,  │    │ (bookings,   │
+         │  embedding)│        │  RAG copy)  │    │  config, RAG │
+         └────────────┘        └────────────┘    │  source, ADK │
+                                                 │  sessions)   │
+                                                 └──────────────┘
+```
+
+The only external runtime dependency is the Gemini API; Qdrant and PostgreSQL are self-hosted alongside the app via `docker-compose` (§9). There is no longer any Google Workspace/Sheets dependency (ADR-0016).
 
 ---
 
@@ -24,7 +50,7 @@ The architecture is driven by the requirements in SRS-001:
 | Natural-language booking conversation with intent understanding | FR-01, FR-06 | Multi-Agent (ADK) is the *core*; one agent per domain, coordinated through an Orchestrator Agent. |
 | **Grounded** FAQ/medical answers, no fabrication | FR-04, FR-05 | RAG (Qdrant) is the **single source of knowledge**; grounding plus an "not found" fallback are mandatory. |
 | **No double-booking** even under concurrent requests | FR-03 | Transactional data lives in a DB with ACID + a unique constraint (PostgreSQL), not in a file. |
-| Detect emergencies, respond with minimal safe guidance | FR-07 | A separate `Emergency Agent` with a fixed scope (no tools, no external system integration); two-layer detection — rule code in `app/webhook/handler.py` runs before ADK (primary), the `Orchestrator Agent` (LLM) catches indirect phrasing as a safety net (§5.4, ADR-0019). |
+| Detect emergencies, respond with minimal safe guidance | FR-07 | A separate `Emergency Agent` with a fixed scope (no tools, no external system integration); two-layer detection — rule code in `modules/conversation/controller.py` runs before ADK (primary), the `Orchestrator Agent` (LLM) catches indirect phrasing as a safety net (§5.4, ADR-0019). |
 | Non-technical staff can self-administer | NFR Usability | Configuration data (doctors, hours, promotions, knowledge content) lives in Postgres, managed through internal CRUD screens (`modules/doctor`, `modules/knowledge`) — no Google Sheets (ADR-0016). |
 | Self-hosted, portable, simple to operate | NFR Operability | The whole stack runs via `docker-compose`; not locked to a specific cloud; the backend is stateless. |
 | Cloud API (Gemini) can fail or be slow | NFR Reliability | Retry/timeout wraps every LLM call in the tool layer. |
@@ -78,7 +104,7 @@ The `Emergency Agent` is a deliberate exception: **it has no `tools` layer** bec
 The top-level organizing principle: **physically separate by rate of change and risk**, don't mix agents with CRUD, and don't let either open a direct connection to Postgres/Qdrant — all data access goes through one dedicated layer.
 
 - **`ai-agents/`** — all AI reasoning/conversation: the Orchestrator Agent + 4 domain agents (booking, faq, symptom, emergency), prompts, base classes for agents/tools. This is the "brain," changing constantly as conversation quality is tuned.
-- **`modules/`** — pure business logic, unrelated to AI: CRUD/API for admin screens (admin edits/cancels bookings, manages doctors, manages knowledge content) **+ the RAG ingestion pipeline** (`knowledge_ingestion`, runs in the background, not over HTTP). This is the "operational hands," stable, and would keep running even without AI.
+- **`modules/`** — non-AI business logic and the HTTP surface: CRUD/API for admin screens (admin edits/cancels bookings, manages doctors, manages knowledge content) **+ the RAG ingestion pipeline** (`knowledge_ingestion`, runs in the background, not over HTTP) **+ the Web chat channel entry** (`conversation/controller.py` — the `POST /api/v1/agents/booker/conversations/{id}/messages` endpoint). The CRUD/ingestion parts are the "operational hands," stable, and would keep running even without AI. `conversation/` is the thin channel adapter that receives a chat message, runs Layer-1 emergency screening, then delegates into the AI runtime in `app/runtime.py` — it holds no reasoning of its own (that lives in `ai-agents/`). It sits under `modules/` because it is a plain REST controller mounted like every other module controller (the standard seam to attach auth later), not because it is business logic.
 
 `ai-agents/` and `modules/` are **peers** — both are coordinated directly by `app/`, neither sits inside or depends on the other.
 
@@ -90,7 +116,7 @@ Why `dal/` is kept separate (instead of putting the client in `common/` or scatt
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
-│  app/  (FastAPI — Composition Root, ADK runtime, webhook router)   │
+│  app/  (FastAPI — Composition Root, ADK runtime, /api/v1 router)   │
 └────────┬──────────────────────────────────────┬────────────────────┘
          │                                      │
 ┌────────▼─────────────────────────┐  ┌─────────▼─────────────────────┐
@@ -106,6 +132,9 @@ Why `dal/` is kept separate (instead of putting the client in `common/` or scatt
 │                                   │  │  knowledge_ingestion/          │
 │  core/  (base_agent, base_tool,  │  │   chunk + embed pipeline        │
 │   prompt loader, AI exceptions)  │  │   (ADR-0021, no HTTP)          │
+│                                   │  │  conversation/                 │
+│                                   │  │   web chat entry: Layer-1       │
+│                                   │  │   emergency, then app runtime   │
 └────────┬──────────────────────────┘  └─────────┬───────────────────────┘
          │                                        │
          └──────────────────┬─────────────────────┘
@@ -126,7 +155,8 @@ Why `dal/` is kept separate (instead of putting the client in `common/` or scatt
 
 | Layer | Responsibility |
 |-------|-------------|
-| **app** | Composition root: initializes the ADK runtime, registers agents + tools, mounts the webhook (web chat channel) + API router for `modules/`; middleware & lifespan. `app/webhook/handler.py` calls `ai-agents/core/domain/emergency_rules.py` **the moment a message arrives, before entering the ADK runtime** — a red-flag match transfers straight to the `Emergency Agent`, skipping the Orchestrator entirely (Layer 1 safety, ADR-0019). Outside this branch, it contains no business logic. |
+| **app** | Composition root: builds the ADK runtimes (`app/runtime.py` — a main Orchestrator runner and a dedicated Emergency runner), mounts the single `/api/v1` router (`app/api/v1/router.py`, which aggregates every `modules/` controller including the conversation chat channel), and owns lifespan (starts/stops the ingestion cron). It contains no business logic — the Layer-1 emergency screening itself lives one hop down, in `modules/conversation/controller.py` (see that row). |
+| **modules/conversation** | The Web chat channel entry (`POST /api/v1/agents/booker/conversations/{id}/messages`). On each inbound message it calls `ai-agents/core/domain/emergency_rules.is_emergency()` **before entering the ADK runtime** — a red-flag match runs the Emergency runner directly (`build_emergency_runtime()`), skipping the Orchestrator entirely (Layer 1 safety, ADR-0019); otherwise it runs the main runner (`build_runtime()` → Orchestrator). A thin channel adapter: it maps `conversation_id` to an ADK session and streams the reply — no reasoning, no `dal/` access of its own. |
 | **ai-agents/orchestrator** | Orchestrator Agent: observes the conversation, classifies customer intent, **transfers down** to the appropriate child agent (faq / symptom / booking / emergency) via session transfer. Still retains the ability to detect indirectly-phrased emergency signals itself (Layer 2 safety, a fallback for cases Layer 1 doesn't catch — ADR-0019). Never calls `dal/` directly. |
 | **ai-agents/faq** | Answers policy / insurance / regulation / clinic operational questions. Tool `search_knowledge_base(query, category="policy"|"clinic_info")` → grounding, citation, "not found" if below threshold. |
 | **ai-agents/symptom** | Suggests a specialty/doctor based on symptoms, per the intake process in [BIZ-001](../01-requirements/02-biz-patient-intake.md). First applies hard rules by patient category (`ai-agents/core/domain/intake_rules.py` — age, pregnancy, referral letter, named-doctor request, package checkups, vaccination); if none match, checks against the **triage table embedded in the system prompt** (not via Qdrant, ADR-0018), asks at most 3 questions, defaults to `General Internal Medicine` when unclear. **The doctor list (with profile: bio, clinical strengths) is rendered from the `doctors` table into context at session start** — the agent sees 100% of the list and picks `doctor_id` directly, no semantic search (ADR-0020). Tool `search_knowledge_base(query, category="medical_guide")` is only for open medical guidance (e.g., test preparation) — not used for specialty routing. Doesn't diagnose — only directs. |
@@ -215,7 +245,7 @@ Customer → booking_agent → cancel_booking(booking_id)
 Customer sends a message
         │
         ▼
-app/webhook/handler.py
+app/api/v1/router.py  →  modules/conversation/controller.py
         │
         ├─ Layer 1: emergency_rules.is_emergency(text)   (rule code, NO LLM call)
         │     │
@@ -363,7 +393,7 @@ draft (knowledge_base) → Publish → ingestion_jobs(pending_chunk)
 |-----------|-----------|
 | **AI engine** | Google ADK — always the latest stable version, never pinned to a specific version in the design. The LLM (Gemini) is chosen **flexibly based on cost/effectiveness at deployment time** (Flash/Pro/other) via an env var, not fixed in the architecture. Embeddings use the Gemini embedding API in the same ecosystem ([ADR-0006](#decision-log)). |
 | **Multi-agent routing** | The `Orchestrator Agent` classifies intent (including emergency detection), transfers sessions. Each agent has a narrow tool scope → less room for confusion ([ADR-0001](#decision-log)). |
-| **Emergency handling** | **Two layers of defense** (BIZ-001 §3, ADR-0019): Layer 1 — `emergency_rules.py` (rule code, running in `app/webhook/handler.py` before entering the ADK runtime, checking against the red-flag list in BIZ-001 §3, no LLM call); Layer 2 — the `Orchestrator Agent` (LLM) still detects indirectly-phrased emergency signals while classifying intent, as a safety net. Both layers transfer to the `Emergency Agent` → a static response (directing to the nearest medical facility / a hotline). No tool calls, no integration with an external medical dispatch system — out of scope for this system ([ADR-0014](#decision-log)). |
+| **Emergency handling** | **Two layers of defense** (BIZ-001 §3, ADR-0019): Layer 1 — `emergency_rules.py` (rule code, called from `modules/conversation/controller.py` before entering the ADK runtime, checking against the red-flag list in BIZ-001 §3, no LLM call); Layer 2 — the `Orchestrator Agent` (LLM) still detects indirectly-phrased emergency signals while classifying intent, as a safety net. Both layers transfer to the `Emergency Agent` → a static response (directing to the nearest medical facility / a hotline). No tool calls, no integration with an external medical dispatch system — out of scope for this system ([ADR-0014](#decision-log)). |
 | **Symptom-to-specialty triage** | Hard rules by patient category (age, pregnancy, referral letter...) live in `ai-agents/core/domain/intake_rules.py` (plain Python, testable, per BIZ-001 §4); the symptom-to-specialty table (BIZ-001 §6–7) is **embedded directly in the system prompt** of the `Symptom Agent`, bypassing Qdrant — because this is hard-enum logic that must be exactly correct, not open knowledge ([ADR-0018](#decision-log)). |
 | **Doctor profiles** | Merged entirely into the `doctors` table (Postgres), **the full list rendered into context** for the `Symptom Agent` at session start — bypassing Qdrant. A few dozen records fit comfortably in context; the LLM sees 100% of the list, so there's no retrieval-miss risk on listing/comparison questions; the `doctor_id` in context is the bridge when calling booking tools (§6.3, [ADR-0020](#decision-log)). |
 | **RAG grounding** | FAQ/Symptom are constrained to "answer only from context"; below the similarity threshold → "no information found," no free-form LLM generation ([ADR-0008](#decision-log)). |
@@ -377,7 +407,7 @@ draft (knowledge_base) → Publish → ingestion_jobs(pending_chunk)
 | **Chat session management** | ADK's `DatabaseSessionService` points at the existing Postgres — no separate `messages`/`chat_history` table is built; ADK auto-creates & manages `sessions`/`events`/`app_states`/`user_states`. Long-term memory (an agent recognizing a returning customer across widely-spaced visits) is left open, using `MemoryService` (`VertexAiMemoryBankService`/`VertexAiRagMemoryService`) if a real need arises — **not implemented** in the current scope ([ADR-0015](#decision-log)). |
 | **AI observability** | Trace spans for every step (intent → agent → tool → result); logs similarity score, slot conflicts, token usage. |
 | **Domain isolation** | Pure business rules in `ai-agents/core/domain/` (slot validation, phone formatting, grounding) import no SDK — pure unit-testable. |
-| **AI quality gate** | `eval/` measures separately from unit tests: retrieval (Hit Rate@k, MRR), intent routing accuracy, faithfulness (LLM-judge), booking concurrency. The real gate lives in `tests/eval/test_eval_gate.py` — exits 1 on FAIL (§8, §11). |
+| **AI quality gate** | `eval/` measures separately from unit tests: retrieval (span/doc Hit Rate@k, MRR, context precision), intent routing accuracy, keyword-match + faithfulness (LLM-judge), booking concurrency, plus a DeepEval judge suite. The gate logic lives in `eval/runner.py` (runs the golden sets against the live stack, writes `eval/REPORT.md`, **exits 1 on FAIL**); it is surfaced to CI through `tests/eval/test_eval_gate.py` (`@pytest.mark.eval`) and run via `pytest -m eval`, never by a plain `pytest` (§8, §11, ADR-0012). |
 
 ---
 
@@ -386,11 +416,9 @@ draft (knowledge_base) → Publish → ingestion_jobs(pending_chunk)
 ```
 ai-clinic-agent/
 ├── app/                          # Composition root (FastAPI + ADK)
-│   ├── main.py                   # creates the app, mounts the router, lifespan
-│   ├── runtime.py                # registers agents + tools
-│   ├── webhook/
-│   │   └── handler.py            # calls emergency_rules first, then hands off to the orchestrator
-│   └── api/v1/router.py          # mounts modules/'s CRUD API
+│   ├── main.py                   # app factory; mounts /api/v1; lifespan starts/stops the ingestion cron
+│   ├── runtime.py                # build_runtime() (Orchestrator runner) + build_emergency_runtime() (Emergency runner, ADR-0019)
+│   └── api/v1/router.py          # aggregates every modules/ controller (CRUD + conversation) under /api/v1
 │
 ├── ai-agents/                    # AI layer
 │   ├── core/                     # base classes for agents
@@ -440,6 +468,10 @@ ai-clinic-agent/
 │   │   ├── controller.py
 │   │   └── services.py           # publish() = INSERT ingestion_jobs → calls knowledge_ingestion
 │   │
+│   ├── conversation/              # Web chat channel entry (no services.py — thin channel adapter)
+│   │   └── controller.py         # POST /agents/booker/conversations/{id}/messages:
+│   │                             #   Layer-1 emergency_rules.is_emergency() → app/runtime runner
+│   │
 │   └── knowledge_ingestion/       # internal pipeline — no controller.py (ADR-0021, reused from rag-health)
 │       ├── chunk_service.py       # SemanticChunker percentile-80 + MAX guard(>1000,overlap150)
 │       │                          #   + MIN guard(<100, merges into the previous chunk)
@@ -468,33 +500,53 @@ ai-clinic-agent/
 │   └── session.py                # initializes the ADK DatabaseSessionService pointed at Postgres
 │
 ├── common/                        # Cross-cutting infrastructure
-│   ├── config.py
-│   ├── gemini_client.py
+│   ├── config.py                 # Pydantic Settings (loaded from .env)
+│   ├── database.py               # SQLAlchemy engine / session factory
+│   ├── gemini_client.py          # LLM + embedding client (retry/timeout wrapped)
+│   ├── module_loader.py          # imports the hyphenated ai-agents/ package (rename pending — see README roadmap)
 │   ├── observability.py
 │   └── resilience.py
 │
-├── eval/                           # AI quality measurement
-│   ├── golden_set_rag.yaml
-│   ├── golden_set_intent.yaml
-│   ├── golden_set_booking.yaml
+├── eval/                           # AI quality measurement (run via `pytest -m eval`)
+│   ├── golden_set_rag.yaml        # retrieval + generation golden set
+│   ├── golden_set_intent.yaml     # intent-routing golden set
+│   ├── golden_set_booking.yaml    # booking-concurrency golden set
+│   ├── golden_set_deepeval_faq.yaml      # DeepEval judge cases — FAQ (TASK-029)
+│   ├── golden_set_deepeval_symptom.yaml  # DeepEval judge cases — symptom
+│   ├── golden_set_deepeval_booking.yaml  # DeepEval judge cases — booking
 │   ├── metrics.py                 # the single source for every measurement formula
-│   └── runner.py                  # emits REPORT.md; exits 1 on FAIL
+│   ├── runner.py                  # runs the 3 golden sets against the live stack; emits REPORT.md; exits 1 on FAIL
+│   ├── deepeval_dataset.py        # loads the deepeval YAMLs via deepeval.dataset.EvaluationDataset
+│   ├── deepeval_gemini.py         # Gemini adapter for the DeepEval LLM-judge
+│   ├── fixtures/                  # fixed seed data (doctors.yaml + knowledge_base/*.md) for reproducible runs
+│   ├── REPORT.md                  # latest generated golden-set report
+│   ├── DEEPEVAL_REPORT.md         # latest generated DeepEval judge report
+│   └── EVAL_FINDINGS.md           # root-caused findings surfaced by the gate (deliberately not silently fixed)
 │
 ├── alembic/
 │   ├── env.py
 │   └── versions/
 │
 ├── scripts/
-│   └── run_ingestion_job.py      # calls job_chunk.run()/job_embedding.run() directly (ADR-0021):
-│                                  #   --knowledge-id <id> · --retry-failed · --reindex-all
-│                                  #   (replaces the old scripts/ingest_knowledge.py)
+│   ├── run_ingestion_job.py      # calls job_chunk.run()/job_embedding.run() directly (ADR-0021):
+│   │                              #   --knowledge-id <id> · --retry-failed · --reindex-all
+│   ├── seed_eval_fixtures.py     # wipes + reseeds eval/fixtures data before an eval run (reproducible results)
+│   └── smoke_test.py             # one message per intent against a running stack
 │
 ├── tests/
-│   ├── unit/
+│   ├── unit/                      # offline-safe, no network — plain `pytest`
+│   │   ├── test_app_factory.py
+│   │   ├── test_runtime.py
+│   │   ├── test_conversation_route.py
+│   │   ├── test_qdrant_search.py
+│   │   ├── test_settings_defaults.py
+│   │   ├── test_dockerignore.py
 │   │   ├── ai_agents/
 │   │   │   ├── test_booking_rules.py
 │   │   │   ├── test_grounding.py
-│   │   │   └── test_intent_routing.py
+│   │   │   ├── test_intent_routing.py
+│   │   │   ├── test_agent_llm_config.py
+│   │   │   └── test_adk_model_retry.py       # ADK client's own retry, not common/ (README §Evaluation)
 │   │   └── modules/
 │   │       ├── test_booking_service.py
 │   │       └── knowledge_ingestion/
@@ -505,14 +557,17 @@ ai-clinic-agent/
 │   │   ├── test_booking_flow.py
 │   │   ├── test_faq_grounding.py
 │   │   └── test_ingestion_pipeline.py   # publish → job_chunk → job_embedding → real Qdrant
-│   └── eval/
+│   └── eval/                            # @pytest.mark.eval — the real gate, live stack
+│       ├── conftest.py
+│       ├── test_eval_gate.py            # drives eval/runner.py, asserts exit 0
 │       ├── test_retrieval_metrics.py
-│       ├── test_faithfulness.py        # @pytest.mark.llm, runs nightly
-│       └── test_eval_gate.py           # @pytest.mark.eval — the real gate
+│       ├── test_faithfulness.py         # @pytest.mark.llm
+│       ├── test_deepeval_faq.py
+│       ├── test_deepeval_symptom.py
+│       └── test_deepeval_booking.py
 │
 ├── docs/
-│   ├── 01-architecture.md
-│   └── ADR/                       # see the full index in §11
+│   └── 01-architecture.md         # this document; the Decision Log (ADR-style) is inline in §11
 │
 ├── .env.example
 ├── docker-compose.yml
@@ -553,13 +608,14 @@ Web chat ──►│  app(s)  │─────►│  Qdrant  │  (RAG vecto
 
 | Requirement | Responsible module |
 |---------|-------------------------|
-| FR-01 Webhook receives conversation | app/webhook → ai-agents/orchestrator |
+| FR-01 Receives conversation (Web chat) | app/api/v1/router.py → modules/conversation/controller.py → ai-agents/orchestrator |
 | FR-02 Intent classification | ai-agents/orchestrator (prompt + transfer) |
 | FR-03 Book / reschedule / cancel (via conversation) | ai-agents/booking (tools → Postgres, partial unique index `WHERE status != 'cancelled'`) |
 | FR-04 Semantic Retrieval | ai-agents/faq, ai-agents/symptom (search_knowledge_base) |
 | FR-05 Grounded Answer + citation | ai-agents/faq (core/domain/grounding.py + tools) |
 | FR-06 Doctor suggestion by symptom | ai-agents/symptom (hard rules in `intake_rules.py` + the triage table in the prompt per [BIZ-001](../01-requirements/02-biz-patient-intake.md) + the doctor list with profiles rendered from `dal/doctor_repository` into context (ADR-0020) + Qdrant `medical_guide` for open medical guidance) |
-| FR-07 Detect & respond to emergencies | Layer 1: `ai-agents/core/domain/emergency_rules.py` (rule code, called from `app/webhook/handler.py`); Layer 2: ai-agents/orchestrator (LLM, fallback) → both transfer to ai-agents/emergency (static response) |
+| FR-07 Detect & respond to emergencies | Layer 1: `ai-agents/core/domain/emergency_rules.py` (rule code, called from `modules/conversation/controller.py`); Layer 2: ai-agents/orchestrator (LLM, fallback) → both transfer to ai-agents/emergency (static response) |
+| — Web chat channel entry (session, Layer-1 emergency, runtime dispatch) | modules/conversation (`controller.py`) → app/runtime (`build_runtime` / `build_emergency_runtime`) |
 | — Manual booking administration (admin, bypasses agents) | modules/booking (direct CRUD on Postgres) |
 | — Doctor administration (operational + profile) | modules/doctor (CRUD on Postgres `doctors`, replaces Sheets; ADR-0020) |
 | — Knowledge administration & ingestion (RAG) | modules/knowledge (CRUD on Postgres `knowledge_base` + publish trigger) → modules/knowledge_ingestion (chunk + batch embed + Qdrant, reused from rag-health, ADR-0021); scripts/run_ingestion_job.py for manual trigger/retry/backfill/re-index |
@@ -595,3 +651,34 @@ Web chat ──►│  app(s)  │─────►│  Qdrant  │  (RAG vecto
 | **0020** | Merging doctor profiles into the `doctors` table, rendering the full list into the Symptom Agent's context — dropping the `doctor_profile` category from Qdrant | Accepted | A few dozen records (~1–5k tokens) fit comfortably in context — RAG is a tool for data that exceeds the context window, and using it here is over-engineering; the LLM sees 100% of the list, so there's no retrieval-miss risk on listing/comparison questions; this also removes the need for a separate embedding pipeline and the risk of Postgres↔Qdrant drift. Partially revises ADR-0007/0017 (dropping the `doctor_profile` category). |
 | **0021** | Reusing `core/` (CRUD base classes), the RAG ingestion pipeline (chunk + batch embedding, job workers), **and the cron-poll trigger mechanism** as-is from the `rag-health` project, only renaming tables/fields/categories; dropping `modules/core` | Accepted | `knowledge_base` content can be long documents, needing real chunking + batch embedding (not the rough "split by heading" in ADR-0017) — an already-proven pipeline + cron sweep/retry was available, no need to redesign from scratch; publish no longer runs synchronously in the request, so there's no timeout risk for long documents. Workers follow the `run(job_id)` contract, decoupled from the trigger, so a manual run (`scripts/run_ingestion_job.py`) shares the same code as the cron. |
 | **0022** | Renaming the `data/` directory (ADR-0013) to `dal/` | Accepted | "data" was too generic and easy to confuse; "dal" makes it explicit this is the Data Access Layer. A pure path rename, with no change to the boundaries/responsibilities already decided in ADR-0013; historical ADRs that say `data/` keep their original wording. |
+
+---
+
+## 12. Cross-cutting Concerns: Security & Privacy
+
+This is a portfolio project scoped to the **booking-assistant core** (multi-agent conversation, grounded RAG, transactional booking, an automated eval gate). Several concerns that a production deployment for a real clinic — especially in a regulated market (JP/US) handling patient PII — would treat as mandatory are **deliberately out of scope here**. Naming them, and the seam each would slot into, is itself part of the design: the layering already leaves clean insertion points, so adding them later is a localized change, not a rewrite.
+
+| Concern | Status | Where it slots in (the seam) |
+|---------|--------|------------------------------|
+| **AuthN / AuthZ** — authentication, RBAC, per-tenant isolation | Not implemented — every endpoint is open | ASGI middleware / FastAPI `Depends()` in `app/` (in front of the `/api/v1` router), plus an authorization policy in `core/` shared by every `modules/*` controller. `modules/conversation/controller.py` is already a plain module controller precisely so auth attaches the same way as for the CRUD controllers. |
+| **Rate limiting & quotas** | Not implemented — no abuse protection on chat or admin endpoints | Middleware in `app/` (per-IP / per-tenant token bucket), keyed before the request reaches a runner or a `dal/` call. |
+| **Secret management** | Basic — keys read from `.env` via `common/config.py` | `common/config.py` (Pydantic Settings) is the single load point; swapping `.env` for a vault/secret-manager provider is a change in one file, nothing downstream reads secrets directly. |
+| **PII redaction & audit** | Not implemented — no redaction of clinical data in transcripts, no audit log | A redaction/audit policy in `core/` invoked from the `dal/` boundary (the one place that reads/writes durable data) and from `common/observability.py` (so traces/logs never persist raw PII). Conversation history is owned by ADK's `SessionService`, so redaction-at-rest would wrap that access, not re-implement it. |
+
+These cover the security/privacy items of the **"Out of scope"** section of the [README](../README.md#out-of-scope) (long-term cross-session memory, the other item on that list, is addressed separately in §7 / ADR-0015) — this document is the architectural counterpart of that list: the README states *what* is not built; this table states *where in the architecture* each would attach. Two guiding principles behind treating them as out-of-scope rather than half-built: (1) a partial security implementation reads as *secure* while not being so, which is worse than an explicit gap; (2) each of these is a cross-cutting middleware/policy concern, not a change to the domain model — so deferring them does not accrue design debt in the core.
+
+---
+
+<a id="version-history"></a>
+
+## 13. Version History
+
+A condensed changelog. Version boundaries before 3.1 are **reconstructed from the Decision Log** (§11) — earlier revisions were not separately dated — so they mark *what changed*, not exact release dates.
+
+| Version | Major change |
+|---------|--------------|
+| **1.0** | Initial architecture: modular monolith with a multi-agent (ADK) core; **Google Sheets** as the configuration + knowledge source, with Postgres as source of truth and Sheets a one-way read-only mirror (ADR-0005); polyglot persistence across Sheets + Postgres + Qdrant. |
+| **2.0** | **Dropped Google Sheets entirely** — all configuration (`doctors`) + raw knowledge (`knowledge_base`) consolidated into Postgres (ADR-0016, supersedes ADR-0005); internal CRUD UIs (`modules/doctor`, `modules/knowledge`) replace the Excel workflow. Two stores remain: Postgres + Qdrant. |
+| **3.0** | RAG ingestion reworked to reuse `rag-health`'s `core/` base classes, the 2-phase chunk/embed pipeline, **and the cron-poll trigger** as-is (ADR-0021, refines ADR-0017; `modules/core` dropped); doctor profiles merged into the `doctors` table and rendered into the Symptom Agent's context, dropping the `doctor_profile` Qdrant category (ADR-0020); `data/` renamed to `dal/` (ADR-0022). |
+| **3.1** | Prior baseline (2026-07-02) — decision log stabilized; two-layer emergency screening documented (ADR-0019). |
+| **3.2** | **As-built sync + portfolio polish (this revision, 2026-07-10).** Corrected the Layer-1 emergency entry point to `modules/conversation/controller.py` (the non-existent `app/webhook/handler.py` was referenced in §1/§4/§5.4/§7/§8/§10); added the `modules/conversation` Web chat channel throughout; refreshed the §8 `eval/` layout to the current DeepEval-based harness and corrected the quality-gate location (`eval/runner.py` via `pytest -m eval`); reconciled §8 layout with the real tree (`common/`, `scripts/`, `tests/`, `docs/`); added this section and §12 (Security & Privacy); added a system-context diagram. No design decision changed. |
