@@ -1,6 +1,18 @@
-# Golden set for retrieval evaluation (Hit Rate@k, MRR — ARCH-001 §7).
-# Each case: a query, the category to search, and the knowledge_id(s) that
-# should appear in the top-k results.
+# Golden set for retrieval + generation evaluation (Hit Rate@k, MRR, span-level
+# grounding, keyword match, faithfulness — ARCH-001 §7).
+# Each case: a query, the category to search, the knowledge_id(s) that should
+# appear in the top-k results, plus (added 2026-07-10, senior-tester, see
+# below) the fields needed for generation-quality metrics:
+#   - answer_span: a short, VERBATIM phrase copied from the real content in
+#     eval/fixtures/knowledge_base/ (the doc identified by relevant_knowledge_ids)
+#     — used by eval/metrics.py::chunk_hits() for span-level retrieval metrics
+#     (Span Hit Rate@5 / Span MRR / Context Precision@5).
+#   - context: a longer VERBATIM excerpt (also copied from the same source doc)
+#     that contains answer_span — documentation only, not read by runner.py at
+#     eval time (only answer_span is checked against real retrieved chunk text).
+#   - answer_keywords: terms a faithful generated answer is expected to
+#     mention — used by eval/metrics.py::keyword_match() against the real
+#     answer returned by POST /api/v1/agents/booker/conversations/{id}/messages.
 #
 # REWRITTEN 2026-07-09 (senior-tester) — replaces the 2026-07-08 (TASK-026)
 # version whose 10/11 queries had `relevant_knowledge_ids: []`. Those queries
@@ -14,7 +26,7 @@
 # TASK-026's own recommendation was exactly this: "don't patch the 10 uncovered
 # queries — write new RAG queries grounded in the content that actually exists."
 #
-# Every query below is grounded in one of the 23 real seeded rows (ids 1-23,
+# Every query below is grounded in one of the 24 real seeded rows (ids 1-24,
 # from eval/fixtures/knowledge_base/, seeded in sorted-glob order by
 # scripts/seed_eval_fixtures.py). Each `relevant_knowledge_ids` was VERIFIED by
 # running the real retrieval path (embed_batch + dal/qdrant_client.search, the
@@ -42,6 +54,23 @@
 # shift +1 again (were 15-23, now 16-24). 4 new contact cases added below, all
 # verified at rank #1 over 0.7 against real retrieval on 2026-07-10.
 #
+# UPDATED 2026-07-10 (senior-tester, TASK-015 gap fix, batch 1/4) — added
+# answer_span/context/answer_keywords to every one of the 27 existing cases
+# (no case's query/category/relevant_knowledge_ids was changed). Every
+# answer_span/context pair below was copied verbatim from the real .md file
+# named in the id map (character-for-character, including any markdown `**`
+# bold markers or list-item dashes that happen to sit inside the quoted
+# range) and re-verified with a real embed_batch + qdrant search run against
+# the live seeded corpus the same day: doc-id Hit Rate@5 = 27/27 (no
+# regression from the pre-existing relevant_knowledge_ids), chunk-level Span
+# Hit Rate@5 = 27/27, Span MRR = 0.812. Two spans (the "bên bạn khám những
+# gì" / "danh sách các chuyên khoa của phòng khám" cases) were swapped for a
+# chunk that actually lands in the real top-5 after an initial pick landed
+# at chunk-rank #9/#5 respectively on a less-central chunk of the same doc —
+# real retrieval was rerun after every edit, not assumed correct on the first
+# try. `context` is documentation only (shows a human where `answer_span`
+# came from); only `answer_span` is read operationally by eval/runner.py.
+#
 # Id map (seeded via POST /knowledge in sorted(*/*.md) order):
 #   clinic_info: 1 gioi-thieu, 2 da-lieu, 3 mat, 4 ngoai, 5 nhi, 6 noi,
 #                7 rang-ham-mat, 8 san-phu-khoa, 9 sieu-am, 10 tai-mui-hong,
@@ -55,89 +84,170 @@ cases:
   - query: "Phòng khám mở cửa mấy giờ"
     category: clinic_info
     relevant_knowledge_ids: [1, 14]  # shared fact — the exact "Giờ hoạt động 07h30-17h00" line lives verbatim in id 1 (canonical intro), id 14 (specialty overview) AND now id 15 (contact doc) + every khoa footer, so no single doc "owns" it (see header note). After BUG-011 added the id-15 contact doc (2 chunks rank above id 1 for this generic "Phòng khám ..." query), id 1 sits at chunk-rank #6; id 14 still reliably lands top-5 (#4/#5) carrying the identical correct hours, so the correct answer is still retrieved. Both accepted as relevant.
+    context: "Giờ hoạt động: Thứ 2 - Chủ nhật, 07h30 - 17h00"  # gioi-thieu.md (id 1) / tong-quan-chuyen-khoa.md (id 14), identical line in both
+    answer_span: "07h30 - 17h00"
+    answer_keywords: ["07h30", "17h00"]
   - query: "Khoa da liễu điều trị những bệnh gì"
     category: clinic_info
     relevant_knowledge_ids: [2]  # rank #1 (nấm da, viêm da, zona, ghẻ)
+    context: "Nhiễm nấm: nấm da đầu, lang ben, nấm móng (lây lan nhanh)"  # khoa-da-lieu.md
+    answer_span: "nấm da đầu, lang ben, nấm móng"
+    answer_keywords: ["nấm da", "viêm da", "zona", "ghẻ"]
   - query: "Khoa mắt chữa những bệnh nào"
     category: clinic_info
     relevant_knowledge_ids: [3]  # rank #1 (cận thị, glaucoma, đục thủy tinh thể)
+    context: "Tăng nhãn áp (glaucoma)"  # khoa-mat.md
+    answer_span: "Tăng nhãn áp (glaucoma)"
+    answer_keywords: ["cận thị", "glaucoma", "đục thủy tinh thể"]
   - query: "Khoa nhi khám các bệnh gì cho trẻ em"
     category: clinic_info
     relevant_knowledge_ids: [5]  # rank #1 (tay chân miệng, sởi, TMH trẻ em)
+    context: "Bệnh truyền nhiễm (cúm, tay chân miệng, sởi)"  # khoa-nhi.md
+    answer_span: "tay chân miệng, sởi"
+    answer_keywords: ["tay chân miệng", "sởi", "tai-mũi-họng"]
   - query: "Khoa siêu âm có những dịch vụ gì"
     category: clinic_info
     relevant_knowledge_ids: [9]  # rank #1 (siêu âm tuyến giáp, ổ bụng, thai 2D/4D)
+    context: "Siêu âm tuyến giáp, ổ bụng, thai 2D/4D, tuyến vú và nhiều dịch vụ khác."  # khoa-sieu-am.md
+    answer_span: "Siêu âm tuyến giáp, ổ bụng, thai 2D/4D"
+    answer_keywords: ["tuyến giáp", "ổ bụng", "thai 2D/4D"]
   - query: "Khoa sản phụ khoa có khám thai không"
     category: clinic_info
     relevant_knowledge_ids: [8]  # rank #1 (khám thai, quản lý thai sản, soi cổ tử cung)
+    context: "Khám thai và quản lý thai sản"  # khoa-san-phu-khoa.md
+    answer_span: "Khám thai và quản lý thai sản"
+    answer_keywords: ["khám thai", "quản lý thai sản", "soi cổ tử cung"]
   - query: "Khoa tai mũi họng điều trị viêm xoang viêm tai không"
     category: clinic_info
     relevant_knowledge_ids: [10]  # rank #1 (viêm xoang, viêm tai, nạo VA)
+    context: "chọc dò xoang, chích rạch viêm tai, cắt polip, cầm máu cam, lấy dị vật, nạo VA"  # khoa-tai-mui-hong.md
+    answer_span: "chích rạch viêm tai, cắt polip"
+    answer_keywords: ["viêm xoang", "viêm tai", "nạo VA"]
   - query: "Chụp CT Cone Beam làm ở khoa nào"
     category: clinic_info
     relevant_knowledge_ids: [13]  # rank #1 (khoa X-Quang — CT Cone Beam)
+    context: "Chụp CT Cone Beam"  # khoa-xquang.md
+    answer_span: "Chụp CT Cone Beam"
+    answer_keywords: ["CT Cone Beam", "X-Quang"]
   - query: "Khoa răng hàm mặt có chỉnh nha và điều trị tủy răng không"
     category: clinic_info
     relevant_knowledge_ids: [7]  # rank #1 (chỉnh nha, điều trị tủy răng)
+    context: "Điều trị tủy răng"  # khoa-rang-ham-mat.md
+    answer_span: "Điều trị tủy răng"
+    answer_keywords: ["chỉnh nha", "điều trị tủy răng"]
   - query: "Khoa xét nghiệm làm những xét nghiệm gì"
     category: clinic_info
     relevant_knowledge_ids: [12]  # rank #1 (huyết học, sinh hóa, vi sinh, nước tiểu)
+    context: "Khoa Xét Nghiệm cung cấp dịch vụ xét nghiệm toàn diện: huyết học, sinh hóa, vi sinh, và tổng phân tích nước tiểu."  # khoa-xet-nghiem.md
+    answer_span: "huyết học, sinh hóa, vi sinh, và tổng phân tích nước tiểu"
+    answer_keywords: ["huyết học", "sinh hóa", "vi sinh", "nước tiểu"]
   # --- clinic_info: broad "what specialties/services" queries (BUG-013, added 2026-07-10) ---
   # All 6 target the consolidated overview doc (id 14, tong-quan-chuyen-khoa.md) and
   # were verified at rank #1 over threshold 0.7 against real retrieval on 2026-07-10.
   - query: "bên bạn khám những gì"
     category: clinic_info
     relevant_knowledge_ids: [14]  # rank #1, 0.7243 — the exact query CEO reported (BUG-013), was 0.62 pre-fix
+    context: "Bên bạn khám những gì? Bên mình khám chữa những bệnh gì? Ở đây khám những gì?"  # tong-quan-chuyen-khoa.md — chunk-level span rank #1 (chosen over the "hiện có 12 chuyên khoa" sentence, which real retrieval put at chunk-rank #9, outside top-5)
+    answer_span: "Bên bạn khám những gì? Bên mình khám chữa những bệnh gì?"
+    answer_keywords: ["12 chuyên khoa"]
   - query: "có những chuyên khoa nào"
     category: clinic_info
     relevant_knowledge_ids: [14]  # rank #1, 0.8046
+    context: "Khoa Nội Tổng Hợp — khám tổng quát và các bệnh nội khoa thường gặp."  # tong-quan-chuyen-khoa.md
+    answer_span: "Khoa Nội Tổng Hợp"
+    answer_keywords: ["Khoa Nội Tổng Hợp", "Khoa Ngoại", "Khoa Nhi"]
   - query: "phòng khám có dịch vụ gì"
     category: clinic_info
     relevant_knowledge_ids: [14]  # rank #1, 0.8334
+    context: "khám sức khỏe cá nhân, khám sức khỏe doanh nghiệp, khám sức khỏe lái xe, và khám sức khỏe theo yêu cầu bảo hiểm"  # tong-quan-chuyen-khoa.md
+    answer_span: "khám sức khỏe cá nhân, khám sức khỏe doanh nghiệp"
+    answer_keywords: ["khám sức khỏe cá nhân", "khám sức khỏe doanh nghiệp"]
   - query: "phòng khám có những khoa nào"
     category: clinic_info
     relevant_knowledge_ids: [14]  # rank #1, 0.8395
+    context: "Danh sách 12 chuyên khoa của phòng khám"  # tong-quan-chuyen-khoa.md, "## Danh sách 12 chuyên khoa của phòng khám" heading
+    answer_span: "Danh sách 12 chuyên khoa"
+    answer_keywords: ["12 chuyên khoa", "danh sách"]
   - query: "danh sách các chuyên khoa của phòng khám"
     category: clinic_info
     relevant_knowledge_ids: [14]  # rank #1, 0.8667
+    context: "Danh sách đầy đủ các chuyên khoa và dịch vụ"  # tong-quan-chuyen-khoa.md title line, chunk-level span rank #1 (the "Khoa Tai – Mũi – Họng" list item, though real, only lands at chunk-rank #5)
+    answer_span: "Danh sách đầy đủ các chuyên khoa và dịch vụ"
+    answer_keywords: ["Khoa Tai", "Mũi", "Họng"]
   - query: "phòng khám có bao nhiêu chuyên khoa"
     category: clinic_info
     relevant_knowledge_ids: [14]  # rank #1, 0.8477
+    context: "hiện có 12 chuyên khoa, khám và điều trị đa dạng các bệnh lý cho cả người lớn và trẻ em."  # tong-quan-chuyen-khoa.md
+    answer_span: "12 chuyên khoa"
+    answer_keywords: ["12 chuyên khoa"]
   # --- clinic_info: contact / reception queries (BUG-011 part 2, added 2026-07-10) ---
   # All 4 target the dedicated contact doc (id 15, z-thong-tin-lien-he-le-tan.md) and
   # were verified at rank #1 over threshold 0.7 against real retrieval on 2026-07-10.
   - query: "khi đến anh liên hệ ai?"
     category: clinic_info
     relevant_knowledge_ids: [15]  # rank #1, 0.7889 — the exact query CEO reported (BUG-011); before this doc, id 6 (Khoa Nội) was wrongly the only >0.7 hit
+    context: "hãy đến **quầy lễ tân** ngay sảnh đón tiếp đầu"  # z-thong-tin-lien-he-le-tan.md (raw markdown, ** kept verbatim)
+    answer_span: "quầy lễ tân"
+    answer_keywords: ["lễ tân", "quầy lễ tân"]
   - query: "số điện thoại lễ tân"
     category: clinic_info
     relevant_knowledge_ids: [15]  # rank #1, 0.7851 — before this doc, top hit id 6 @ 0.6923 was below threshold → fallback
+    context: "Hotline / số điện thoại lễ tân tư vấn và đặt lịch: **0969 2555 61**"  # z-thong-tin-lien-he-le-tan.md
+    answer_span: "0969 2555 61"
+    answer_keywords: ["0969 2555 61", "lễ tân"]
   - query: "liên hệ ai khi đến khám"
     category: clinic_info
     relevant_knowledge_ids: [15]  # rank #1, 0.8950
+    context: "Nhân viên lễ tân sẽ tiếp đón, hướng dẫn bạn đăng ký khám, lấy số thứ tự và chỉ dẫn tới"  # z-thong-tin-lien-he-le-tan.md
+    answer_span: "Nhân viên lễ tân sẽ tiếp đón, hướng dẫn bạn đăng ký khám"
+    answer_keywords: ["lễ tân", "đăng ký khám"]
   - query: "gặp ai khi tới phòng khám"
     category: clinic_info
     relevant_knowledge_ids: [15]  # rank #1, 0.8515
+    context: "Khi đến khám bạn liên hệ **quầy lễ tân** để được đón tiếp và hướng dẫn"  # z-thong-tin-lien-he-le-tan.md, "Tóm lại" section
+    answer_span: "để được đón tiếp và hướng dẫn"
+    answer_keywords: ["lễ tân", "đón tiếp"]
   # --- medical_guide (2 docs seeded) ---
   - query: "Huyết áp bao nhiêu thì được coi là cao huyết áp"
     category: medical_guide
     relevant_knowledge_ids: [16]  # rank #1 (≥140/90 mmHg)
+    context: "Bình thường khoảng 120/80 mmHg; cao huyết áp được xác định khi ≥ 140/90 mmHg."  # cao-huyet-ap.md
+    answer_span: "cao huyết áp được xác định khi ≥ 140/90 mmHg"
+    answer_keywords: ["140/90 mmHg"]
   - query: "Dấu hiệu nhận biết hở van tim là gì"
     category: medical_guide
     relevant_knowledge_ids: [17]  # rank #1 (khó thở gắng sức, phù chân, hở van hai lá/ba lá)
+    context: "Khó thở khi gắng sức, mệt mỏi kéo dài, tim đập nhanh, ho khan nhất là về đêm, choáng váng, ngất xỉu, phù mắt cá chân hoặc bàn chân."  # ho-van-tim.md
+    answer_span: "Khó thở khi gắng sức, mệt mỏi kéo dài, tim đập nhanh"
+    answer_keywords: ["khó thở", "hở van hai lá", "hở van ba lá"]
   # --- policy (7 docs seeded) ---
   - query: "Xét nghiệm tổng phân tích tế bào máu giá bao nhiêu"
     category: policy
     relevant_knowledge_ids: [22]  # rank #1 (bảng giá xét nghiệm — 150.000đ)
+    context: "Tổng phân tích tế bào máu ngoại vi: 150.000 VNĐ"  # bang-gia-xet-nghiem.md
+    answer_span: "Tổng phân tích tế bào máu ngoại vi: 150.000 VNĐ"
+    answer_keywords: ["150.000", "VNĐ"]
   - query: "Cắt u lành phần mềm chi phí bao nhiêu"
     category: policy
     relevant_knowledge_ids: [19]  # rank #1 (bảng giá ngoại khoa — từ 1.200.000đ)
+    context: "Cắt u lành phần mềm: từ 1.200.000 VNĐ"  # bang-gia-ngoai-khoa.md
+    answer_span: "Cắt u lành phần mềm: từ 1.200.000 VNĐ"
+    answer_keywords: ["1.200.000", "VNĐ"]
   - query: "Đo chỉ số cơ thể giá bao nhiêu"
     category: policy
     relevant_knowledge_ids: [18]  # rank #1 (bảng giá khám tổng quát — 50.000đ)
+    context: "Đo chỉ số cơ thể: 50.000 VNĐ"  # bang-gia-kham-tong-quat.md
+    answer_span: "Đo chỉ số cơ thể: 50.000 VNĐ"
+    answer_keywords: ["50.000", "VNĐ"]
   - query: "Chích áp xe tầng sinh môn giá bao nhiêu"
     category: policy
     relevant_knowledge_ids: [21]  # rank #1 (bảng giá sản & siêu âm — 900.000đ)
+    context: "Chích áp xe tầng sinh môn: 900.000 VNĐ"  # bang-gia-san-sieu-am.md
+    answer_span: "Chích áp xe tầng sinh môn: 900.000 VNĐ"
+    answer_keywords: ["900.000", "VNĐ"]
   - query: "Quy trình khám sức khỏe gồm mấy bước"
     category: policy
     relevant_knowledge_ids: [24]  # rank #1 (quy trình 7 bước)
+    context: "# Quy trình khám sức khỏe — 7 bước"  # quy-trinh-kham-7-buoc.md
+    answer_span: "Quy trình khám sức khỏe — 7 bước"
+    answer_keywords: ["7 bước"]
