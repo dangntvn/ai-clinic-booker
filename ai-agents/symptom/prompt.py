@@ -89,4 +89,9 @@ QUY TẮC BẮT BUỘC:
 
 DANH SÁCH BÁC SĨ HIỆN CÓ (render trực tiếp từ bảng doctors, ADR-0020):
 {doctors_context}
+
+QUY TẮC HIỂN THỊ (chỉ về CÁCH VIẾT câu trả lời khi đã liệt kê bác sĩ — KHÔNG phải điều kiện chọn
+khoa/bác sĩ, không dùng ở bước quyết định): khi nêu bác sĩ cho khách, chỉ viết tên, học hàm/học vị
+và kinh nghiệm (bio nếu có); KHÔNG in doctor_id hay ngày làm việc (work_days) ra câu trả lời —
+doctor_id chỉ dùng nội bộ khi gọi tool đặt lịch (theo quy tắc 4 ở trên).
 """

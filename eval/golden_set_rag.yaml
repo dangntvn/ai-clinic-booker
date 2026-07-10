@@ -14,30 +14,47 @@
 # TASK-026's own recommendation was exactly this: "don't patch the 10 uncovered
 # queries — write new RAG queries grounded in the content that actually exists."
 #
-# Every query below is grounded in one of the 22 real seeded rows (ids 1-22,
+# Every query below is grounded in one of the 23 real seeded rows (ids 1-23,
 # from eval/fixtures/knowledge_base/, seeded in sorted-glob order by
 # scripts/seed_eval_fixtures.py). Each `relevant_knowledge_ids` was VERIFIED by
 # running the real retrieval path (embed_batch + dal/qdrant_client.search, the
-# same code search_knowledge_base uses) against the freshly-seeded corpus on
-# 2026-07-09 — the id listed is the one actually returned, not a guess. 16 of 17
-# queries retrieve their target at rank #1; the "opening hours" query (id 1)
-# lands at rank #2 because the 07h30-17h00 hours line is repeated in every
-# department doc footer, so that topic is inherently ambiguous — id 1 (the
-# canonical intro doc) still sits comfortably inside top-5. This is a real
+# same code search_knowledge_base uses) against the freshly-seeded corpus —
+# the id listed is the one actually returned, not a guess. All targets retrieve
+# at rank #1 except the "opening hours" query (id 1), which lands at rank #4:
+# the 07h30-17h00 hours line is repeated in every department doc footer AND in
+# the new consolidated doc (id 14), so that topic is inherently ambiguous — id 1
+# (the canonical intro doc) still sits comfortably inside top-5. This is a real
 # ranking observation, not a bug: no single doc "owns" the hours fact.
+#
+# UPDATED 2026-07-10 (senior-dev, BUG-013): added a new consolidated
+# "Danh sách các chuyên khoa và dịch vụ" doc (tong-quan-chuyen-khoa.md). It
+# sorts last within clinic_info, so it seeds as id 14 and the 12 khoa + intro
+# ids 1-13 are unchanged; medical_guide and policy ids all shift +1 (were 14-22,
+# now 15-23). Ids below and the 6 new broad clinic_info cases were re-verified
+# against real retrieval on 2026-07-10 (all 6 clear 0.7 at rank #1 on id 14).
+#
+# UPDATED 2026-07-10 (senior-dev, BUG-011 part 2): added a new dedicated
+# "Thông tin liên hệ, lễ tân và cách liên lạc" doc (z-thong-tin-lien-he-le-tan.md)
+# for contact/reception questions ("liên hệ ai khi đến khám", "số điện thoại lễ
+# tân"). The "z-" prefix is deliberate so it sorts LAST within clinic_info (after
+# tong-quan-chuyen-khoa.md) — same minimise-id-shift trick as BUG-013: clinic_info
+# ids 1-14 stay unchanged, the new doc seeds as id 15, and medical_guide+policy
+# shift +1 again (were 15-23, now 16-24). 4 new contact cases added below, all
+# verified at rank #1 over 0.7 against real retrieval on 2026-07-10.
 #
 # Id map (seeded via POST /knowledge in sorted(*/*.md) order):
 #   clinic_info: 1 gioi-thieu, 2 da-lieu, 3 mat, 4 ngoai, 5 nhi, 6 noi,
 #                7 rang-ham-mat, 8 san-phu-khoa, 9 sieu-am, 10 tai-mui-hong,
-#                11 tam-than, 12 xet-nghiem, 13 xquang
-#   medical_guide: 14 cao-huyet-ap, 15 ho-van-tim
-#   policy: 16 kham-tong-quat, 17 ngoai-khoa, 18 nha-khoa, 19 san-sieu-am,
-#           20 xet-nghiem, 21 xquang, 22 quy-trinh-kham-7-buoc
+#                11 tam-than, 12 xet-nghiem, 13 xquang, 14 tong-quan-chuyen-khoa,
+#                15 z-thong-tin-lien-he-le-tan
+#   medical_guide: 16 cao-huyet-ap, 17 ho-van-tim
+#   policy: 18 kham-tong-quat, 19 ngoai-khoa, 20 nha-khoa, 21 san-sieu-am,
+#           22 xet-nghiem, 23 xquang, 24 quy-trinh-kham-7-buoc
 cases:
   # --- clinic_info (13 docs seeded) ---
   - query: "Phòng khám mở cửa mấy giờ"
     category: clinic_info
-    relevant_knowledge_ids: [1]  # gioi-thieu — giờ hoạt động 07h30-17h00. Rank #2 (hours line repeated in every khoa doc footer), vẫn nằm trong top-5.
+    relevant_knowledge_ids: [1, 14]  # shared fact — the exact "Giờ hoạt động 07h30-17h00" line lives verbatim in id 1 (canonical intro), id 14 (specialty overview) AND now id 15 (contact doc) + every khoa footer, so no single doc "owns" it (see header note). After BUG-011 added the id-15 contact doc (2 chunks rank above id 1 for this generic "Phòng khám ..." query), id 1 sits at chunk-rank #6; id 14 still reliably lands top-5 (#4/#5) carrying the identical correct hours, so the correct answer is still retrieved. Both accepted as relevant.
   - query: "Khoa da liễu điều trị những bệnh gì"
     category: clinic_info
     relevant_knowledge_ids: [2]  # rank #1 (nấm da, viêm da, zona, ghẻ)
@@ -65,26 +82,62 @@ cases:
   - query: "Khoa xét nghiệm làm những xét nghiệm gì"
     category: clinic_info
     relevant_knowledge_ids: [12]  # rank #1 (huyết học, sinh hóa, vi sinh, nước tiểu)
+  # --- clinic_info: broad "what specialties/services" queries (BUG-013, added 2026-07-10) ---
+  # All 6 target the consolidated overview doc (id 14, tong-quan-chuyen-khoa.md) and
+  # were verified at rank #1 over threshold 0.7 against real retrieval on 2026-07-10.
+  - query: "bên bạn khám những gì"
+    category: clinic_info
+    relevant_knowledge_ids: [14]  # rank #1, 0.7243 — the exact query CEO reported (BUG-013), was 0.62 pre-fix
+  - query: "có những chuyên khoa nào"
+    category: clinic_info
+    relevant_knowledge_ids: [14]  # rank #1, 0.8046
+  - query: "phòng khám có dịch vụ gì"
+    category: clinic_info
+    relevant_knowledge_ids: [14]  # rank #1, 0.8334
+  - query: "phòng khám có những khoa nào"
+    category: clinic_info
+    relevant_knowledge_ids: [14]  # rank #1, 0.8395
+  - query: "danh sách các chuyên khoa của phòng khám"
+    category: clinic_info
+    relevant_knowledge_ids: [14]  # rank #1, 0.8667
+  - query: "phòng khám có bao nhiêu chuyên khoa"
+    category: clinic_info
+    relevant_knowledge_ids: [14]  # rank #1, 0.8477
+  # --- clinic_info: contact / reception queries (BUG-011 part 2, added 2026-07-10) ---
+  # All 4 target the dedicated contact doc (id 15, z-thong-tin-lien-he-le-tan.md) and
+  # were verified at rank #1 over threshold 0.7 against real retrieval on 2026-07-10.
+  - query: "khi đến anh liên hệ ai?"
+    category: clinic_info
+    relevant_knowledge_ids: [15]  # rank #1, 0.7889 — the exact query CEO reported (BUG-011); before this doc, id 6 (Khoa Nội) was wrongly the only >0.7 hit
+  - query: "số điện thoại lễ tân"
+    category: clinic_info
+    relevant_knowledge_ids: [15]  # rank #1, 0.7851 — before this doc, top hit id 6 @ 0.6923 was below threshold → fallback
+  - query: "liên hệ ai khi đến khám"
+    category: clinic_info
+    relevant_knowledge_ids: [15]  # rank #1, 0.8950
+  - query: "gặp ai khi tới phòng khám"
+    category: clinic_info
+    relevant_knowledge_ids: [15]  # rank #1, 0.8515
   # --- medical_guide (2 docs seeded) ---
   - query: "Huyết áp bao nhiêu thì được coi là cao huyết áp"
     category: medical_guide
-    relevant_knowledge_ids: [14]  # rank #1 (≥140/90 mmHg)
+    relevant_knowledge_ids: [16]  # rank #1 (≥140/90 mmHg)
   - query: "Dấu hiệu nhận biết hở van tim là gì"
     category: medical_guide
-    relevant_knowledge_ids: [15]  # rank #1 (khó thở gắng sức, phù chân, hở van hai lá/ba lá)
+    relevant_knowledge_ids: [17]  # rank #1 (khó thở gắng sức, phù chân, hở van hai lá/ba lá)
   # --- policy (7 docs seeded) ---
   - query: "Xét nghiệm tổng phân tích tế bào máu giá bao nhiêu"
     category: policy
-    relevant_knowledge_ids: [20]  # rank #1 (bảng giá xét nghiệm — 150.000đ)
+    relevant_knowledge_ids: [22]  # rank #1 (bảng giá xét nghiệm — 150.000đ)
   - query: "Cắt u lành phần mềm chi phí bao nhiêu"
     category: policy
-    relevant_knowledge_ids: [17]  # rank #1 (bảng giá ngoại khoa — từ 1.200.000đ)
+    relevant_knowledge_ids: [19]  # rank #1 (bảng giá ngoại khoa — từ 1.200.000đ)
   - query: "Đo chỉ số cơ thể giá bao nhiêu"
     category: policy
-    relevant_knowledge_ids: [16]  # rank #1 (bảng giá khám tổng quát — 50.000đ)
+    relevant_knowledge_ids: [18]  # rank #1 (bảng giá khám tổng quát — 50.000đ)
   - query: "Chích áp xe tầng sinh môn giá bao nhiêu"
     category: policy
-    relevant_knowledge_ids: [19]  # rank #1 (bảng giá sản & siêu âm — 900.000đ)
+    relevant_knowledge_ids: [21]  # rank #1 (bảng giá sản & siêu âm — 900.000đ)
   - query: "Quy trình khám sức khỏe gồm mấy bước"
     category: policy
-    relevant_knowledge_ids: [22]  # rank #1 (quy trình 7 bước)
+    relevant_knowledge_ids: [24]  # rank #1 (quy trình 7 bước)
