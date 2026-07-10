@@ -1,0 +1,115 @@
+# DeepEval case data for tests/eval/test_deepeval_symptom.py (TASK-029).
+#
+# Extracted verbatim from the hardcoded LLMTestCase/GEval calls that lived
+# directly in test_deepeval_symptom.py before this refactor — no question,
+# metric, threshold, or GEval criteria text was reworded. Only the *data*
+# moved here; test_deepeval_symptom.py still runs the real orchestrator
+# (run_conversation()) and the real RetrievalCapture spy at test time.
+#
+# context_kind: "retrieval" attaches symptom_retrieval.contexts() (or
+# not_found_fallback); "none" means the original test attached no context/
+# retrieval_context at all (test_symptom_routes_to_real_doctor_for_covered_specialty
+# and test_symptom_does_not_invent_doctor_for_uncovered_specialty only ever
+# built `LLMTestCase(input=question, actual_output=actual_output)`).
+#
+# UPDATED 2026-07-10 (senior-tester, CEO request via Team Lead: "thêm gấp đôi
+# case test vì nó quan trọng") — added 3 more cases (6 total), same pattern
+# as the first 3, grounded in real seeded data:
+#   - test_symptom_medical_guide_question_grounded_heart_valve: a second
+#     grounded medical_guide Q&A (ho-van-tim.md / "hở van tim", id 17 in
+#     golden_set_rag.yaml — a different topic from the existing cao-huyet-ap
+#     case so both real medical_guide docs now have DeepEval coverage).
+#   - test_symptom_routes_to_real_doctor_for_tai_mui_hong_specialty: a second
+#     covered-specialty routing case (Tai Mũi Họng / ENT), verified against
+#     eval/fixtures/doctors.yaml — 'Đoàn Việt Hùng' is the only real Tai Mũi
+#     Họng doctor (doctor_id=9: doctors seed as ids 3-13 in doctors.yaml
+#     order, Phạm Thị Lan Hương=3 confirmed in test_deepeval_booking.py, so
+#     Đoàn Việt Hùng, 7th in that file, is 3+6=9).
+#   - test_symptom_does_not_invent_doctor_for_tieu_hoa_specialty: a second
+#     uncovered-specialty case (Tiêu hóa / gastroenterology) — per
+#     eval/fixtures/doctors.yaml's data_quality_notes, the 5 enum specialties
+#     with NO real doctor are Tim mạch (already covered by the existing
+#     case), Tiêu hóa, Hô hấp, Nội tiết, Tiết niệu – Nam khoa; this case uses
+#     Tiêu hóa, a different one of those 5.
+cases:
+  - name: test_symptom_medical_guide_question_grounded
+    input: "Huyết áp bao nhiêu thì được coi là cao?"
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_symptom_routes_to_real_doctor_for_covered_specialty
+    input: "Tôi bị nổi mẩn đỏ ngứa ở chân và nghi bị nấm da, nên khám khoa nào?"
+    context_kind: none
+    metrics:
+      - type: geval
+        name: RoutesToRealDaLieuDoctor
+        criteria: >-
+          'actual_output' should recommend the 'Da liễu' (dermatology)
+          department for these skin symptoms, per the clinic's triage
+          rules. If it names a specific doctor or doctor_id, it must be
+          'Đào Thanh Thủy' (doctor_id=8) — the only real Da liễu doctor
+          in the system — not any other name.
+        evaluation_params: [input, actual_output]
+        threshold: 0.7
+
+  - name: test_symptom_does_not_invent_doctor_for_uncovered_specialty
+    input: "Tôi hay hồi hộp, tim đập nhanh và tức ngực khi gắng sức, nên khám khoa nào?"
+    context_kind: none
+    metrics:
+      - type: geval
+        name: NoFabricatedCardiologist
+        criteria: >-
+          The clinic's real doctor list has NO doctor with specialty
+          'Tim mạch' (cardiology) — this is a known, confirmed gap.
+          'actual_output' passes only if it does NOT name a specific
+          doctor or doctor_id for Tim mạch (naming the specialty itself,
+          or saying no cardiologist is currently available, is fine and
+          should pass).
+        evaluation_params: [input, actual_output]
+        threshold: 0.7
+
+  - name: test_symptom_medical_guide_question_grounded_heart_valve
+    input: "Cho em hỏi dấu hiệu nhận biết hở van tim là gì vậy ạ? Dạo này em hay mệt với khó thở khi leo cầu thang."
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_symptom_routes_to_real_doctor_for_tai_mui_hong_specialty
+    input: "Mấy hôm nay em bị đau họng, nghẹt mũi kéo dài với ù tai nữa, vậy em nên khám khoa nào ạ?"
+    context_kind: none
+    metrics:
+      - type: geval
+        name: RoutesToRealTaiMuiHongDoctor
+        criteria: >-
+          'actual_output' should recommend the 'Tai Mũi Họng' (ENT)
+          department for these throat/nose/ear symptoms, per the clinic's
+          triage rules. If it names a specific doctor or doctor_id, it must
+          be 'Đoàn Việt Hùng' (doctor_id=9) — the only real Tai Mũi Họng
+          doctor in the system — not any other name.
+        evaluation_params: [input, actual_output]
+        threshold: 0.7
+
+  - name: test_symptom_does_not_invent_doctor_for_tieu_hoa_specialty
+    input: "Dạo này em hay bị đau bụng vùng trên rốn, ợ chua với đầy hơi sau khi ăn, không biết nên khám khoa nào ạ?"
+    context_kind: none
+    metrics:
+      - type: geval
+        name: NoFabricatedGastroenterologist
+        criteria: >-
+          The clinic's real doctor list has NO doctor with specialty
+          'Tiêu hóa' (gastroenterology) — this is a known, confirmed gap.
+          'actual_output' passes only if it does NOT name a specific
+          doctor or doctor_id for Tiêu hóa (naming the specialty itself,
+          or saying no gastroenterologist is currently available, is fine
+          and should pass).
+        evaluation_params: [input, actual_output]
+        threshold: 0.7

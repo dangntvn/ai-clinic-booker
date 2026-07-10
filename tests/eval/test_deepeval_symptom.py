@@ -20,102 +20,59 @@
 #              not something to re-verify here; what TASK-026 flagged as
 #              actually risky with real data is (a) hallucinated grounding
 #              and (b) inventing a doctor for a specialty that has none.
+#
+# UPDATED 2026-07-10 (senior-tester, TASK-029) — the 3 cases above are now
+# data-driven from eval/golden_set_deepeval_symptom.yaml via
+# eval/deepeval_dataset.py::load_dataset(), loaded into a real
+# deepeval.dataset.EvaluationDataset, instead of one hardcoded
+# LLMTestCase/GEval call per test function. Behavior is unchanged: still a
+# real run_conversation() call per case, still the same 3 questions/
+# metrics/thresholds/GEval criteria text. The `symptom_retrieval` fixture
+# (RetrievalCapture spy) is now requested for all 3 parametrized cases
+# rather than only the medical_guide one — the 2 routing cases (whose
+# YAML entry has `context_kind: none`) simply never read
+# `symptom_retrieval.contexts()`, so the spy is installed-but-unused for
+# them, an intentional, harmless side effect of collapsing 3 test functions
+# into 1 parametrized one (documented here, not hidden).
 ###############################################################################
 
 import pytest
 from deepeval import assert_test
-from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric, GEval
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase
 
+from eval.deepeval_dataset import build_metrics, load_dataset
 from eval.deepeval_gemini import build_judge
 
-THRESHOLD = 0.7
+_dataset = load_dataset("golden_set_deepeval_symptom.yaml")
 
 
 @pytest.mark.eval
 @pytest.mark.llm
-async def test_symptom_medical_guide_question_grounded(symptom_retrieval):
-    """Real content from eval/fixtures/knowledge_base/medical_guide/cao-huyet-ap.md (id=14)."""
-    from tests.eval.conftest import run_conversation
+@pytest.mark.parametrize("golden", _dataset.goldens, ids=[g.name for g in _dataset.goldens])
+async def test_symptom_cases(golden, symptom_retrieval):
+    """Run one Symptom Agent case (question + metrics from golden.additional_metadata).
 
-    question = "Huyết áp bao nhiêu thì được coi là cao?"
-    actual_output = await run_conversation(question)
-
-    test_case = LLMTestCase(
-        input=question,
-        actual_output=actual_output,
-        retrieval_context=symptom_retrieval.contexts() or ["(no context retrieved)"],
-    )
-    judge = build_judge()
-    assert_test(
-        test_case,
-        [
-            AnswerRelevancyMetric(threshold=THRESHOLD, model=judge),
-            FaithfulnessMetric(threshold=THRESHOLD, model=judge),
-        ],
-    )
-
-
-@pytest.mark.eval
-@pytest.mark.llm
-async def test_symptom_routes_to_real_doctor_for_covered_specialty():
-    """Da liễu is one of the 9/14 specialties with a real seeded doctor.
-
-    Real doctor: Đào Thanh Thủy, doctor_id=8 (eval/seed_result_2026-07-08.json).
-    Symptoms below match the Da liễu row of the triage table
-    (ai-agents/symptom/prompt.py TRIAGE_TABLE) verbatim ("nổi mẩn/mề đay/ngứa",
-    "nấm da/hắc lào/lang ben").
+    See eval/golden_set_deepeval_symptom.yaml for the 3 cases this
+    parametrizes over: 1 grounded medical_guide Q&A case (AnswerRelevancy +
+    Faithfulness) and 2 specialty-routing cases (GEval checks, no
+    retrieval_context attached — matches the pre-refactor behavior), all
+    against the real orchestrator via run_conversation().
     """
     from tests.eval.conftest import run_conversation
 
-    question = "Tôi bị nổi mẩn đỏ ngứa ở chân và nghi bị nấm da, nên khám khoa nào?"
+    case = golden.additional_metadata
+    question = case["input"]
     actual_output = await run_conversation(question)
 
-    test_case = LLMTestCase(input=question, actual_output=actual_output)
+    if case.get("context_kind") == "retrieval":
+        fallback = case.get("not_found_fallback", "(no context retrieved)")
+        test_case = LLMTestCase(
+            input=question,
+            actual_output=actual_output,
+            retrieval_context=symptom_retrieval.contexts() or [fallback],
+        )
+    else:
+        test_case = LLMTestCase(input=question, actual_output=actual_output)
+
     judge = build_judge()
-    routes_correctly = GEval(
-        name="RoutesToRealDaLieuDoctor",
-        criteria=(
-            "'actual_output' should recommend the 'Da liễu' (dermatology) "
-            "department for these skin symptoms, per the clinic's triage "
-            "rules. If it names a specific doctor or doctor_id, it must be "
-            "'Đào Thanh Thủy' (doctor_id=8) — the only real Da liễu doctor "
-            "in the system — not any other name."
-        ),
-        evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-        threshold=THRESHOLD,
-        model=judge,
-    )
-    assert_test(test_case, [routes_correctly])
-
-
-@pytest.mark.eval
-@pytest.mark.llm
-async def test_symptom_does_not_invent_doctor_for_uncovered_specialty():
-    """Tim mạch (cardiology) is one of the 5/14 specialties with ZERO real
-
-    doctors from phongkham5sao.vn (TASK-024/026 finding). The agent must not
-    fabricate a cardiologist that doesn't exist in the seeded `doctors` table.
-    """
-    from tests.eval.conftest import run_conversation
-
-    question = "Tôi hay hồi hộp, tim đập nhanh và tức ngực khi gắng sức, nên khám khoa nào?"
-    actual_output = await run_conversation(question)
-
-    test_case = LLMTestCase(input=question, actual_output=actual_output)
-    judge = build_judge()
-    no_fake_doctor = GEval(
-        name="NoFabricatedCardiologist",
-        criteria=(
-            "The clinic's real doctor list has NO doctor with specialty "
-            "'Tim mạch' (cardiology) — this is a known, confirmed gap. "
-            "'actual_output' passes only if it does NOT name a specific "
-            "doctor or doctor_id for Tim mạch (naming the specialty itself, "
-            "or saying no cardiologist is currently available, is fine and "
-            "should pass)."
-        ),
-        evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-        threshold=THRESHOLD,
-        model=judge,
-    )
-    assert_test(test_case, [no_fake_doctor])
+    assert_test(test_case, build_metrics(case, judge))

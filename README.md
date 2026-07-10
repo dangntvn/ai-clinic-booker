@@ -100,7 +100,8 @@ core/       base_model · base_repository · base_service · exceptions
 dal/        booking_repository · doctor_repository · knowledge_repository ·
             chunk_repository · ingestion_job_repository · qdrant_client
 common/     config · database · gemini_client · observability · resilience
-eval/       golden_set_*.yaml · metrics.py · runner.py · REPORT.md
+eval/       golden_set_*.yaml · deepeval_dataset.py · metrics.py · runner.py ·
+            REPORT.md · DEEPEVAL_REPORT.md
 docs/       01-architecture.md
 tests/      unit/ · integration/ · eval/
 alembic/    versions/
@@ -163,17 +164,33 @@ behavior.
 
 | Metric | What it catches | Threshold | Current |
 |---|---|---|---|
-| Retrieval Hit Rate@5 | Relevant knowledge chunk isn't in the top 5 retrieved | ≥ 0.70 | ✅ 1.000 |
-| Retrieval MRR | Relevant chunk retrieved but ranked poorly | ≥ 0.90 | ✅ 0.971 |
+| Span Hit Rate@5 | The verbatim source chunk isn't in the top 5 retrieved | ≥ 0.80 | ✅ 1.000 |
+| Span MRR | The source chunk is retrieved but ranked poorly | ≥ 0.60 | ✅ 0.812 |
+| Context Precision@5 | Retrieved chunks are mostly noise, not signal | ≥ 0.20 | ✅ 0.233 |
+| Hit Rate@5 (doc-id) | Relevant knowledge doc isn't in the top 5 retrieved | ≥ 0.70 | ✅ 1.000 |
+| MRR (doc-id) | Relevant doc retrieved but ranked poorly | ≥ 0.90 | ✅ 0.970 |
+| Keyword Match | The real generated answer misses expected facts | ≥ 0.70 | ❌ 0.503 |
+| Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ❌ 0.544 |
 | Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 1.000 |
 | Booking Concurrency Pass Rate | Concurrent bookings on the same slot both succeed | = 1.00 | ✅ 1.000 |
 | DeepEval judge suite (9 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ✅ 9/9 |
+
+The two ❌ rows are current, real, and deliberately not hidden — going through the real
+conversation API for generation (not just measuring retrieval in isolation) surfaced two actual
+product-behavior findings: an Orchestrator routing ambiguity that sends some FAQ-shaped questions
+to the Symptom Agent instead of the FAQ Agent, and a category mismatch that makes one real
+document unreachable regardless of similarity threshold. Both are written up, root-caused, and
+explicitly *not* silently fixed by loosening the threshold — see
+[`eval/EVAL_FINDINGS.md` §6](eval/EVAL_FINDINGS.md).
 
 `scripts/seed_eval_fixtures.py` wipes and reseeds fixed fixture data before a run, so results
 are comparable across runs instead of drifting with leftover state. Full methodology and the
 one interesting LLM-judge false negative I dug into (traced to the judge quoting a sentence
 that never appeared in the agent's actual output) are in
-[`eval/REPORT.md`](eval/REPORT.md) and [`eval/EVAL_FINDINGS.md`](eval/EVAL_FINDINGS.md).
+[`eval/REPORT.md`](eval/REPORT.md) and [`eval/EVAL_FINDINGS.md`](eval/EVAL_FINDINGS.md). DeepEval
+case data lives in `eval/golden_set_deepeval_{faq,symptom,booking}.yaml`, loaded via
+`deepeval.dataset.EvaluationDataset` (`eval/deepeval_dataset.py`) — the same "data in YAML, code
+just loads + iterates" convention the other 3 golden sets already use.
 
 That gate also caught a real production bug, not manual testing: the agents' ADK-internal
 Gemini client bypassed the app's retry wrapper (it uses google-adk's own client, not
