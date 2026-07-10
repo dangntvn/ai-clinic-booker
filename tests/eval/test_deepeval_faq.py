@@ -25,95 +25,50 @@
 #              A third case checks the not-found fallback (ADR-0008) using a
 #              question TASK-026 confirmed has zero real content (BHYT) —
 #              this must NOT be silently fabricated.
+#
+# UPDATED 2026-07-10 (senior-tester, TASK-029) — the 3 cases above are now
+# data-driven from eval/golden_set_deepeval_faq.yaml via
+# eval/deepeval_dataset.py::load_dataset(), loaded into a real
+# deepeval.dataset.EvaluationDataset, instead of one hardcoded
+# LLMTestCase/GEval call per test function. Behavior is unchanged: still a
+# real run_conversation() call per case, still the real RetrievalCapture
+# spy (faq_retrieval fixture), still the same 3 questions/metrics/
+# thresholds/GEval criteria text — see the YAML file's header for exactly
+# what "unchanged" means here.
 ###############################################################################
 
 import pytest
 from deepeval import assert_test
-from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric, GEval
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase
 
+from eval.deepeval_dataset import build_metrics, load_dataset
 from eval.deepeval_gemini import build_judge
 
-THRESHOLD = 0.7
+_dataset = load_dataset("golden_set_deepeval_faq.yaml")
 
 
 @pytest.mark.eval
 @pytest.mark.llm
-async def test_faq_pricing_question_grounded(faq_retrieval):
-    """Real pricing fact from eval/fixtures/knowledge_base/policy/bang-gia-xet-nghiem.md (id=20)."""
-    from tests.eval.conftest import run_conversation
+@pytest.mark.parametrize("golden", _dataset.goldens, ids=[g.name for g in _dataset.goldens])
+async def test_faq_cases(golden, faq_retrieval):
+    """Run one FAQ Agent case (question + metrics from golden.additional_metadata).
 
-    question = "Xét nghiệm nhóm máu ở phòng khám giá bao nhiêu?"
-    actual_output = await run_conversation(question)
-
-    test_case = LLMTestCase(
-        input=question,
-        actual_output=actual_output,
-        retrieval_context=faq_retrieval.contexts() or ["(no context retrieved)"],
-    )
-    judge = build_judge()
-    assert_test(
-        test_case,
-        [
-            AnswerRelevancyMetric(threshold=THRESHOLD, model=judge),
-            FaithfulnessMetric(threshold=THRESHOLD, model=judge),
-        ],
-    )
-
-
-@pytest.mark.eval
-@pytest.mark.llm
-async def test_faq_clinic_info_question_grounded(faq_retrieval):
-    """Real clinic info from eval/fixtures/knowledge_base/clinic_info/gioi-thieu.md (id=1)."""
-    from tests.eval.conftest import run_conversation
-
-    question = "Phòng khám Đa khoa 5 Sao ở địa chỉ nào và mở cửa giờ nào?"
-    actual_output = await run_conversation(question)
-
-    test_case = LLMTestCase(
-        input=question,
-        actual_output=actual_output,
-        retrieval_context=faq_retrieval.contexts() or ["(no context retrieved)"],
-    )
-    judge = build_judge()
-    assert_test(
-        test_case,
-        [
-            AnswerRelevancyMetric(threshold=THRESHOLD, model=judge),
-            FaithfulnessMetric(threshold=THRESHOLD, model=judge),
-        ],
-    )
-
-
-@pytest.mark.eval
-@pytest.mark.llm
-async def test_faq_out_of_scope_question_not_fabricated(faq_retrieval):
-    """TASK-026 confirmed (real retrieval test + WebSearch) phongkham5sao.vn has
-
-    no BHYT/insurance policy page — the real knowledge_base has nothing to
-    ground this in. The agent must not invent a policy answer.
+    See eval/golden_set_deepeval_faq.yaml for the 3 cases this parametrizes
+    over: 2 grounded-Q&A cases (AnswerRelevancy + Faithfulness) and 1
+    not-fabricated-fallback case (a GEval check), all against the real
+    orchestrator via run_conversation().
     """
     from tests.eval.conftest import run_conversation
 
-    question = "Phòng khám có nhận thanh toán bằng bảo hiểm y tế (BHYT) không?"
+    case = golden.additional_metadata
+    question = case["input"]
     actual_output = await run_conversation(question)
 
+    fallback = case.get("not_found_fallback", "(no context retrieved)")
     test_case = LLMTestCase(
         input=question,
         actual_output=actual_output,
-        retrieval_context=faq_retrieval.contexts() or ["(no real content covers BHYT policy)"],
+        retrieval_context=faq_retrieval.contexts() or [fallback],
     )
     judge = build_judge()
-    not_fabricated = GEval(
-        name="NoFabricatedPolicy",
-        criteria=(
-            "The knowledge_base has no real content about BHYT/insurance policy. "
-            "'actual_output' passes only if it admits it doesn't have this "
-            "information / suggests contacting the clinic directly, and does "
-            "NOT assert a specific BHYT acceptance policy (yes or no) as fact."
-        ),
-        evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-        threshold=THRESHOLD,
-        model=judge,
-    )
-    assert_test(test_case, [not_fabricated])
+    assert_test(test_case, build_metrics(case, judge))

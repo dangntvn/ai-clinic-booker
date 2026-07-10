@@ -20,6 +20,29 @@
 #              checked against the real BookingRepository call captured by
 #              `booking_capture` (TASK-027 DoD: no mocked actual_output, and
 #              no metric added "for the sake of it").
+#
+# UPDATED 2026-07-10 (senior-tester, TASK-029) — the first 3 DeepEval cases
+# below (test_booking_proposes_only_real_available_slot,
+# test_booking_confirms_before_create_then_creates_real_booking,
+# test_booking_non_work_day_no_fabricated_slots) are now data-driven from
+# eval/golden_set_deepeval_booking.yaml via
+# eval/deepeval_dataset.py::load_dataset(), loaded into a real
+# deepeval.dataset.EvaluationDataset. Behavior is unchanged: still real
+# run_conversation()/run_conversation_turns() calls, still the real
+# BookingToolCapture spy, still the same questions/metrics/thresholds/GEval
+# criteria text, still the same booking cleanup in a `finally` block
+# (BUG-008) — now applied defensively to every parametrized case rather
+# than only the multi-turn one (harmless no-op for the 2 that never call
+# create_booking, since booking_capture.results is then empty).
+#
+# test_booking_resolves_relative_date_before_checking_slots and
+# test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday (BUG-009)
+# are OUT OF SCOPE for TASK-029: they don't build an LLMTestCase or call
+# assert_test at all (deterministic pytest asserts against the real captured
+# tool calls, no LLM-judge metric involved) — TASK-029 is specifically about
+# refactoring the LLM-judge-metric cases (see EVAL_FINDINGS.md/TASK-029 for
+# why "9 case DeepEval" means these 9, not these 9 plus these 2). Left
+# unchanged below.
 ###############################################################################
 
 import re
@@ -27,132 +50,77 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from deepeval import assert_test
-from deepeval.metrics import GEval
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase
 
+from eval.deepeval_dataset import build_metrics, load_dataset, substitute
 from eval.deepeval_gemini import build_judge
 
-THRESHOLD = 0.7
 REAL_DOCTOR_ID = 3  # Phạm Thị Lan Hương, Nội tổng quát — eval/seed_result_2026-07-08.json
 WORK_DAY = "2026-07-13"  # Monday — inside the seeded Mon-Sat test schedule
 NON_WORK_DAY = "2026-07-19"  # Sunday — outside the seeded Mon-Sat test schedule
 
+_PLACEHOLDERS = {
+    "REAL_DOCTOR_ID": REAL_DOCTOR_ID,
+    "WORK_DAY": WORK_DAY,
+    "NON_WORK_DAY": NON_WORK_DAY,
+}
 
-@pytest.mark.eval
-@pytest.mark.llm
-async def test_booking_proposes_only_real_available_slot(booking_capture):
-    from tests.eval.conftest import run_conversation
-
-    question = f"Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống ngày {WORK_DAY} không?"
-    actual_output = await run_conversation(question)
-
-    test_case = LLMTestCase(
-        input=question,
-        actual_output=actual_output,
-        context=[booking_capture.context_text()],
-    )
-    judge = build_judge()
-    faithful_to_tool = GEval(
-        name="FaithfulToCheckAvailableSlots",
-        criteria=(
-            "'context' contains the real check_available_slots(...) tool call "
-            "and its actual return value. 'actual_output' passes only if "
-            "every specific time it offers the user is a time that literally "
-            "appears in that tool's returned list — it must not invent a "
-            "time slot not present in 'context'."
-        ),
-        evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
-        threshold=THRESHOLD,
-        model=judge,
-    )
-    assert_test(test_case, [faithful_to_tool])
+_dataset = load_dataset("golden_set_deepeval_booking.yaml")
 
 
 @pytest.mark.eval
 @pytest.mark.llm
-async def test_booking_confirms_before_create_then_creates_real_booking(booking_capture):
-    """Exercises the full BIZ-001 §9 confirm-then-execute round trip.
+@pytest.mark.parametrize("golden", _dataset.goldens, ids=[g.name for g in _dataset.goldens])
+async def test_booking_cases(golden, booking_capture):
+    """Run one Booking Agent DeepEval case (from golden.additional_metadata).
 
-    BUG-008: create_booking here creates a real, permanent row — cancel it in
-    `finally` so a repeat run against the same DB finds the slot free again.
+    See eval/golden_set_deepeval_booking.yaml for the 3 cases this
+    parametrizes over: proposes-only-real-slots, the 2-turn confirm-then-book
+    round trip (BIZ-001 §9), and non-work-day no-fabricated-slots — all
+    GEval checks against the real BookingRepository call captured by
+    `booking_capture`.
     """
     from common.database import AsyncSessionFactory
     from dal.booking_repository import BookingRepository
-    from tests.eval.conftest import run_conversation_turns
+    from tests.eval.conftest import run_conversation, run_conversation_turns
 
-    turn_1 = (
-        f"Tôi tên Nguyễn Văn A, số điện thoại 0912345678. Tôi muốn đặt lịch khám với "
-        f"bác sĩ có mã doctor_id={REAL_DOCTOR_ID} vào lúc 09:00 ngày {WORK_DAY}."
-    )
-    turn_2 = "Đúng rồi, xác nhận đặt lịch giúp tôi."
+    case = golden.additional_metadata
+    turns = case.get("turns")
+
     try:
-        first_reply, second_reply = await run_conversation_turns([turn_1, turn_2])
+        if turns:
+            resolved_turns = [substitute(t, **_PLACEHOLDERS) for t in turns]
+            replies = await run_conversation_turns(resolved_turns)
+            question = "\n".join(resolved_turns)
+            actual_output = "\n".join(f"[turn {i + 1}] {reply}" for i, reply in enumerate(replies))
+        else:
+            question = substitute(case["input"], **_PLACEHOLDERS)
+            actual_output = await run_conversation(question)
 
-        assert "create_booking" in booking_capture.context_text(), (
-            "create_booking was never called across the 2-turn conversation — "
-            f"captured calls: {booking_capture.context_text()}"
-        )
+        tool_call = case.get("requires_tool_call")
+        if tool_call:
+            assert tool_call in booking_capture.context_text(), (
+                f"{tool_call} was never called across the conversation — "
+                f"captured calls: {booking_capture.context_text()}"
+            )
 
         test_case = LLMTestCase(
-            input=f"{turn_1}\n{turn_2}",
-            actual_output=f"[turn 1] {first_reply}\n[turn 2] {second_reply}",
+            input=question,
+            actual_output=actual_output,
             context=[booking_capture.context_text()],
         )
         judge = build_judge()
-        faithful_to_tool = GEval(
-            name="FaithfulToBookingOutcome",
-            criteria=(
-                "'context' contains the real create_booking(...) tool call and its "
-                "actual return value (either {'status': 'confirmed', 'booking_id': "
-                "N} or {'status': 'slot_taken'}). 'actual_output' passes only if it "
-                "accurately reports that exact outcome (confirmed with a booking "
-                "reference, or apologizes and offers another time if slot_taken) "
-                "and does not claim success if the real result was slot_taken, or "
-                "vice versa."
-            ),
-            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
-            threshold=THRESHOLD,
-            model=judge,
-        )
-        assert_test(test_case, [faithful_to_tool])
+        assert_test(test_case, build_metrics(case, judge, **_PLACEHOLDERS))
     finally:
+        # BUG-008: cancel any booking this case created so a repeat run starts
+        # from the same free-slot state. No-op for cases that never reach
+        # create_booking (booking_capture.results is then empty).
         created_ids = [
             result.id for name, result in booking_capture.results if name == "create_booking"
         ]
         for booking_id in created_ids:
             async with AsyncSessionFactory() as session:
                 await BookingRepository(session).cancel_booking(booking_id)
-
-
-@pytest.mark.eval
-@pytest.mark.llm
-async def test_booking_non_work_day_no_fabricated_slots(booking_capture):
-    """doctor_id=3's seeded work_days is Mon-Sat — Sunday must show zero real slots."""
-    from tests.eval.conftest import run_conversation
-
-    question = f"Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống ngày {NON_WORK_DAY} không?"
-    actual_output = await run_conversation(question)
-
-    test_case = LLMTestCase(
-        input=question,
-        actual_output=actual_output,
-        context=[booking_capture.context_text()],
-    )
-    judge = build_judge()
-    faithful_to_empty_result = GEval(
-        name="NoFabricatedSlotsOnNonWorkDay",
-        criteria=(
-            f"'context' shows check_available_slots returned an empty list for "
-            f"{NON_WORK_DAY} (doctor doesn't work Sundays). 'actual_output' "
-            "passes only if it tells the user there are no available slots "
-            "that day (optionally suggesting another day) — it must NOT list "
-            "any specific available time for that date."
-        ),
-        evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
-        threshold=THRESHOLD,
-        model=judge,
-    )
-    assert_test(test_case, [faithful_to_empty_result])
 
 
 def _exact_relative_cases() -> list[tuple[str, date]]:

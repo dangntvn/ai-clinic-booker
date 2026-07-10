@@ -1,0 +1,80 @@
+# DeepEval case data for tests/eval/test_deepeval_booking.py (TASK-029).
+#
+# Extracted verbatim from the hardcoded LLMTestCase/GEval calls that lived
+# directly in test_deepeval_booking.py before this refactor — no question,
+# metric, threshold, or GEval criteria text was reworded. Only the *data*
+# moved here; test_deepeval_booking.py still runs the real orchestrator
+# (run_conversation()/run_conversation_turns()) and the real
+# BookingToolCapture spy at test time, and still cancels any booking it
+# creates so a repeat run starts from the same free-slot state (BUG-008).
+#
+# `{REAL_DOCTOR_ID}` / `{WORK_DAY}` / `{NON_WORK_DAY}` are literal
+# placeholders substituted at test time from the same Python constants the
+# pre-refactor test file hardcoded as f-string interpolations
+# (REAL_DOCTOR_ID=3, WORK_DAY="2026-07-13", NON_WORK_DAY="2026-07-19" — see
+# test_deepeval_booking.py) — plain string .replace(), not str.format(),
+# because the "FaithfulToBookingOutcome" criteria below contains literal
+# `{'status': ...}` dict-repr text that str.format() would misparse as a
+# format field.
+#
+# context_kind: "booking_tool" attaches booking_capture.context_text() as
+# `context=[...]` (BookingToolCapture has no context_kind: "none" case in
+# this file — every booking case uses it, matching the original file).
+#
+# `turns` (instead of `input`) marks a multi-turn case
+# (test_booking_confirms_before_create_then_creates_real_booking is the only
+# one — the BIZ-001 §9 confirm-then-execute round trip needs 2 turns).
+#
+# `requires_tool_call` reproduces the original file's one explicit assertion
+# (`assert "create_booking" in booking_capture.context_text()`) that isn't
+# itself part of any GEval metric.
+cases:
+  - name: test_booking_proposes_only_real_available_slot
+    input: "Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống ngày {WORK_DAY} không?"
+    context_kind: booking_tool
+    metrics:
+      - type: geval
+        name: FaithfulToCheckAvailableSlots
+        criteria: >-
+          'context' contains the real check_available_slots(...) tool call
+          and its actual return value. 'actual_output' passes only if
+          every specific time it offers the user is a time that literally
+          appears in that tool's returned list — it must not invent a
+          time slot not present in 'context'.
+        evaluation_params: [actual_output, context]
+        threshold: 0.7
+
+  - name: test_booking_confirms_before_create_then_creates_real_booking
+    turns:
+      - "Tôi tên Nguyễn Văn A, số điện thoại 0912345678. Tôi muốn đặt lịch khám với bác sĩ có mã doctor_id={REAL_DOCTOR_ID} vào lúc 09:00 ngày {WORK_DAY}."
+      - "Đúng rồi, xác nhận đặt lịch giúp tôi."
+    context_kind: booking_tool
+    requires_tool_call: create_booking
+    metrics:
+      - type: geval
+        name: FaithfulToBookingOutcome
+        criteria: >-
+          'context' contains the real create_booking(...) tool call and its
+          actual return value (either {'status': 'confirmed', 'booking_id':
+          N} or {'status': 'slot_taken'}). 'actual_output' passes only if it
+          accurately reports that exact outcome (confirmed with a booking
+          reference, or apologizes and offers another time if slot_taken)
+          and does not claim success if the real result was slot_taken, or
+          vice versa.
+        evaluation_params: [actual_output, context]
+        threshold: 0.7
+
+  - name: test_booking_non_work_day_no_fabricated_slots
+    input: "Bác sĩ có mã doctor_id={REAL_DOCTOR_ID} còn giờ trống ngày {NON_WORK_DAY} không?"
+    context_kind: booking_tool
+    metrics:
+      - type: geval
+        name: NoFabricatedSlotsOnNonWorkDay
+        criteria: >-
+          'context' shows check_available_slots returned an empty list for
+          {NON_WORK_DAY} (doctor doesn't work Sundays). 'actual_output'
+          passes only if it tells the user there are no available slots
+          that day (optionally suggesting another day) — it must NOT list
+          any specific available time for that date.
+        evaluation_params: [actual_output, context]
+        threshold: 0.7

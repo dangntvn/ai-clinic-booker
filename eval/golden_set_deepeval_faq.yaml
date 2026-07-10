@@ -1,0 +1,57 @@
+# DeepEval case data for tests/eval/test_deepeval_faq.py (TASK-029).
+#
+# Extracted verbatim from the hardcoded LLMTestCase/GEval calls that lived
+# directly in test_deepeval_faq.py before this refactor — no question,
+# metric, threshold, or GEval criteria text was reworded. Only the *data*
+# moved here; test_deepeval_faq.py still runs the real orchestrator
+# (run_conversation()) and the real RetrievalCapture spy at test time
+# (eval/deepeval_dataset.py only loads this file into an EvaluationDataset
+# and builds the deepeval Metric objects a case's `metrics` list describes).
+#
+# Field reference:
+#   name               - stable id, also used as the pytest parametrize id
+#                        (was the test function name pre-refactor)
+#   input              - the user question sent via run_conversation()
+#   context_kind        - "retrieval" (attach faq_retrieval.contexts(), or
+#                        `not_found_fallback` if nothing was retrieved)
+#   not_found_fallback  - fallback retrieval_context text when context_kind
+#                        is "retrieval" and no chunk was captured this run
+#   metrics             - list of metric specs:
+#     type: answer_relevancy | faithfulness  -> {type, threshold}
+#     type: geval                            -> {type, name, criteria,
+#                                                evaluation_params, threshold}
+cases:
+  - name: test_faq_pricing_question_grounded
+    input: "Xét nghiệm nhóm máu ở phòng khám giá bao nhiêu?"
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_faq_clinic_info_question_grounded
+    input: "Phòng khám Đa khoa 5 Sao ở địa chỉ nào và mở cửa giờ nào?"
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_faq_out_of_scope_question_not_fabricated
+    input: "Phòng khám có nhận thanh toán bằng bảo hiểm y tế (BHYT) không?"
+    context_kind: retrieval
+    not_found_fallback: "(no real content covers BHYT policy)"
+    metrics:
+      - type: geval
+        name: NoFabricatedPolicy
+        criteria: >-
+          The knowledge_base has no real content about BHYT/insurance policy.
+          'actual_output' passes only if it admits it doesn't have this
+          information / suggests contacting the clinic directly, and does
+          NOT assert a specific BHYT acceptance policy (yes or no) as fact.
+        evaluation_params: [input, actual_output]
+        threshold: 0.7

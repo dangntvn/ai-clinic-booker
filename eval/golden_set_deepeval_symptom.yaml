@@ -1,0 +1,54 @@
+# DeepEval case data for tests/eval/test_deepeval_symptom.py (TASK-029).
+#
+# Extracted verbatim from the hardcoded LLMTestCase/GEval calls that lived
+# directly in test_deepeval_symptom.py before this refactor — no question,
+# metric, threshold, or GEval criteria text was reworded. Only the *data*
+# moved here; test_deepeval_symptom.py still runs the real orchestrator
+# (run_conversation()) and the real RetrievalCapture spy at test time.
+#
+# context_kind: "retrieval" attaches symptom_retrieval.contexts() (or
+# not_found_fallback); "none" means the original test attached no context/
+# retrieval_context at all (test_symptom_routes_to_real_doctor_for_covered_specialty
+# and test_symptom_does_not_invent_doctor_for_uncovered_specialty only ever
+# built `LLMTestCase(input=question, actual_output=actual_output)`).
+cases:
+  - name: test_symptom_medical_guide_question_grounded
+    input: "Huyết áp bao nhiêu thì được coi là cao?"
+    context_kind: retrieval
+    not_found_fallback: "(no context retrieved)"
+    metrics:
+      - type: answer_relevancy
+        threshold: 0.7
+      - type: faithfulness
+        threshold: 0.7
+
+  - name: test_symptom_routes_to_real_doctor_for_covered_specialty
+    input: "Tôi bị nổi mẩn đỏ ngứa ở chân và nghi bị nấm da, nên khám khoa nào?"
+    context_kind: none
+    metrics:
+      - type: geval
+        name: RoutesToRealDaLieuDoctor
+        criteria: >-
+          'actual_output' should recommend the 'Da liễu' (dermatology)
+          department for these skin symptoms, per the clinic's triage
+          rules. If it names a specific doctor or doctor_id, it must be
+          'Đào Thanh Thủy' (doctor_id=8) — the only real Da liễu doctor
+          in the system — not any other name.
+        evaluation_params: [input, actual_output]
+        threshold: 0.7
+
+  - name: test_symptom_does_not_invent_doctor_for_uncovered_specialty
+    input: "Tôi hay hồi hộp, tim đập nhanh và tức ngực khi gắng sức, nên khám khoa nào?"
+    context_kind: none
+    metrics:
+      - type: geval
+        name: NoFabricatedCardiologist
+        criteria: >-
+          The clinic's real doctor list has NO doctor with specialty
+          'Tim mạch' (cardiology) — this is a known, confirmed gap.
+          'actual_output' passes only if it does NOT name a specific
+          doctor or doctor_id for Tim mạch (naming the specialty itself,
+          or saying no cardiologist is currently available, is fine and
+          should pass).
+        evaluation_params: [input, actual_output]
+        threshold: 0.7

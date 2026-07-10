@@ -62,13 +62,13 @@ from eval.metrics import (
     chunk_hits,
     faithfulness_score,
     first_hit_rank,
+    hit_rate_at_k,
     hit_rate_at_k_from_hits,
     intent_routing_accuracy,
     keyword_match,
-    mean_hit_rate_at_k,
-    mrr,
     mrr_from_hits,
     precision_from_hits,
+    reciprocal_rank,
 )
 
 _EVAL_DIR = Path(__file__).parent
@@ -192,15 +192,8 @@ async def run_rag_eval() -> dict:
             retrieved_texts = [r["payload"].get("text", "") for r in results]
 
             # --- doc-id-level retrieval (pre-existing metric, unchanged formula) ---
-            doc_hit.append(
-                1.0 if set(retrieved_ids[:K]) & set(relevant_ids) else 0.0
-            )
-            doc_rr = 0.0
-            for rank, kid in enumerate(retrieved_ids, start=1):
-                if kid in relevant_ids:
-                    doc_rr = 1.0 / rank
-                    break
-            doc_mrr.append(doc_rr)
+            doc_hit.append(hit_rate_at_k(retrieved_ids, relevant_ids, K))
+            doc_mrr.append(reciprocal_rank(retrieved_ids, relevant_ids))
 
             # --- span-level retrieval (new) ---
             span_rank = None
@@ -294,7 +287,9 @@ async def run_intent_eval() -> tuple[float, list[dict]]:
                 for event in session.events:
                     if event.author and event.author not in _NON_AGENT_AUTHORS:
                         actual_intent = event.author
-            scored.append({"expected_intent": case["expected_intent"], "actual_intent": actual_intent})
+            scored.append(
+                {"expected_intent": case["expected_intent"], "actual_intent": actual_intent}
+            )
 
     return intent_routing_accuracy(scored), scored
 
@@ -409,19 +404,27 @@ def _write_report(rag_result: dict, intent_result: tuple, booking_result: tuple)
 
     intent_status = "✅" if intent_accuracy >= INTENT_ACCURACY_THRESHOLD else "❌"
     booking_status = "✅" if booking_pass_rate >= BOOKING_PASS_THRESHOLD else "❌"
+    intent_row = (
+        f"| Intent Routing Accuracy | {intent_accuracy:.3f} | "
+        f"≥ {INTENT_ACCURACY_THRESHOLD:.2f} | {intent_status} |"
+    )
+    booking_row = (
+        f"| Booking Concurrency Pass Rate | {booking_pass_rate:.3f} | "
+        f"= {BOOKING_PASS_THRESHOLD:.2f} | {booking_status} |"
+    )
     lines += [
         "",
         "## 2. Intent routing",
         "",
         "| Metric | Score | Target | Status |",
         "|--------|-------|--------|--------|",
-        f"| Intent Routing Accuracy | {intent_accuracy:.3f} | ≥ {INTENT_ACCURACY_THRESHOLD:.2f} | {intent_status} |",
+        intent_row,
         "",
         "## 3. Booking concurrency",
         "",
         "| Metric | Score | Target | Status |",
         "|--------|-------|--------|--------|",
-        f"| Booking Concurrency Pass Rate | {booking_pass_rate:.3f} | = {BOOKING_PASS_THRESHOLD:.2f} | {booking_status} |",
+        booking_row,
     ]
 
     (_EVAL_DIR / "REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
