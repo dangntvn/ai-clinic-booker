@@ -5,7 +5,7 @@
 [![Google ADK](https://img.shields.io/badge/Google_ADK-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-DC244C?logo=qdrant&logoColor=white)](https://qdrant.tech/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-D22128?logo=apache&logoColor=white)](http://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/badge/License-Apache_2.0-D22128?logo=apache&logoColor=white)](https://www.apache.org/licenses/LICENSE-2.0)
 
 A multi-agent conversational backend for a clinic booking assistant. Patients talk to it in
 natural language — ask about policy/insurance, describe a symptom to get routed to the right
@@ -162,24 +162,51 @@ accuracy from 95% to 80%. That needs its own gate, run against the live stack wi
 Gemini calls (`pytest -m eval`) — no mocks, because the thing being measured *is* the model's
 behavior.
 
+Numbers below are as of 2026-07, all green. The eval suite regenerates them on every run —
+[`eval/REPORT.md`](eval/REPORT.md) is the auto-generated, always-current source of truth; if
+the two ever disagree, trust the report, not this table.
+
 | Metric | What it catches | Threshold | Current |
 |---|---|---|---|
 | Span Hit Rate@5 | The verbatim source chunk isn't in the top 5 retrieved | ≥ 0.80 | ✅ 1.000 |
 | Span MRR | The source chunk is retrieved but ranked poorly | ≥ 0.60 | ✅ 0.812 |
-| Context Precision@5 | Retrieved chunks are mostly noise, not signal | ≥ 0.20 | ✅ 0.233 |
+| Context Precision@5¹ | Retrieved chunks are mostly noise, not signal | ≥ 0.20 | ✅ 0.233 |
 | Hit Rate@5 (doc-id) | Relevant knowledge doc isn't in the top 5 retrieved | ≥ 0.70 | ✅ 1.000 |
 | MRR (doc-id) | Relevant doc retrieved but ranked poorly | ≥ 0.90 | ✅ 0.970 |
 | Keyword Match | The real generated answer misses expected facts | ≥ 0.70 | ✅ 0.821 |
 | Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ✅ 0.874 |
 | Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 0.917 |
-| Booking Concurrency Pass Rate | Concurrent bookings on the same slot both succeed | = 1.00 | ✅ 1.000 |
+| Booking Concurrency Pass Rate | Two concurrent bookings on the same slot both commit (double-booking) | = 1.00 | ✅ 1.000 |
 | DeepEval judge suite (15 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ⚠️ 10/15 clean, 4 persona trade-off, 1 still open |
+
+¹ `Context Precision@5`'s threshold (`≥ 0.20`) sits close to its current value (`0.233`) by
+design, not because it was tuned to just barely pass: retrieval intentionally casts a wide
+top-K net (`TOP_K = 6`) to protect recall (missing the right chunk is far more costly than
+including an extra one), which structurally caps how high precision can go. 0.20 is the floor
+below which retrieved context is mostly noise; it isn't meant to track close to 1.0 the way the
+hit-rate/MRR metrics are.
 
 The two previously-❌ generation-quality rows (Keyword Match, Faithfulness) are now fixed and
 green — going through the real conversation API for generation (not just measuring retrieval in
 isolation) originally surfaced two product-behavior findings (an Orchestrator routing ambiguity
 and a category mismatch), both root-caused, fixed, and re-confirmed passing — see
 [`eval/EVAL_FINDINGS.md` §6](eval/EVAL_FINDINGS.md).
+
+**A note on what "real conversation API" covers.** The claim above is true, but not uniform
+across every row — there are 3 distinct coverage levels in this eval suite, and conflating them
+would overstate how end-to-end some of it is:
+- **Retrieval, RAG generation, intent routing** — full HTTP round-trip through the real
+  `/api/v1/agents/booker/conversations/{conversation_id}/messages` endpoint, real Gemini calls,
+  real Qdrant/Postgres.
+- **DeepEval judge suite (15 cases)** — real runtime/LLM/DB/Qdrant, but in-process: built via
+  `build_runtime()` and driven through `runner.run_async()` (see
+  `tests/eval/conftest.py::run_conversation`), skipping the HTTP layer and
+  `modules/conversation/controller.py`'s routing/validation.
+- **Booking Concurrency Pass Rate** — also in-process, but one level deeper: it calls
+  `BookingRepository.create_booking` directly, with no LLM in the loop at all. There's no REST
+  endpoint for creating a booking to hit here — the only real path is a two-turn, LLM-driven
+  conversation, which isn't deterministic enough to pin down a race condition. Going straight to
+  the repository is the deliberate choice that makes the race reproducible.
 
 The DeepEval row is intentionally not a clean fraction. Of 15 cases: 8 pass with no concerns; 4 dip
 below the Answer Relevancy threshold purely from a friendlier conversational persona (the underlying
@@ -302,6 +329,12 @@ built here:
 Calling these out explicitly is the point: the layering leaves clean seams for them
 (middleware in `app/`, policy in `core/`), but they are not implemented.
 
+**Not a medical device.** This is a portfolio/demo project. The emergency-detection layer
+(see [Not trusting the LLM](#not-trusting-the-llm-with-anything-that-has-to-be-true)) is an
+architecture pattern for AI safety-net design, not a certified or validated clinical triage
+system — it is not intended for, and must not be used for, real patient care or emergency
+medical decisions.
+
 ## Roadmap
 
 - Exercise the ADK retry fix against a real transient 503 in a live eval run — currently
@@ -312,7 +345,7 @@ Calling these out explicitly is the point: the layering leaves clean seams for t
 
 ## About
 
-Built by **Dang NT** — a software engineer with 18 years of experience across system
+Built by **Dang NT** — a software engineer with 18+ years of experience across system
 architecture, fullstack development, and AI applications. I design systems end to end:
 drawing the module boundaries, writing the code, and — as this project shows — proving the
 result with measurement rather than assertion.
