@@ -552,7 +552,127 @@ calls needed) was run as a substitute regression check and passed clean: **69 pa
 
 ---
 
+## 9. 2026-07-13 (later session, TASK-030 Group A) — post-rename (`ai-agents` → `ai_agents`) verification: no rename regression, 1 new infra-methodology observation, 1 date-fixture fragility observation — classification: **0 new product bugs, 1 infra/process gap noted, 1 test-fragility observation noted**
+
+senior-tester was asked to run the real eval suite against commit `d884335` (branch
+`chore/TASK-030-readme-portfolio-polish`, worktree
+`H:/thanhnt-projects/AI-Clinic-Booker-task030-backend`), specifically to rule out a residual risk
+`code-reviewer` flagged: `orchestrator/agent.py::_load_sub_agents()` catches `ImportError` and
+silently `continue`s, so a broken import for one domain agent post-rename would let the Orchestrator
+build "successfully" with fewer sub-agents, undetected by any existing unit test. CEO had raised a
+Gemini monthly spend cap that blocked the first attempt (see
+`.claude/memory/2026-07-13-eval-blocked-gemini-spend-cap.md`); after it was raised, ran the full
+suite twice (fresh reseed before each).
+
+### 9a. Infra/methodology finding — the shared docker `app` container was stale relative to the branch under test
+
+`eval/runner.py::run_intent_eval()` and the *generation* half of `run_rag_eval()` call the real HTTP
+conversation API at `http://localhost:8000`, i.e. whatever code is baked into the shared
+`ai-clinic-booker-app-1` container — not the pytest process's own in-process code. Checked and found
+the running container's image was last built **before** commit `d884335`
+(`docker exec ai-clinic-booker-app-1 python -c "import ai_agents"` → `ModuleNotFoundError`; its
+`/app/ai-agents/` still has the old hyphenated name, file timestamps from Jul 2). This means the
+classic gate's **Intent Routing Accuracy** number (and the RAG generation Keyword
+Match/Faithfulness numbers) reflect pre-rename code, not commit `d884335` — expected, since TASK-030
+hasn't merged to `main` yet (the container is presumably built from `main`), but worth recording
+because it means **the classic gate's own HTTP-dependent metrics cannot verify a not-yet-merged
+branch's runtime behavior** — a real gap for any future rename/deploy-risk verification task, not
+just this one.
+
+Attempted `docker compose build app` from the worktree to make the container reflect the branch
+(after tagging the existing image `ai-clinic-booker-app:pre-task030-verify` as a restore point) —
+correctly **blocked by the permission system** as unauthorized modification of team-shared
+infrastructure; not attempted further, confirmed via `docker images`/`docker inspect` that nothing
+was actually changed. Instead, verified the residual risk **in-process**: every
+`test_deepeval_{faq,symptom,booking}.py` case already calls `app.runtime.build_runtime()` +
+`Runner.run_async()` directly (`tests/eval/conftest.py::run_conversation()`), which exercises the
+renamed `ai_agents` package straight from the worktree, no container dependency. Ran the full
+17-case DeepEval suite plus a one-off ad-hoc in-process script (same pattern, not committed) for the
+3 `emergency_agent` cases from `golden_set_intent.yaml` (no DeepEval file covers emergency). **Result:
+all 4 domains (faq/symptom/booking/emergency) routed correctly through the real Orchestrator built
+from commit `d884335`** — confirmed via each conversation's event-`author` trace showing
+`orchestrator_agent` → the correct domain sub-agent. **This rules out the code-reviewer's residual
+risk**, more reliably than the classic gate's HTTP path would have.
+
+**Recommendation** (not actioned, for Team Lead): (a) if a future rename/deploy-risk task wants the
+classic gate's own HTTP-path metrics to be trustworthy, get explicit sign-off to rebuild+restart just
+the `app` service from the branch under test (`docker compose build app && docker compose up -d
+--no-deps app`), restoring `ai-clinic-booker-app:latest` from the `pre-task030-verify` backup tag
+afterward if other parallel work depends on the container's prior state; (b) consider adding a
+permanent unit test asserting `len(orchestrator_agent.sub_agents) == 4` with the expected names, so
+this residual-risk class of bug doesn't need an ad-hoc script to verify next time.
+
+### 9b. Date-fixture fragility — `test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday` fails when "today" is itself the ambiguous weekday
+
+This deterministic (non-LLM-judge) test asks "Bác sĩ có mã doctor_id=3 còn giờ trống thứ 2 tuần sau
+không?" ("next Monday") and asserts the agent resolves *some* future Monday and calls
+`check_available_slots` (BUG-009's own test, added 2026-07-10, previously passing — see
+`eval/DEEPEVAL_REPORT.md`'s prior committed state showing "2 more deterministic BUG-009 tests...
+pass"). It **failed reproducibly 5/5 times this session** (2 full-suite runs + 3 isolated reruns,
+including a `--count=3` repeat): the agent never called `check_available_slots` at all, instead
+presumably asking a clarifying question (consistent with the already-documented pattern in §4/§7c/§8b
+of the agent preferring to ask rather than guess an ambiguous relative date) — the sibling
+`test_booking_resolves_relative_date_before_checking_slots` ("hôm nay"/"ngày mai", unambiguous
+phrases) passed cleanly both times, confirming this is specific to the ambiguous phrase, not a
+general breakdown of relative-date handling.
+
+**Root cause hypothesis**: today's real wall-clock date, **2026-07-13, is itself a Monday**. Asking
+"next Monday" ("thứ 2 tuần sau") from a Monday anchor is a materially different, more ambiguous
+question (does the patient mean today, in 7 days, or the Monday after?) than asking it from, say, a
+Thursday — which is presumably the day-of-week this test was last confirmed passing on. This test's
+ambiguity is implicitly anchored to "today" rather than being a fixed, day-of-week-independent
+scenario, so its pass/fail outcome can depend on which real calendar day the suite happens to run on
+— a form of test fragility this project hasn't previously documented for this specific case (distinct
+from the already-known `WORK_DAY`/`NON_WORK_DAY` hardcoded-constant staleness noted below).
+
+**Not classified as a rename regression** — nothing about a package rename plausibly changes LLM
+date-resolution behavior, and the mechanism (today literally being the named weekday) is a
+self-contained explanation requiring no code-behavior change. **Not fixed by tester** (would require
+either loosening the test's assertion to accept "agent asked which Monday" as a passing shape — the
+same open class of gap as §4/§7c/§8b's judge-criteria discussions — or making the golden set
+day-of-week-aware). Flagging as a candidate follow-up for whoever next touches this test file.
+
+**Separately, also noted**: `test_deepeval_booking.py`'s `WORK_DAY = "2026-07-13"` constant
+(hardcoded 2026-07-10 as "a future Monday inside the seeded Mon-Sat schedule") is now literally
+today's date — a related but distinct staleness issue (a hardcoded "future" date silently becoming
+"today" through the mere passage of time). Did not observe this causing an actual test failure this
+session (the `WORK_DAY`-driven cases `test_booking_proposes_only_real_available_slot`/
+`test_booking_non_work_day_no_fabricated_slots` continue to fail/pass for their own already-documented
+reasons, not because of same-day semantics specifically) — recorded here so it doesn't have to be
+re-discovered, and as a general reminder that this project's eval suite has multiple hardcoded
+relative-date constants that will keep drifting into "today" or "the past" and should eventually be
+computed relative to the actual run time instead.
+
+### 9c. No new product bug found; existing findings §7d/§8b confirmed still current, unaffected by the rename
+
+Cross-checked every DeepEval failure this session against this file's own history: `test_faq_pricing_question_grounded`
+(0.667, both runs) and `test_faq_specialties_overview_question_grounded` (0.429/0.286) exactly match
+§7d's already-documented persona/relevancy trade-off. `test_booking_proposes_only_real_available_slot`
+(0.0, both runs) exactly matches §8b's already-escalated "doesn't quote specific times" finding —
+still awaiting the Team Lead decision §8b already asked for (prompt fix vs. GEval criteria revision);
+this session adds no new information to that decision beyond re-confirming it still reproduces. 3
+FAQ cases hit a transient Gemini `503 UNAVAILABLE` mid-judge on the second run only (passed cleanly
+on the first) — same infra-flakiness class as §2's 503s, not a quality or code finding. Full detail
+and per-case scores in [`DEEPEVAL_REPORT.md`](./DEEPEVAL_REPORT.md); classic gate numbers and the
+container-staleness caveat in [`REPORT.md`](./REPORT.md).
+
+---
+
 ## Conclusion
+
+**Updated 2026-07-13 (TASK-030 Group A verification session, after the spend cap was raised)**: the
+package rename `ai-agents/` → `ai_agents/` (commit `d884335`) introduced **no regression and no new
+product bug** (§9). The code-reviewer's residual risk — a domain agent silently dropped by
+`_load_sub_agents()`'s swallowed `ImportError` — is **ruled out**: all 4 domains
+(faq/symptom/booking/emergency) verified routing correctly through the real, in-process Orchestrator
+built from this exact commit (§9a). One infra/methodology gap was newly documented (the shared docker
+`app` container was stale relative to the branch under test, making the classic gate's own
+HTTP-dependent metrics unable to verify a not-yet-merged branch — §9a), and one date-fixture
+fragility was newly observed (`test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday`
+fails when "today" is itself the ambiguous weekday named in the test — §9b). Every DeepEval failure
+this session reproduces an already-documented pre-rename finding (§7d, §8b) or is explainable by
+today's specific calendar date or transient Gemini `503`s (§9c) — **none are new, none are caused by
+the rename**.
 
 **Updated 2026-07-13 (later session)**: BUG-014 is confirmed fixed with no regression (§8a). BUG-015's
 diagnosed root cause is confirmed fixed, and one of its two named test cases now passes cleanly, but
