@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Booking Agent tools — thin wrappers over
-#              dal/booking_repository; no SQL, no race-condition handling
-#              here (constraint lives in dal/, ARCH-001 §4). Each tool owns
-#              its own DB session since ADK tool functions are called
-#              independently by the LLM, not injected with a shared request
-#              session the way FastAPI Depends() works.
+# Description: Booking Agent tools — thin wrappers over dal/ repositories
+#              (booking_repository for slots/bookings, doctor_repository for
+#              the name->doctor_id lookup added for BUG-015); no SQL, no
+#              race-condition handling here (constraint lives in dal/,
+#              ARCH-001 §4). Name matching is a pure core/domain helper, not
+#              SQL. Each tool owns its own DB session since ADK tool functions
+#              are called independently by the LLM, not injected with a shared
+#              request session the way FastAPI Depends() works.
 ###############################################################################
 
 from datetime import datetime
@@ -25,6 +27,45 @@ from datetime import datetime
 from common.database import AsyncSessionFactory
 from core.exceptions import InvalidSlotError, SlotTakenError
 from dal.booking_repository import BookingRepository
+from dal.doctor_repository import DoctorRepository
+
+from ..core.domain.doctor_lookup import name_matches
+
+
+async def find_doctor_by_name(name: str) -> list[dict]:
+    """Resolve a doctor named by the patient into the real roster (BUG-015).
+
+    Use this when the patient names a doctor directly (e.g. "bác sĩ Phạm Thị
+    Lan Hương") and no numeric doctor_id is known yet — never ask the patient
+    for an internal doctor_id. Matching is accent-insensitive and tolerant of
+    honorifics ("bác sĩ", "ThS.BS", "CKI"), so passing the name as the patient
+    said it is fine.
+
+    Args:
+        name: The doctor name the patient gave (with or without a title).
+
+    Returns:
+        One dict per matching active doctor, each with the doctor_id needed for
+        check_available_slots/create_booking plus enough detail to disambiguate:
+        {"doctor_id": int, "full_name": str, "title": str | None,
+         "specialty": str, "work_days": list[str]}. Empty list if no active
+        doctor matches — in that case tell the patient honestly that no doctor
+        by that name was found; do NOT substitute a different doctor.
+    """
+    async with AsyncSessionFactory() as session:
+        repo = DoctorRepository(session)
+        doctors = await repo.list_active()
+    return [
+        {
+            "doctor_id": d.id,
+            "full_name": d.full_name,
+            "title": d.title,
+            "specialty": d.specialty,
+            "work_days": d.work_days,
+        }
+        for d in doctors
+        if name_matches(name, d.full_name)
+    ]
 
 
 async def check_available_slots(doctor_id: int, date_iso: str) -> list[str]:

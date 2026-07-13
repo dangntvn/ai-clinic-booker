@@ -31,7 +31,13 @@ from common.config import settings
 from common.resilience import build_adk_model
 
 from .prompt import BOOKING_INSTRUCTION_TEMPLATE
-from .tools import cancel_booking, check_available_slots, create_booking, update_booking
+from .tools import (
+    cancel_booking,
+    check_available_slots,
+    create_booking,
+    find_doctor_by_name,
+    update_booking,
+)
 
 # Vietnamese weekday labels keyed by datetime.weekday() (Mon=0). Hard-coded
 # rather than strftime("%A") so the injected anchor never depends on the host
@@ -57,7 +63,7 @@ def _build_instruction(ctx: ReadonlyContext) -> str:
 
 
 def build_booking_agent() -> Agent:
-    """Build the Booking Agent with its four booking tools and a date-anchored instruction."""
+    """Build the Booking Agent with booking + doctor-lookup tools and a date-anchored prompt."""
     return Agent(
         name="booking_agent",
         model=build_adk_model(settings.booking_llm_model),
@@ -67,7 +73,13 @@ def build_booking_agent() -> Agent:
             thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
         instruction=_build_instruction,
-        tools=[check_available_slots, create_booking, update_booking, cancel_booking],
+        tools=[
+            find_doctor_by_name,
+            check_available_slots,
+            create_booking,
+            update_booking,
+            cancel_booking,
+        ],
     )
 
 
