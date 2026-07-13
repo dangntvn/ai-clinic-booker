@@ -135,7 +135,9 @@ async def test_booking_cases(golden, booking_capture):
         # from the same free-slot state. No-op for cases that never reach
         # create_booking (booking_capture.results is then empty).
         created_ids = [
-            result.id for name, result in booking_capture.results if name == "create_booking"
+            result["booking_id"]
+            for name, result in booking_capture.results
+            if name == "create_booking" and result.get("status") == "confirmed"
         ]
         for booking_id in created_ids:
             async with AsyncSessionFactory() as session:
