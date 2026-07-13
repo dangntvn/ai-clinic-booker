@@ -16,7 +16,7 @@
 #              gemini_retry wraps the *direct* genai client in gemini_client.py
 #              (retry + timeout; adapted from rag-health's openai_retry,
 #              ADR-0021/ADR-0006). build_adk_model applies the same *retry*
-#              policy to *ADK-driven* calls (ai-agents/*/agent.py), which use
+#              policy to *ADK-driven* calls (ai_agents/*/agent.py), which use
 #              google-adk's own genai client and never reach gemini_retry.
 #              Note: the ADK path carries retry only, not gemini_retry's
 #              asyncio timeout — see .claude/memory/2026-07-09-adk-model-retry-503.md.

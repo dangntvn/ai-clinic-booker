@@ -41,7 +41,7 @@
 >   appearing during a reseed embedding call) — an infra/billing blocker, not a code issue. The 8
 >   FAQ-related rows and the 2 medical_guide-grounded/persona-dip symptom rows below are **carried
 >   forward unchanged from the prior run** — confirmed via `git diff` that none of the files behind
->   those rows (`ai-agents/faq/*`, `common/config.py`, `eval/metrics.py`) were touched by the
+>   those rows (`ai_agents/faq/*`, `common/config.py`, `eval/metrics.py`) were touched by the
 >   BUG-014/BUG-015 fix (those diffs predate today's fix, from the earlier Nhóm B/TASK-015 work) — and
 >   were **not re-verified this session**.
 

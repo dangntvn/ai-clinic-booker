@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Description: Gemini LLM + embedding client wrapper, shared across
-#              ai-agents/modules (ADR-0006). Replaces rag-health's
+#              ai_agents/modules (ADR-0006). Replaces rag-health's
 #              OpenAIEmbeddings/ChatOpenAI (ADR-0021) with the google-genai
 #              SDK; model names stay env-driven via common/config.py.
 ###############################################################################

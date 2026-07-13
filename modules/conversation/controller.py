@@ -28,8 +28,8 @@ from fastapi import APIRouter
 from google.genai import types
 from pydantic import BaseModel
 
+from ai_agents.core.domain import emergency_rules
 from app.runtime import build_emergency_runtime, build_runtime
-from common.module_loader import load_ai_agents
 
 router = APIRouter(prefix="/agents/booker/conversations", tags=["conversations"])
 
@@ -86,7 +86,6 @@ async def handle_message(conversation_id: str, text: str) -> str:
     """
     session_id = _session_id_for_conversation(conversation_id)
 
-    emergency_rules = load_ai_agents("core.domain.emergency_rules")
     if emergency_rules.is_emergency(text):
         return await _run(build_emergency_runtime(), conversation_id, session_id, text)
 

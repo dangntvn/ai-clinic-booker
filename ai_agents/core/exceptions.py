@@ -15,9 +15,8 @@
 # Description: AI-specific exceptions raised by the agent/tool layer
 #              (ARCH-001 §8). SlotTakenError actually lives in
 #              core/exceptions.py (ARCH-001 §4 explicitly allows either
-#              location) — re-exported here so ai-agents/booking/tools.py
-#              can catch it with a normal relative import instead of the
-#              ai-agents/ hyphen workaround.
+#              location) — re-exported here so ai_agents/booking/tools.py
+#              can catch it with a normal relative import.
 ###############################################################################
 
 from core.exceptions import SlotTakenError

@@ -58,7 +58,7 @@ connection directly, and neither imports the other.
 └─────────┬─────────────────────────────────┬─────────────────┘
           │                                 │
 ┌─────────▼─────────────┐        ┌──────────▼──────────────┐
-│  ai-agents/            │        │  modules/                │
+│  ai_agents/            │        │  modules/                │
 │  orchestrator + 4      │        │  admin CRUD +             │
 │  domain agents (faq,   │        │  knowledge ingestion      │
 │  symptom, booking,     │        │  pipeline (cron-polled)   │
@@ -75,7 +75,7 @@ connection directly, and neither imports the other.
 └───────────────────────────────────────────────────────────────┘
 ```
 
-Within `ai-agents/`, agents never import each other either — the orchestrator is the only
+Within `ai_agents/`, agents never import each other either — the orchestrator is the only
 thing that transfers a session to a domain agent.
 
 ### Project layout
@@ -86,7 +86,7 @@ app/
 ├── main.py           app factory
 └── runtime.py        ADK runtime wiring
 
-ai-agents/
+ai_agents/
 ├── orchestrator/     intent routing
 ├── faq/ symptom/ booking/ emergency/   agent.py · tools.py · prompt.py
 └── core/             base agent/tool, domain rules
@@ -304,9 +304,6 @@ Calling these out explicitly is the point: the layering leaves clean seams for t
 
 ## Roadmap
 
-- Rename `ai-agents/` → `ai_agents` — the hyphen currently blocks a normal Python `import`
-  and is worked around in `common/module_loader.py`; the rename is straightforward, just not
-  done yet.
 - Exercise the ADK retry fix against a real transient 503 in a live eval run — currently
   proven only by a unit test that simulates the failure, not by an observed live occurrence.
 - `MemoryService`-backed long-term memory, if a real multi-visit personalization need shows up.

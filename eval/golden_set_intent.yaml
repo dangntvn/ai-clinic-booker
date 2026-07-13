@@ -3,7 +3,7 @@
 # faq_agent | symptom_agent | booking_agent | emergency_agent. At least one
 # case per intent, plus a few paraphrased-emergency cases to check the
 # Layer-2 safety net (ADR-0019) — Layer-1 already covers literal keywords
-# (see ai-agents/core/domain/emergency_rules.py), this golden set targets
+# (see ai_agents/core/domain/emergency_rules.py), this golden set targets
 # the LLM-based fallback for indirect language.
 cases:
   - message: "Khám nội soi dạ dày ở đây giá bao nhiêu?"
