@@ -1,5 +1,13 @@
 # DeepEval Report
 
+> **CURRENT STATUS (2026-07-13, latest): 15/17 cases passing.** BUG-016 fixed and verified
+> (`test_booking_proposes_only_real_available_slot` now 1.000/1.000, was 0.000/0.000) — all 5
+> Booking cases and all 6 Symptom cases now pass cleanly. Remaining 2 known failures are both the
+> same already-documented persona/relevancy trade-off (§7d, not a bug, not caused by today's fix):
+> `test_faq_pricing_question_grounded` (Answer Relevancy 0.667) and
+> `test_faq_specialties_overview_question_grounded` (Answer Relevancy 0.429). Full detail in the
+> "Summary — 2026-07-13 (later session)" section near the bottom of this file.
+
 > **Curated 2026-07-13 (later session, senior-tester) — BUG-016 fix + dynamic WORK_DAY/NON_WORK_DAY
 > verification.** Same overwrite gotcha as the note below (`_deepeval_metrics_recorder` is
 > session-scoped and this session ran many separate isolated `pytest -k <name>` invocations, each
@@ -130,7 +138,11 @@ unit test asserting `len(orchestrator_agent.sub_agents) == 4` with the expected 
 regression guard — this residual risk had to be verified ad hoc this session precisely because no
 such permanent test exists yet.
 
-## Summary
+## Summary (SUPERSEDED — see "Summary — 2026-07-13 (later session)" below for current status)
+
+> ⚠️ The numbers below (13/17, 11/17) are a **historical snapshot from BEFORE today's BUG-016 fix**,
+> kept for audit trail only. They are NOT the current state. `test_booking_proposes_only_real_available_slot`
+> (the case behind most of these "failures") is now **1.000/1.000** — see the later section below.
 
 **Cases: 17.** Run 1: 13/17 passed. Run 2: 11/17 passed (3 of the 6 "failures" were a transient
 Gemini `503 UNAVAILABLE` mid-judge, not a real evaluation — infra flakiness, not a quality finding).
