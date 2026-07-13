@@ -94,25 +94,41 @@ def _parse_fixture(path: Path) -> dict:
     return {"category": meta["category"], "title": meta["title"], "content": body.strip()}
 
 
-async def seed_doctors(http: httpx.AsyncClient) -> list[int]:
-    fixture = yaml.safe_load((FIXTURES_DIR / "doctors.yaml").read_text(encoding="utf-8"))
+# doctors.yaml (verified-real) is seeded FIRST so its rows keep ids 3–13 (the
+# ids eval cases hardcode); doctors_coverage_fill.yaml (synthetic top-up so
+# every specialty has >= 2 active doctors, BUG-017) is seeded AFTER, taking
+# ids 14+. Keep this order stable so a reseed reproduces the same ids.
+_DOCTOR_FIXTURES = ("doctors.yaml", "doctors_coverage_fill.yaml")
+
+
+async def _seed_doctor_fixture(http: httpx.AsyncClient, filename: str) -> list[int]:
+    fixture = yaml.safe_load((FIXTURES_DIR / filename).read_text(encoding="utf-8"))
     ids = []
     for doctor in fixture["doctors"]:
+        # coverage-fill rows carry name/title/specialty only; .get() keeps the
+        # richer real-doctor rows working while letting the sparse ones default.
         body = {
             "full_name": doctor["full_name"],
-            "title": doctor["title"],
+            "title": doctor.get("title"),
             "specialty": doctor["specialty"],
-            "phone": doctor["phone"],
+            "phone": doctor.get("phone"),
             "work_days": TEST_WORK_DAYS,
-            "room": doctor["room"],
-            "shift": doctor["shift"],
-            "fee": doctor["fee"],
-            "bio": doctor["bio"],
-            "education": doctor["education"],
+            "room": doctor.get("room"),
+            "shift": doctor.get("shift"),
+            "fee": doctor.get("fee"),
+            "bio": doctor.get("bio"),
+            "education": doctor.get("education"),
         }
         resp = await http.post(f"{API_BASE}/doctors", json=body)
         resp.raise_for_status()
         ids.append(resp.json()["id"])
+    return ids
+
+
+async def seed_doctors(http: httpx.AsyncClient) -> list[int]:
+    ids: list[int] = []
+    for filename in _DOCTOR_FIXTURES:
+        ids.extend(await _seed_doctor_fixture(http, filename))
     return ids
 
 
