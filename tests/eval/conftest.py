@@ -42,6 +42,7 @@ import pytest
 from google.genai import types
 
 from app.runtime import build_runtime
+from core.exceptions import InvalidSlotError, SlotTakenError
 
 
 async def run_conversation(text: str) -> str:
@@ -128,8 +129,38 @@ def symptom_retrieval():
         yield cap
 
 
+def _tool_shape(name: str, *, result: object = None, exc: Exception | None = None) -> object:
+    """Reproduce the exact value `ai_agents/booking/tools.py`'s tool wrapper returns
+    to the agent for a given `BookingRepository` call outcome (BUG-019).
+
+    `BookingToolCapture` patches `BookingRepository` (see class docstring for why),
+    not the tool wrapper functions themselves — so it observes the raw dal/ return
+    value (a `Booking` ORM object, or a raised `SlotTakenError`/`InvalidSlotError`),
+    never the `{"status": ...}` dict the tool wrapper builds from it *after* the
+    patched call site returns. `FaithfulToBookingOutcome`'s GEval criteria is
+    written against that dict shape (what the agent actually sees), so this
+    duplicates the same transformation `ai_agents/booking/tools.py` performs,
+    keeping the captured "ground truth" in the shape the criteria expects instead
+    of the ORM object's repr.
+    """
+    if exc is not None:
+        if isinstance(exc, SlotTakenError):
+            return {"status": "slot_taken"}
+        if isinstance(exc, InvalidSlotError):
+            return {"status": "invalid_slot", "reason": exc.message}
+        raise exc  # pragma: no cover — not a shape create_booking/update_booking catch
+    if name == "check_available_slots":
+        return [s.isoformat() for s in result]
+    if name in ("create_booking", "update_booking"):
+        return {"status": "confirmed", "booking_id": result.id}
+    if name == "cancel_booking":
+        return {"status": "cancelled", "booking_id": result.id}
+    return result  # pragma: no cover — every _METHODS entry is handled above
+
+
 class BookingToolCapture:
-    """Records the real return value of every BookingRepository call the agent makes.
+    """Records the tool-wrapper-shaped result of every BookingRepository call the
+    agent makes.
 
     Used as the "ground truth" a booking reply must stay faithful to — the
     Booking Agent doesn't use Qdrant retrieval, so FaithfulnessMetric doesn't
@@ -143,6 +174,12 @@ class BookingToolCapture:
     each tool function does `BookingRepository(session)` fresh on every
     call, resolved from its own module's globals — the same free-variable
     lookup that makes `RetrievalCapture` above work for `search`.
+
+    Because the patch site is still the repository layer, `_tool_shape()`
+    above duplicates `ai_agents/booking/tools.py`'s own ORM-result-to-dict
+    (and exception-to-dict) transformation so `calls`/`results` record what
+    the tool wrapper actually returns to the agent (BUG-019), not the raw
+    `Booking` ORM object or an uncaught repository exception.
     """
 
     _METHODS = ("check_available_slots", "create_booking", "update_booking", "cancel_booking")
@@ -163,9 +200,16 @@ class BookingToolCapture:
 
             def make_method(name=name, base_method=base_method):
                 async def _method(self, *args, **kwargs):
-                    result = await base_method(self, *args, **kwargs)
-                    calls.append(f"{name}(args={args}, kwargs={kwargs}) -> {result}")
-                    results.append((name, result))
+                    try:
+                        result = await base_method(self, *args, **kwargs)
+                    except (SlotTakenError, InvalidSlotError) as exc:
+                        tool_shaped = _tool_shape(name, exc=exc)
+                        calls.append(f"{name}(args={args}, kwargs={kwargs}) -> {tool_shaped}")
+                        results.append((name, tool_shaped))
+                        raise
+                    tool_shaped = _tool_shape(name, result=result)
+                    calls.append(f"{name}(args={args}, kwargs={kwargs}) -> {tool_shaped}")
+                    results.append((name, tool_shaped))
                     return result
 
                 return _method

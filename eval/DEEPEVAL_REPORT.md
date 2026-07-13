@@ -1,18 +1,19 @@
 # DeepEval Report
 
-> Last curated: 2026-07-13 (post-rename `ai-agents/` → `ai_agents/`, commit `d884335`; later same day,
-> BUG-016 fix + dynamic `WORK_DAY`/`NON_WORK_DAY` verification). `tests/eval/conftest.py`'s
-> `_deepeval_metrics_recorder` fixture overwrites this file with only the cases from the *last*
-> `pytest` invocation (session-scoped autouse) — this is a hand-curated merge across multiple runs;
-> re-apply by hand after any raw run. Full root-cause classification in
+> Last curated: 2026-07-13 (post-rename `ai-agents/` → `ai_agents/`, commit `d884335`; same day,
+> BUG-016 fix + dynamic `WORK_DAY`/`NON_WORK_DAY`; later same day, BUG-018 + BUG-019 fixes).
+> `tests/eval/conftest.py`'s `_deepeval_metrics_recorder` fixture overwrites this file with only the
+> cases from the *last* `pytest` invocation (session-scoped autouse) — this is a hand-curated merge
+> across multiple runs; re-apply by hand after any raw run. Full root-cause classification in
 > [`EVAL_FINDINGS.md`](./EVAL_FINDINGS.md).
 >
-> **Current status: 15/17 cases passing.** BUG-016 fixed and verified
-> (`test_booking_proposes_only_real_available_slot` now 1.000/1.000, was 0.000/0.000) — all 5 Booking
-> cases and all 6 Symptom cases pass cleanly. The 2 remaining failures are the same
-> already-documented persona/relevancy trade-off (EVAL_FINDINGS §7d, not a bug):
-> `test_faq_pricing_question_grounded` (Answer Relevancy 0.667) and
-> `test_faq_specialties_overview_question_grounded` (Answer Relevancy 0.429).
+> **Current status: 15/17 cases passing** (unchanged by BUG-018/BUG-019 — neither added a new
+> DeepEval case). BUG-016, BUG-018, BUG-019 all fixed and verified — all 5 Booking cases and all 6
+> Symptom cases pass cleanly. The 2 remaining failures are the same already-documented persona/
+> relevancy trade-off (EVAL_FINDINGS §7d, not a bug):
+> `test_faq_pricing_question_grounded` (Answer Relevancy ~0.375-0.667, reproducible) and
+> `test_faq_specialties_overview_question_grounded` (Answer Relevancy 0.286-0.429, reproducible) —
+> unrelated to BUG-018's citation removal (verified via real transcript, not just score).
 
 Cases: 17 (6 FAQ + 6 Symptom + 5 Booking [3 DeepEval-metric + 2 deterministic, no-metric BUG-009 tests])
 
@@ -105,3 +106,13 @@ already-documented persona/relevancy trade-off (EVAL_FINDINGS §7d), not a bug, 
 **Net: 0 findings attributable to the `ai-agents` → `ai_agents` rename or to today's BUG-016 fix.**
 The code-reviewer's residual risk (a silently dropped sub-agent) is ruled out — all 4 domains verified
 routing correctly through the real, in-process Orchestrator.
+
+- **BUG-018 CONFIRMED FIXED** (later same day): `ai_agents/faq/prompt.py` rule 4 no longer instructs
+  citing a raw `knowledge_id`. Verified via 2 real transcripts (pricing + specialties questions) —
+  neither reply contains `knowledge_id`/`#<number>`/"(theo tài liệu". The 2 pre-existing FAQ Answer
+  Relevancy failures reproduce identically with or without this fix — confirmed unrelated.
+- **BUG-019 CONFIRMED FIXED** (later same day): `tests/eval/conftest.py`'s `BookingToolCapture` now
+  captures the tool-wrapper's dict shape (`{"status": "confirmed", "booking_id": N}`) instead of the
+  raw `Booking` ORM object, matching what `FaithfulToBookingOutcome`'s criteria was written against.
+  Directly inspected `booking_capture.results` to confirm the new shape. No regression on the 3
+  BUG-016 cases; full-suite cross-run (both fixes on the same branch) shows no new failures.
