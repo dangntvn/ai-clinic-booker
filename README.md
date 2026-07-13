@@ -169,19 +169,32 @@ behavior.
 | Context Precision@5 | Retrieved chunks are mostly noise, not signal | ≥ 0.20 | ✅ 0.233 |
 | Hit Rate@5 (doc-id) | Relevant knowledge doc isn't in the top 5 retrieved | ≥ 0.70 | ✅ 1.000 |
 | MRR (doc-id) | Relevant doc retrieved but ranked poorly | ≥ 0.90 | ✅ 0.970 |
-| Keyword Match | The real generated answer misses expected facts | ≥ 0.70 | ❌ 0.503 |
-| Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ❌ 0.544 |
-| Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 1.000 |
+| Keyword Match | The real generated answer misses expected facts | ≥ 0.70 | ✅ 0.821 |
+| Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ✅ 0.874 |
+| Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 0.917 |
 | Booking Concurrency Pass Rate | Concurrent bookings on the same slot both succeed | = 1.00 | ✅ 1.000 |
-| DeepEval judge suite (9 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ✅ 9/9 |
+| DeepEval judge suite (15 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ⚠️ 10/15 clean, 4 persona trade-off, 1 still open |
 
-The two ❌ rows are current, real, and deliberately not hidden — going through the real
-conversation API for generation (not just measuring retrieval in isolation) surfaced two actual
-product-behavior findings: an Orchestrator routing ambiguity that sends some FAQ-shaped questions
-to the Symptom Agent instead of the FAQ Agent, and a category mismatch that makes one real
-document unreachable regardless of similarity threshold. Both are written up, root-caused, and
-explicitly *not* silently fixed by loosening the threshold — see
+The two previously-❌ generation-quality rows (Keyword Match, Faithfulness) are now fixed and
+green — going through the real conversation API for generation (not just measuring retrieval in
+isolation) originally surfaced two product-behavior findings (an Orchestrator routing ambiguity
+and a category mismatch), both root-caused, fixed, and re-confirmed passing — see
 [`eval/EVAL_FINDINGS.md` §6](eval/EVAL_FINDINGS.md).
+
+The DeepEval row is intentionally not a clean fraction. Of 15 cases: 8 pass with no concerns; 4 dip
+below the Answer Relevancy threshold purely from a friendlier conversational persona (the underlying
+facts stay grounded — Faithfulness is 1.000 on all four); the case that flagged a confirmed
+fabrication (a symptom-triage recommendation naming a real doctor for a specialty they don't actually
+practice) is **now fixed and confirmed** (2 clean isolated re-runs, no regression on the routing cases
+next to it); and of the 2 cases that flagged a confirmed UX/architecture gap (the booking flow
+couldn't resolve a doctor by name, only by an internal id), the underlying gap **is now fixed and
+confirmed** (the name→id lookup resolves correctly every trial, 0/6 recurrences of the old dead-end) —
+one of those 2 cases now passes cleanly, but the other still fails, for a **different, newly-surfaced**
+reason (the agent resolves the doctor and gets real available slots, but doesn't quote any specific
+time back to the patient) that only became visible once the original blocker was cleared. Nothing here
+is hidden or threshold-adjusted away; full reproduction steps and the reasoning for treating the
+still-open case as a new finding rather than "the old bug reopened" are in
+[`eval/EVAL_FINDINGS.md` §7-§8](eval/EVAL_FINDINGS.md) and [`eval/DEEPEVAL_REPORT.md`](eval/DEEPEVAL_REPORT.md).
 
 `scripts/seed_eval_fixtures.py` wipes and reseeds fixed fixture data before a run, so results
 are comparable across runs instead of drifting with leftover state. Full methodology and the

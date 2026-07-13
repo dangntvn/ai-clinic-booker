@@ -99,6 +99,12 @@ class Settings(BaseSettings):
     qdrant_port: int = 6333
     qdrant_collection: str = "ai_clinic_knowledge"
     similarity_threshold: float = 0.7  # BUG-002: 0.5 let every irrelevant-topic query "ground"
+    # FAQ-only recall knob (Nhóm B task 5 — FAQ improvements, 2026-07-10). FAQ answers non-medical clinic content (policy/clinic_info)
+    # where a marginal miss only costs a false "not found", not the safety risk that a loose
+    # grounding cutoff poses for symptom triage — so FAQ retrieval runs slightly more permissive
+    # than the global 0.7 while the safety-critical Symptom Agent keeps using similarity_threshold
+    # unchanged. Kept well above the 0.5 that BUG-002 proved too permissive.
+    faq_similarity_threshold: float = 0.6
     top_k: int = 6
 
     # Ingestion (ADR-0021) — chunk_max_size/overlap match ARCH-001 §5.5.

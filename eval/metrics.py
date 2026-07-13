@@ -22,7 +22,7 @@
 # UPDATED 2026-07-10 (senior-tester, TASK-015 batch 3/4) — added the
 # span-level retrieval family (chunk_hits/hit_rate_at_k_from_hits/
 # mrr_from_hits/precision_from_hits/first_hit_rank) and keyword_match(),
-# ported from H:\thanhnt-projects\AI-Rag-Health's eval/metrics.py to close
+# ported from the rag-health reference project's eval/metrics.py to close
 # the gap between this project's golden sets (which now carry answer_span/
 # answer_keywords, see golden_set_rag.yaml) and its metrics. The existing
 # doc-id-level hit_rate_at_k(retrieved_ids, relevant_ids, k) already owned
@@ -257,7 +257,8 @@ async def faithfulness_score(answer: str, context_chunks: list[str], judge_gener
     )
     response_text = await judge_generate(system_prompt, prompt, disable_thinking=True)
     try:
-        return float(response_text.strip())
+        score = float(response_text.strip())
+        return max(0.0, min(1.0, score))
     except ValueError:
         return 0.0
 
