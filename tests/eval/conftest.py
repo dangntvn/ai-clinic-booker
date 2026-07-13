@@ -163,7 +163,19 @@ class BookingToolCapture:
 
             def make_method(name=name, base_method=base_method):
                 async def _method(self, *args, **kwargs):
-                    result = await base_method(self, *args, **kwargs)
+                    # Record raised calls too: check_available_slots now raises
+                    # NotFoundError for a missing/inactive doctor (BUG-017), and
+                    # the tool wrapper catches it into {"status":
+                    # "doctor_not_found"}. Without this, a doctor_not_found eval
+                    # case would see "(no booking tool was called)" in context
+                    # even though the DAL call really ran. Only successful calls
+                    # go into `results` (used to extract created-booking ids for
+                    # cleanup) — a raised call has no result object.
+                    try:
+                        result = await base_method(self, *args, **kwargs)
+                    except Exception as e:
+                        calls.append(f"{name}(args={args}, kwargs={kwargs}) -> raised {e!r}")
+                        raise
                     calls.append(f"{name}(args={args}, kwargs={kwargs}) -> {result}")
                     results.append((name, result))
                     return result
