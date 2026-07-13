@@ -41,8 +41,8 @@ def filter_grounded_results(results: list[dict], threshold: float) -> list[dict]
 def build_context_text(results: list[dict]) -> str:
     """Render grounded results into a context block for the LLM prompt.
 
-    Each entry is tagged with its source knowledge_id so the agent's answer
-    can cite a traceable source (TASK-012 DoD).
+    Each entry is tagged with its source knowledge_id for internal traceability
+    only — never surfaced to the patient in the reply (BUG-018).
     """
     blocks = []
     for r in results:
