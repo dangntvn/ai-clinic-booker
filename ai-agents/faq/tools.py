@@ -42,7 +42,10 @@ _FAQ_CATEGORY_FALLBACK = {"policy": "clinic_info", "clinic_info": "policy"}
 def _grounded_search(query_vector: list[float], category: str) -> list[dict]:
     """Search one category and keep only results clearing the grounding threshold."""
     results = search(query_vector, category=category)
-    return filter_grounded_results(results, settings.similarity_threshold)
+    # (Nhóm B task 5 — FAQ improvements, 2026-07-10): FAQ uses its own, slightly lower cutoff (faq_similarity_threshold, 0.6) to raise
+    # recall on non-medical clinic content — the stricter global similarity_threshold (0.7) stays
+    # reserved for the safety-critical Symptom Agent's medical grounding.
+    return filter_grounded_results(results, settings.faq_similarity_threshold)
 
 
 async def search_knowledge_base(query: str, category: str) -> str:
