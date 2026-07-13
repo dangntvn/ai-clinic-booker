@@ -658,7 +658,112 @@ container-staleness caveat in [`REPORT.md`](./REPORT.md).
 
 ---
 
+## 10. 2026-07-13 (even later session) — BUG-016 CONFIRMED FIXED (closes §8b's open finding) + §9b's date-fixture fragility flips FAIL→PASS as a likely side effect + Group B FAQ infra re-confirmed stable — classification: **1 bug closed with direct transcript evidence, 1 eval-fragility improvement observed (not separately claimed as fixed), 1 known trade-off re-confirmed unchanged, 0 new bugs**
+
+senior-tester re-verified, after senior-dev's fix (BUG-016, `ai_agents/booking/prompt.py`) and a
+companion eval-infra fix (`tests/eval/test_deepeval_booking.py`'s `WORK_DAY`/`NON_WORK_DAY` made
+dynamic instead of hardcoded) passed `code-reviewer` sign-off (2 clean review rounds, no blocking
+issues left). Team Lead scoped this session to exactly: the 3 Booking DeepEval cases + the 2
+deterministic BUG-009 tests (Group A), plus a stability re-check of the 3 FAQ cases that hit
+transient Gemini `503`s in the TASK-030 run (Group B) — every other case is carried forward unchanged
+from §9/`DEEPEVAL_REPORT.md`, not re-run this session (explicit Team Lead instruction, to avoid
+burning Gemini quota re-running cases already known stable).
+
+### 10a. BUG-016 CONFIRMED FIXED — closes the exact gap §8b left open
+
+§8b left an open question for Team Lead: rewrite `booking/prompt.py` rule 3 to require stating real
+times, or relax the GEval criteria? The chosen fix was (a). Re-ran
+`test_booking_proposes_only_real_available_slot` isolated, reseeded before each of 2 independent
+runs: **FaithfulToCheckAvailableSlots = 1.000, 1.000** (was 0.000, 0.000 in §8b). The agent's reply
+now names concrete times from the real `check_available_slots` result instead of only asking "what
+time works for you?".
+
+BUG-016 also named a second requirement no existing GEval criteria checks: the agent must not
+silently substitute a different hour than the one the patient explicitly requested.
+`test_booking_confirms_before_create_then_creates_real_booking`'s GEval criteria
+("FaithfulToBookingOutcome") only checks that the `create_booking` *outcome* (confirmed/slot_taken) is
+reported faithfully — not *which* hour — so a metric PASS alone can't prove this. Verified instead
+with a standalone diagnostic script (bypassing `assert_test`, reusing the same
+`run_conversation_turns()`/`BookingToolCapture` helpers `tests/eval/conftest.py` already provides),
+run twice independently:
+
+```
+[turn 1] ... 4. Thời gian: 09:00 ngày 2026-07-20 ...
+[turn 2] ... đặt lịch thành công ... vào lúc 09:00 ngày 2026-07-20 ...
+create_booking(args=('Nguyễn Văn A', '0912345678', 3, datetime.datetime(2026, 7, 20, 9, 0, ...)), ...)
+```
+
+Both runs: the hour the agent states (09:00) exactly matches what the patient requested and what
+`create_booking` was actually called with — no substitution to an earlier/different slot observed in
+either run. **BUG-016 is confirmed fixed on both of its named requirements**, with direct transcript
+evidence, not just a passing metric score.
+
+`test_booking_non_work_day_no_fabricated_slots` (1.000, 1.000) and
+`test_booking_resolves_relative_date_before_checking_slots` (2/2 PASS, deterministic) show **no
+regression** from the rule 3 rewrite.
+
+### 10b. §9b's date-fixture fragility flips from 5/5 FAIL to 5/5 PASS — a likely side effect, not separately fixed
+
+§9b documented `test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday` failing 5/5 times
+because today (2026-07-13) is itself a Monday and the agent, asked for "thứ 2 tuần sau" ("next
+Monday"), was observed to stall by asking a clarifying question rather than resolving the date and
+calling `check_available_slots` at all.
+
+Under the **exact same calendar-date scenario** today (still 2026-07-13, still a Monday), re-ran this
+test 5 independent times (reseeded before each): **5/5 PASS**. A standalone diagnostic capture
+confirms the agent now resolves "thứ 2 tuần sau" → `2026-07-20` (a real future Monday, consistent with
+the prompt's own pre-existing rule 1 definition: "'thứ N tuần sau' = thứ N của tuần kế tiếp") and
+calls `check_available_slots(3, date(2026,7,20))` immediately, every time — no clarifying-question
+stall observed in any of the 5 runs.
+
+**Root cause hypothesis**: rule 1 (the date-resolution logic itself) was **not touched** by today's
+diff (`git diff ai_agents/booking/prompt.py` confirms only rule 3 changed) — so this isn't a direct
+fix to date resolution. What changed is rule 3's new instruction to call `check_available_slots`
+*immediately* when asked about free slots, explicitly forbidding delaying the answer to ask for
+name/phone (or, plausibly, any other clarifying question) first. §9b's failure mode was precisely the
+agent choosing to ask a clarifying question instead of proceeding — the same class of "agent prefers
+to ask over acting" pattern this file has repeatedly documented (§4/§7c/§8b). Making the "don't stall,
+call the tool now" instruction more forceful and specific in rule 3 plausibly reduced the model's
+general tendency to bail into a clarifying question in this adjacent scenario too, even though rule
+3's text is specifically about slot-proposal wording, not date resolution.
+
+**Not claimed as a direct BUG-016 fix** (BUG-016 didn't name this test or this phrase), and **not
+reclassified as permanently resolved** — LLM behavior on an ambiguity this fragile (day-of-week
+dependent) could plausibly still regress on some future Monday even with the current prompt.
+Recommend re-checking this specific case the next time the suite happens to run on a Monday, before
+fully retiring §9b as closed.
+
+### 10c. Group B FAQ re-check — infra confirmed stable, known trade-off unchanged
+
+Re-ran the 3 FAQ cases that hit transient Gemini `503`s in the TASK-030 run (§9c), reseeded before
+each of 2 independent runs: **0/2 503s** — infra confirmed stable.
+`test_faq_out_of_scope_question_not_fabricated` (NoFabricatedPolicy = 1.000, 1.000) and
+`test_faq_surgery_pricing_question_grounded` (Answer Relevancy = 1.000, 1.000; Faithfulness = 1.000,
+1.000) now both PASS cleanly with real, retained scores (the TASK-030 run could only report "PASSED,
+exact score not retained" due to the 503s interrupting the second run before the recorder captured
+it). `test_faq_specialties_overview_question_grounded` still fails Answer Relevancy — **0.429, 0.429**
+(2/2, identical) — which exactly reproduces the TASK-030 run's 0.429 — re-confirmed as the same known
+persona/relevancy trade-off (§7d), unaffected by anything this session touched.
+
+Full per-case scores in [`DEEPEVAL_REPORT.md`](./DEEPEVAL_REPORT.md)'s "later session" curated update.
+
+---
+
 ## Conclusion
+
+**Updated 2026-07-13 (even later session)**: BUG-016 is confirmed fixed on both of its named
+requirements — the agent now states a concrete real time when proposing slots
+(`test_booking_proposes_only_real_available_slot` flipped 0.000→1.000, closing §8b), and does not
+silently substitute a different hour than the patient requested (verified via direct transcript
+reading, not just the GEval score, since no existing metric checks this — §10a). No regression on the
+other 2 Booking DeepEval cases or the "hôm nay/ngày mai" deterministic case. A notable, unexpected
+positive observation: §9b's previously 5/5-failing date-fixture-fragility case
+(`test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday`) now passes 5/5 under the
+identical calendar-date scenario that caused it to fail — attributed to a plausible side effect of the
+same prompt rewrite, not claimed as a targeted fix (§10b). The 3 previously-`503`-flaky FAQ cases are
+now confirmed clean (0/2 infra errors); the 1 real Answer-Relevancy failure among them
+(`test_faq_specialties_overview_question_grounded`) reproduces its exact prior score — still the
+known persona trade-off (§7d), not new (§10c). **0 new product bugs found this session.**
 
 **Updated 2026-07-13 (TASK-030 Group A verification session, after the spend cap was raised)**: the
 package rename `ai-agents/` → `ai_agents/` (commit `d884335`) introduced **no regression and no new

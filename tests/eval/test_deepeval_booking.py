@@ -56,8 +56,27 @@ from eval.deepeval_dataset import build_metrics, load_dataset, substitute
 from eval.deepeval_gemini import build_judge
 
 REAL_DOCTOR_ID = 3  # Phạm Thị Lan Hương, Nội tổng quát — eval/seed_result_2026-07-08.json
-WORK_DAY = "2026-07-13"  # Monday — inside the seeded Mon-Sat test schedule
-NON_WORK_DAY = "2026-07-19"  # Sunday — outside the seeded Mon-Sat test schedule
+
+# WORK_DAY / NON_WORK_DAY used to be hardcoded absolute dates (2026-07-13 /
+# 2026-07-19). That drifts into the past over time and can coincide with
+# "today" when the suite is run — which is exactly what caused
+# test_booking_resolves_ambiguous_weekday_phrase_to_a_future_weekday (BUG-009)
+# to fail 5/5 times on 2026-07-13, since that date happened to BE the Monday
+# being asked about. Compute both dynamically, once at module scope (not
+# per-test, so a single pytest run stays deterministic):
+#   - WORK_DAY: "Monday of next week" relative to today, i.e. the Monday
+#     that is at least 7 days out — never today/tomorrow — matching the
+#     Mon-Sat seeded test schedule (scripts/seed_eval_fixtures.py
+#     TEST_WORK_DAYS) and the "thứ 2 tuần sau" semantics used elsewhere.
+#   - NON_WORK_DAY: the Sunday of that same following week — outside the
+#     seeded Mon-Sat schedule.
+_today = datetime.now(UTC).date()
+_days_until_next_monday = (7 - _today.weekday()) % 7 + 7  # Monday=0; always >=7 days out
+_work_day_date = _today + timedelta(days=_days_until_next_monday)
+_non_work_day_date = _work_day_date + timedelta(days=6)  # Sunday of that week
+
+WORK_DAY = _work_day_date.isoformat()  # Monday — inside the seeded Mon-Sat test schedule
+NON_WORK_DAY = _non_work_day_date.isoformat()  # Sunday — outside the seeded Mon-Sat test schedule
 
 _PLACEHOLDERS = {
     "REAL_DOCTOR_ID": REAL_DOCTOR_ID,
