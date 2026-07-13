@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Unit tests for ai-agents/faq/tools.py — the sibling-category
+# Description: Unit tests for ai_agents/faq/tools.py — the sibling-category
 #              fallback (_FAQ_CATEGORY_FALLBACK) and the FAQ-specific
 #              grounding threshold (faq_similarity_threshold) used by
 #              _grounded_search/search_knowledge_base. Offline: search(),
@@ -20,13 +20,12 @@
 #              Gemini/Qdrant call, no docker, no eval marker.
 ###############################################################################
 
-import importlib
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-tools = importlib.import_module("ai-agents.faq.tools")
-grounding = importlib.import_module("ai-agents.core.domain.grounding")
+from ai_agents.core.domain import grounding
+from ai_agents.faq import tools
 
 FAKE_VECTOR = [0.1, 0.2, 0.3]
 

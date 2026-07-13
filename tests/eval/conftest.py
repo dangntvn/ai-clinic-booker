@@ -80,7 +80,7 @@ async def run_conversation_turns(messages: list[str]) -> list[str]:
 class RetrievalCapture:
     """Wraps a tools module's `search` binding to record real Qdrant results.
 
-    `ai-agents/faq/tools.py` and `ai-agents/symptom/tools.py` both do
+    `ai_agents/faq/tools.py` and `ai_agents/symptom/tools.py` both do
     `from dal.qdrant_client import search` at import time, so patching
     `dal.qdrant_client.search` itself would miss calls made through those
     already-bound names. Patching the *tools module's* `search` attribute
@@ -118,13 +118,13 @@ class RetrievalCapture:
 
 @pytest.fixture
 def faq_retrieval():
-    with RetrievalCapture("ai-agents.faq.tools") as cap:
+    with RetrievalCapture("ai_agents.faq.tools") as cap:
         yield cap
 
 
 @pytest.fixture
 def symptom_retrieval():
-    with RetrievalCapture("ai-agents.symptom.tools") as cap:
+    with RetrievalCapture("ai_agents.symptom.tools") as cap:
         yield cap
 
 
@@ -135,7 +135,7 @@ class BookingToolCapture:
     Booking Agent doesn't use Qdrant retrieval, so FaithfulnessMetric doesn't
     apply; this plays the same role for a GEval check instead.
 
-    Patches `ai-agents/booking/tools.py`'s `BookingRepository` binding (not
+    Patches `ai_agents/booking/tools.py`'s `BookingRepository` binding (not
     the tool functions themselves) — `google.adk.agents.Agent(tools=[...])`
     captures the tool *function objects* directly at agent-build time, so
     swapping the module's `create_booking` attribute afterward would never
@@ -148,7 +148,7 @@ class BookingToolCapture:
     _METHODS = ("check_available_slots", "create_booking", "update_booking", "cancel_booking")
 
     def __init__(self):
-        self._module = importlib.import_module("ai-agents.booking.tools")
+        self._module = importlib.import_module("ai_agents.booking.tools")
         self._original_cls = self._module.BookingRepository
         self.calls: list[str] = []
         self.results: list[tuple[str, object]] = []

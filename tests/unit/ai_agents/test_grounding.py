@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Unit tests for ai-agents/core/domain/grounding.py grounding-
+# Description: Unit tests for ai_agents/core/domain/grounding.py grounding-
 #              threshold logic. BUG-002 regression: the scores below are
 #              frozen real embed_batch()+search() results captured 2026-07-09
 #              against a freshly wiped-and-reseeded knowledge base
@@ -22,9 +22,7 @@
 #              what it deliberately still doesn't (see the module below).
 ###############################################################################
 
-import importlib
-
-grounding = importlib.import_module("ai-agents.core.domain.grounding")
+from ai_agents.core.domain import grounding
 
 NEW_THRESHOLD = 0.7
 

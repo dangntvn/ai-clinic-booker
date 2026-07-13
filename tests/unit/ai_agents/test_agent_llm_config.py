@@ -22,7 +22,6 @@ import importlib
 import pytest
 
 from common.config import settings
-from common.module_loader import load_ai_agents
 
 AGENTS = [
     ("orchestrator.agent", "build_orchestrator_agent", "orchestrator"),
@@ -45,7 +44,7 @@ def test_agent_uses_its_own_llm_config(monkeypatch, module_path, builder_name, p
     monkeypatch.setattr(settings, f"{prefix}_llm_temperature", 0.42)
     monkeypatch.setattr(settings, f"{prefix}_llm_max_tokens", 999)
 
-    module = load_ai_agents(module_path)
+    module = importlib.import_module(f"ai_agents.{module_path}")
 
     if prefix == "orchestrator":
         # Re-import (import, not reload here) may have already built the
@@ -53,7 +52,7 @@ def test_agent_uses_its_own_llm_config(monkeypatch, module_path, builder_name, p
         # sub-agent singletons. Reload the sub-agents now, right before our
         # own explicit build call, so they're unparented again.
         for sub_module_path in _ORCHESTRATOR_SUB_AGENT_MODULES:
-            importlib.reload(load_ai_agents(sub_module_path))
+            importlib.reload(importlib.import_module(f"ai_agents.{sub_module_path}"))
 
     agent = getattr(module, builder_name)()
 
@@ -68,8 +67,8 @@ def test_agent_uses_its_own_llm_config(monkeypatch, module_path, builder_name, p
 def test_overriding_one_agent_does_not_affect_another(monkeypatch):
     monkeypatch.setattr(settings, "faq_llm_model", "faq-only-model")
 
-    faq_module = load_ai_agents("faq.agent")
-    booking_module = load_ai_agents("booking.agent")
+    faq_module = importlib.import_module("ai_agents.faq.agent")
+    booking_module = importlib.import_module("ai_agents.booking.agent")
     faq_agent = faq_module.build_faq_agent()
     booking_agent = booking_module.build_booking_agent()
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Unit tests for ai-agents/core/domain/doctor_lookup.py
+# Description: Unit tests for ai_agents/core/domain/doctor_lookup.py
 #              (BUG-015). Pure name-matching, no I/O — covers the real seeded
 #              roster (eval/fixtures/doctors.yaml) plus the collision cases the
 #              BUG-015 code review raised: given names that double as honorific
@@ -20,11 +20,10 @@
 #              stripped only from the query, never from a stored full_name.
 ###############################################################################
 
-import importlib
-
 import pytest
 
-doctor_lookup = importlib.import_module("ai-agents.core.domain.doctor_lookup")
+from ai_agents.core.domain import doctor_lookup
+
 name_matches = doctor_lookup.name_matches
 normalize_vietnamese = doctor_lookup.normalize_vietnamese
 

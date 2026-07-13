@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["app*", "core*", "dal*", "common*", "modules*", "eval*"]
+include = ["ai_agents*", "app*", "core*", "dal*", "common*", "modules*", "eval*"]
 
 [project]
 name = "ai-clinic-agent"

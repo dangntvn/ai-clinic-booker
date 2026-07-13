@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
     # gemini_llm_model/llm_temperature/llm_max_tokens below are legacy shared
     # defaults, superseded by the per-agent fields (TASK-017) that every
-    # ai-agents/*/agent.py now reads instead. gemini_embedding_model is RAG's
+    # ai_agents/*/agent.py now reads instead. gemini_embedding_model is RAG's
     # own model (used only by common/gemini_client.embed_batch) and is
     # intentionally independent of every per-agent chat field below it.
     gemini_api_key: str = ""

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Unit tests for ai-agents/core/domain/booking_rules.py (pure function, no I/O).
+# Description: Unit tests for ai_agents/core/domain/booking_rules.py (pure function, no I/O).
 ###############################################################################
 
 

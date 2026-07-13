@@ -23,7 +23,6 @@
 
 from google.adk.runners import Runner
 
-from common.module_loader import load_ai_agents
 from dal.session import get_session_service
 
 APP_NAME = "ai-clinic-agent"
@@ -36,9 +35,14 @@ def build_runtime() -> Runner:
     """Return the process-wide main Runner, creating it (and the Orchestrator) on first use."""
     global _runner
     if _runner is None:
-        orchestrator_module = load_ai_agents("orchestrator.agent")
+        # Imported lazily (not at module top) so the Orchestrator Agent — and
+        # the faq/symptom/booking/emergency sub-agent singletons it parents at
+        # import time — are only built on first runtime use, not whenever
+        # app.runtime is imported.
+        from ai_agents.orchestrator.agent import orchestrator_agent
+
         _runner = Runner(
-            agent=orchestrator_module.orchestrator_agent,
+            agent=orchestrator_agent,
             app_name=APP_NAME,
             session_service=get_session_service(),
             auto_create_session=True,
@@ -55,9 +59,10 @@ def build_emergency_runtime() -> Runner:
     """
     global _emergency_runner
     if _emergency_runner is None:
-        emergency_module = load_ai_agents("emergency.agent")
+        from ai_agents.emergency.agent import emergency_agent
+
         _emergency_runner = Runner(
-            agent=emergency_module.emergency_agent,
+            agent=emergency_agent,
             app_name=APP_NAME,
             session_service=get_session_service(),
             auto_create_session=True,
