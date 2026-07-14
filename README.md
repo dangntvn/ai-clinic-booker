@@ -88,11 +88,16 @@ app/
 
 ai_agents/
 ├── orchestrator/     intent routing
-├── faq/ symptom/ booking/ emergency/   agent.py · tools.py · prompt.py
+├── faq/              agent.py · tools.py · prompt.py
+├── symptom/          agent.py · tools.py · prompt.py
+├── booking/          agent.py · tools.py · prompt.py
+├── emergency/        agent.py · tools.py · prompt.py
 └── core/             base agent/tool, domain rules
 
 modules/
-├── booking/ doctor/ knowledge/         admin CRUD
+├── booking/          admin CRUD
+├── doctor/           admin CRUD
+├── knowledge/        admin CRUD
 ├── conversation/     chat controller
 └── knowledge_ingestion/   chunk_service · embedding_service · cron.py
 
@@ -178,7 +183,7 @@ this table.
 | Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ✅ 0.856 |
 | Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 1.000 |
 | Booking Concurrency Pass Rate | Two concurrent bookings on the same slot both commit (double-booking) | = 1.00 | ✅ 1.000 |
-| DeepEval judge suite (17 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ⚠️ 14/17 clean, 3 persona trade-off |
+| DeepEval judge suite (15 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ⚠️ 12/15 clean, 3 persona trade-off |
 
 ¹ `Context Precision@5`'s threshold (`≥ 0.20`) sits close to its current value (`0.233`) by
 design, not because it was tuned to just barely pass: retrieval intentionally casts a wide
@@ -199,7 +204,7 @@ would overstate how end-to-end some of it is:
 - **Retrieval, RAG generation, intent routing** — full HTTP round-trip through the real
   `/api/v1/agents/booker/conversations/{conversation_id}/messages` endpoint, real Gemini calls,
   real Qdrant/Postgres.
-- **DeepEval judge suite (17 cases)** — real runtime/LLM/DB/Qdrant, but in-process: built via
+- **DeepEval judge suite (15 cases)** — real runtime/LLM/DB/Qdrant, but in-process: built via
   `build_runtime()` and driven through `runner.run_async()` (see
   `tests/eval/conftest.py::run_conversation`), skipping the HTTP layer and
   `modules/conversation/controller.py`'s routing/validation.
@@ -209,7 +214,7 @@ would overstate how end-to-end some of it is:
   conversation, which isn't deterministic enough to pin down a race condition. Going straight to
   the repository is the deliberate choice that makes the race reproducible.
 
-The DeepEval row is intentionally not a clean fraction. Of 17 cases: 14 pass with no concerns; the
+The DeepEval row is intentionally not a clean fraction. Of 15 cases: 12 pass with no concerns; the
 remaining 3 all dip below the Answer Relevancy threshold on the FAQ suite (two pricing questions,
 one specialties-overview question) purely from a friendlier conversational persona folding in
 extra context the user didn't strictly ask for — the underlying facts stay grounded (Faithfulness
