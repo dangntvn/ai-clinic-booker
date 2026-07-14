@@ -1,4 +1,4 @@
-# Eval Findings — 2026-07-08 real run (full clean re-run 2026-07-09)
+# Eval Findings — 2026-07-08 original run (latest full clean re-run: 2026-07-14, §11 — see Conclusion for the full update history)
 
 > ## 2026-07-09 full re-run — everything green
 >
@@ -749,7 +749,43 @@ Full per-case scores in [`DEEPEVAL_REPORT.md`](./DEEPEVAL_REPORT.md)'s "later se
 
 ---
 
+## 11. 2026-07-14 — full docker rebuild + clean-data reseed + full re-run (Team Lead, no subagent) — classification: 0 new bugs, 3 known persona/relevancy trade-off cases reconfirmed
+
+Team Lead ran this directly in the main session per explicit CEO instruction ("chạy lại docker, làm
+sạch data, chạy lại eval, deepeval"): `docker compose down`, full volume wipe
+(`ai-clinic-booker_postgres_data` + `ai-clinic-booker_qdrant_data` — a real clean-data reset, not
+just a container restart), `docker compose build app` (the app container was stale/exited before
+this), `docker compose up -d` (Alembic auto-migrated the fresh Postgres on boot), then
+`scripts/seed_eval_fixtures.py` (28 doctors, 24 knowledge docs). Sanity-checked the Gemini API first
+given §8c/`2026-07-13-eval-blocked-gemini-spend-cap.md`'s spend-cap history — both `generate_content`
+and `embed_content` (real configured model `gemini-embedding-001`, not the code default
+`text-embedding-004`) succeeded immediately; no spend-cap block this session.
+
+**Classic gate: PASS, fully green, all 4 metrics** — Span Hit Rate@5 = 1.000, Span MRR = 0.812,
+Context Precision@5 = 0.233, Hit Rate@5 (doc-id) = 1.000, MRR (doc-id) = 0.970, Keyword Match =
+0.796, Faithfulness = 0.856, **Intent Routing Accuracy = 1.000 (12/12)**, Booking Concurrency =
+1.000. Unlike §9a's caveat, the Intent Routing number here **is valid against current code** — the
+`app` container was rebuilt from the current branch immediately before this run, not stale.
+
+**DeepEval (17 cases): 14/17 PASS, 3 FAIL** — all 3 failures are FAQ Answer Relevancy dips already
+on file in §7d (persona warmth diluting a strict single-question relevancy judge; Faithfulness
+stayed 1.000 on all 3): `test_faq_pricing_question_grounded` (0.500),
+`test_faq_surgery_pricing_question_grounded` (0.500), `test_faq_specialties_overview_question_grounded`
+(0.375). No booking, symptom, or fabrication case failed — BUG-014/BUG-015/BUG-016's fixes continue
+to hold with no regression. **No new product bug found.**
+
+`eval/REPORT.md` and `eval/DEEPEVAL_REPORT.md` were auto-overwritten by these runs, as always;
+current file contents reflect this session's numbers. Full session notes in
+`.claude/memory/2026-07-14-full-clean-rerun-docker-eval-deepeval.md`.
+
+---
+
 ## Conclusion
+
+**Updated 2026-07-14**: full docker rebuild + clean-data reseed + real re-run against current code
+(§11). Classic gate fully green (Intent Routing 1.000/12 valid this time — container rebuilt from
+current branch first, unlike §9a). DeepEval 14/17 pass; the 3 failures are the same pre-existing
+FAQ Answer-Relevancy/persona trade-off documented in §7d, not new. **0 new bugs found.**
 
 **Updated 2026-07-13 (even later session)**: BUG-016 is confirmed fixed on both of its named
 requirements — the agent now states a concrete real time when proposing slots
