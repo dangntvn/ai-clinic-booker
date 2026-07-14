@@ -17,14 +17,18 @@
 #              conversation controller, TASK-022). TASK-016 adds startup
 #              readiness waits. TASK-018: lifespan starts/stops the ingestion
 #              cron scheduler (modules/knowledge_ingestion/cron.setup_scheduler),
-#              which was defined but never invoked anywhere until now.
+#              which was defined but never invoked anywhere until now. TASK-032:
+#              CORSMiddleware for the embeddable chat widget, origin list is
+#              env-driven (common/config.py::Settings.allowed_origins).
 ###############################################################################
 
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import build_router
+from common.config import settings
 from modules.knowledge_ingestion.cron import setup_scheduler
 
 
@@ -40,6 +44,12 @@ async def _lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
     app = FastAPI(title="AI Clinic Booking Agent", lifespan=_lifespan)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins_list,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.include_router(build_router())
 
     @app.get("/health")
