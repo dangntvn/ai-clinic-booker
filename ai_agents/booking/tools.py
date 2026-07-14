@@ -25,7 +25,7 @@
 from datetime import datetime
 
 from common.database import AsyncSessionFactory
-from core.exceptions import InvalidSlotError, SlotTakenError
+from core.exceptions import InvalidSlotError, NotFoundError, SlotTakenError
 from dal.booking_repository import BookingRepository
 from dal.doctor_repository import DoctorRepository
 
@@ -68,25 +68,39 @@ async def find_doctor_by_name(name: str) -> list[dict]:
     ]
 
 
-async def check_available_slots(doctor_id: int, date_iso: str) -> list[str]:
-    """Return open slots for a doctor on a date, as ISO datetime strings.
+async def check_available_slots(doctor_id: int, date_iso: str) -> dict:
+    """Return open slots for a doctor on a date.
 
     Args:
-        doctor_id: The doctor's id (from the Symptom Agent's rendered context).
+        doctor_id: The doctor's id (from the Symptom Agent's rendered context
+            or resolved via find_doctor_by_name).
         date_iso: Target date as "YYYY-MM-DD". The agent must resolve any
             relative expression ("hôm nay"/"mai"/"thứ 2"...) into this format
             first using the reference date in its instruction (BUG-009) — this
             tool does not parse relative or free-text dates.
 
     Returns:
-        ISO datetime strings for every open slot. Empty list if the doctor
-        doesn't work that day or has no free slots.
+        {"status": "ok", "slots": [<ISO datetime str>, ...]} when the doctor
+        exists and is active. ``slots`` is the list of every open clinic-hour
+        slot; it is EMPTY when the doctor doesn't work that day or is fully
+        booked — that is a real "no free time this day" state, tell the patient
+        so and offer another day.
+
+        {"status": "doctor_not_found"} when doctor_id doesn't resolve to an
+        active doctor (BUG-017). This is a DIFFERENT situation from an empty
+        slot list — it means there is no such doctor, so the agent must NOT say
+        "no slots left / fully booked"; it should say no doctor by that
+        reference was found and re-check the name (find_doctor_by_name) or
+        offer specialty-based routing instead of substituting another doctor.
     """
     target_date = datetime.fromisoformat(date_iso).date()
     async with AsyncSessionFactory() as session:
         repo = BookingRepository(session)
-        slots = await repo.check_available_slots(doctor_id, target_date)
-    return [s.isoformat() for s in slots]
+        try:
+            slots = await repo.check_available_slots(doctor_id, target_date)
+        except NotFoundError:
+            return {"status": "doctor_not_found"}
+    return {"status": "ok", "slots": [s.isoformat() for s in slots]}
 
 
 async def create_booking(doctor_id: int, slot_time_iso: str, patient_name: str, phone: str) -> dict:

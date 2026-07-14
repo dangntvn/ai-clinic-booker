@@ -35,7 +35,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
-from core.exceptions import InvalidSlotError, SlotTakenError
+from core.exceptions import InvalidSlotError, NotFoundError, SlotTakenError
 from dal.doctor_repository import Doctor
 
 # Clinic hours (ARCH-001 doesn't pin these — a single-branch clinic default;
@@ -152,12 +152,21 @@ class BookingRepository(BaseRepository[Booking]):
         actual conflict guard is the DB constraint hit at ``create_booking``.
 
         Returns:
-            Empty list if the doctor doesn't work that weekday. Otherwise
-            every clinic-hour slot not already held by an active booking.
+            Empty list if the doctor works but has no free slot that day
+            (doesn't work that weekday, or every slot is already taken).
+
+        Raises:
+            NotFoundError: If ``doctor_id`` doesn't resolve to an active
+                doctor. This is deliberately distinct from the empty-list
+                "no free slot" result (BUG-017): a caller/agent must be able
+                to tell "there is no such doctor" apart from "this doctor has
+                nothing free that day", so the two are never phrased the same
+                way to the patient. Mirrors ``_validate_slot``, which already
+                errors on the same condition rather than silently returning.
         """
         doctor = await self.session.get(Doctor, doctor_id)
         if doctor is None or not doctor.is_active:
-            return []
+            raise NotFoundError(f"Doctor {doctor_id} not found or inactive")
 
         weekday_abbr = target_date.strftime("%a")  # "Mon", "Tue", ...
         if weekday_abbr not in doctor.work_days:
@@ -223,8 +232,6 @@ class BookingRepository(BaseRepository[Booking]):
         """Reschedule a booking to a new slot. Same validity/conflict handling as create."""
         booking = await self.get(booking_id)
         if booking is None:
-            from core.exceptions import NotFoundError
-
             raise NotFoundError(f"Booking {booking_id} not found")
 
         new_slot_time = _to_utc(new_slot_time)
@@ -248,8 +255,6 @@ class BookingRepository(BaseRepository[Booking]):
         """
         booking = await self.get(booking_id)
         if booking is None:
-            from core.exceptions import NotFoundError
-
             raise NotFoundError(f"Booking {booking_id} not found")
 
         booking.status = "cancelled"

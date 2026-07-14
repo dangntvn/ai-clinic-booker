@@ -42,7 +42,7 @@ import pytest
 from google.genai import types
 
 from app.runtime import build_runtime
-from core.exceptions import InvalidSlotError, SlotTakenError
+from core.exceptions import InvalidSlotError, NotFoundError, SlotTakenError
 
 
 async def run_conversation(text: str) -> str:
@@ -135,22 +135,28 @@ def _tool_shape(name: str, *, result: object = None, exc: Exception | None = Non
 
     `BookingToolCapture` patches `BookingRepository` (see class docstring for why),
     not the tool wrapper functions themselves — so it observes the raw dal/ return
-    value (a `Booking` ORM object, or a raised `SlotTakenError`/`InvalidSlotError`),
-    never the `{"status": ...}` dict the tool wrapper builds from it *after* the
-    patched call site returns. `FaithfulToBookingOutcome`'s GEval criteria is
-    written against that dict shape (what the agent actually sees), so this
-    duplicates the same transformation `ai_agents/booking/tools.py` performs,
-    keeping the captured "ground truth" in the shape the criteria expects instead
-    of the ORM object's repr.
+    value (a `Booking` ORM object, or a raised `NotFoundError`/`SlotTakenError`/
+    `InvalidSlotError`), never the `{"status": ...}` dict the tool wrapper builds
+    from it *after* the patched call site returns. `FaithfulToBookingOutcome`'s
+    GEval criteria is written against that dict shape (what the agent actually
+    sees), so this duplicates the same transformation `ai_agents/booking/tools.py`
+    performs, keeping the captured "ground truth" in the shape the criteria
+    expects instead of the ORM object's repr.
     """
     if exc is not None:
+        if isinstance(exc, NotFoundError):
+            # check_available_slots raises this for a missing/inactive doctor
+            # (BUG-017); the tool wrapper catches it into this dict. Without
+            # this branch, a doctor_not_found eval case would see the raw
+            # exception repr in context instead of what the agent really saw.
+            return {"status": "doctor_not_found"}
         if isinstance(exc, SlotTakenError):
             return {"status": "slot_taken"}
         if isinstance(exc, InvalidSlotError):
             return {"status": "invalid_slot", "reason": exc.message}
         raise exc  # pragma: no cover — not a shape create_booking/update_booking catch
     if name == "check_available_slots":
-        return [s.isoformat() for s in result]
+        return {"status": "ok", "slots": [s.isoformat() for s in result]}
     if name in ("create_booking", "update_booking"):
         return {"status": "confirmed", "booking_id": result.id}
     if name == "cancel_booking":
@@ -200,9 +206,21 @@ class BookingToolCapture:
 
             def make_method(name=name, base_method=base_method):
                 async def _method(self, *args, **kwargs):
+                    # Record raised calls too: check_available_slots now raises
+                    # NotFoundError for a missing/inactive doctor (BUG-017), and
+                    # the tool wrapper catches it into {"status":
+                    # "doctor_not_found"}. Without this, a doctor_not_found eval
+                    # case would see "(no booking tool was called)" in context
+                    # even though the DAL call really ran. create_booking/
+                    # update_booking similarly raise SlotTakenError/
+                    # InvalidSlotError that their tool wrappers catch (BUG-019).
+                    # _tool_shape() reproduces each wrapper's dict shape for
+                    # both the exception and success cases so `calls`/`results`
+                    # always record what the agent actually saw, never a raw
+                    # ORM object or exception repr.
                     try:
                         result = await base_method(self, *args, **kwargs)
-                    except (SlotTakenError, InvalidSlotError) as exc:
+                    except (NotFoundError, SlotTakenError, InvalidSlotError) as exc:
                         tool_shaped = _tool_shape(name, exc=exc)
                         calls.append(f"{name}(args={args}, kwargs={kwargs}) -> {tool_shaped}")
                         results.append((name, tool_shaped))

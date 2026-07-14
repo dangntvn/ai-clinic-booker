@@ -22,7 +22,7 @@ dependencies = [
     "structlog",
     "apscheduler",
     "google-genai",
-    "google-adk",
+    "google-adk==2.3.0",
     "tenacity",
     "opentelemetry-api",
     "opentelemetry-sdk",

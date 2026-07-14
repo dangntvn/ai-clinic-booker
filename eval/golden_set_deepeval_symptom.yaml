@@ -8,13 +8,38 @@
 #
 # context_kind: "retrieval" attaches symptom_retrieval.contexts() (or
 # not_found_fallback); "none" means the original test attached no context/
-# retrieval_context at all (test_symptom_routes_to_real_doctor_for_covered_specialty
-# and test_symptom_does_not_invent_doctor_for_uncovered_specialty only ever
-# built `LLMTestCase(input=question, actual_output=actual_output)`).
+# retrieval_context at all (the routing cases only ever built
+# `LLMTestCase(input=question, actual_output=actual_output)`).
+#
+# UPDATED 2026-07-13 (senior-dev, BUG-017) — the doctor roster this suite is
+# written against changed: BUG-017 auto-seeded >= 2 active doctors for EVERY
+# one of the 14 specialties (eval/fixtures/doctors_coverage_fill.yaml), so
+#   (a) NO specialty is "uncovered" anymore — the two former
+#       "does_not_invent_doctor_for_uncovered_specialty" cases (Tim mạch,
+#       Tiêu hóa) had a now-false premise and are re-cast as covered-specialty
+#       routing cases (route correctly + only name a REAL doctor of that
+#       specialty). The DATA half of the original "don't fabricate a doctor for
+#       a genuinely empty specialty" property is now guarded by a unit test
+#       that renders the Symptom Agent's doctor context from a simulated roster
+#       missing a specialty and asserts no doctor is attributed to it
+#       (tests/unit/ai_agents/test_symptom_context.py), since the empty-roster
+#       state can no longer be reproduced against the seeded DB. NOTE: the LLM
+#       half of that property (the agent OBEYING prompt rule 4 and refusing to
+#       name a doctor when a specialty is empty) is no longer covered by any
+#       live eval case — flagged for senior-tester to decide whether a mocked/
+#       injected empty-roster LLM case is worth adding.
+#   (b) the two covered cases (Da liễu, Tai Mũi Họng) previously pinned "the
+#       ONLY real doctor is X (id N)"; each specialty now has 2 real doctors,
+#       so the criteria accept either.
+# SENIOR-TESTER should re-run these 4 LLM-judged cases live to confirm the
+# judge still passes against the new roster.
 #
 # UPDATED 2026-07-10 (senior-tester, CEO request via Team Lead: "thêm gấp đôi
 # case test vì nó quan trọng") — added 3 more cases (6 total), same pattern
-# as the first 3, grounded in real seeded data:
+# as the first 3, grounded in real seeded data. NOTE: the roster facts stated
+# in this 2026-07-10 block ("the only real Tai Mũi Họng doctor", "5 enum
+# specialties with NO real doctor") were SUPERSEDED by the 2026-07-13 BUG-017
+# note above — kept verbatim only for history:
 #   - test_symptom_medical_guide_question_grounded_heart_valve: a second
 #     grounded medical_guide Q&A (ho-van-tim.md / "hở van tim", id 17 in
 #     golden_set_rag.yaml — a different topic from the existing cao-huyet-ap
@@ -51,25 +76,26 @@ cases:
         criteria: >-
           'actual_output' should recommend the 'Da liễu' (dermatology)
           department for these skin symptoms, per the clinic's triage
-          rules. If it names a specific doctor or doctor_id, it must be
-          'Đào Thanh Thủy' (doctor_id=8) — the only real Da liễu doctor
-          in the system — not any other name.
+          rules. If it names a specific doctor, it must be one of the real
+          Da liễu doctors — 'Đào Thanh Thủy' or 'Tạ Thu Trang' — and not a
+          doctor from any other specialty.
         evaluation_params: [input, actual_output]
         threshold: 0.7
 
-  - name: test_symptom_does_not_invent_doctor_for_uncovered_specialty
+  - name: test_symptom_routes_to_real_doctor_for_tim_mach_specialty
+    # Was test_symptom_does_not_invent_doctor_for_uncovered_specialty — Tim mạch
+    # is now a covered specialty after BUG-017 seeded 2 cardiologists.
     input: "Tôi hay hồi hộp, tim đập nhanh và tức ngực khi gắng sức, nên khám khoa nào?"
     context_kind: none
     metrics:
       - type: geval
-        name: NoFabricatedCardiologist
+        name: RoutesToRealTimMachDoctor
         criteria: >-
-          The clinic's real doctor list has NO doctor with specialty
-          'Tim mạch' (cardiology) — this is a known, confirmed gap.
-          'actual_output' passes only if it does NOT name a specific
-          doctor or doctor_id for Tim mạch (naming the specialty itself,
-          or saying no cardiologist is currently available, is fine and
-          should pass).
+          'actual_output' should recommend the 'Tim mạch' (cardiology)
+          department for these cardiac symptoms, per the clinic's triage
+          rules. If it names a specific doctor, it must be one of the real
+          Tim mạch doctors — 'Lý Quang Đại' or 'Vũ Hồng Vân' — and not a
+          doctor from any other specialty.
         evaluation_params: [input, actual_output]
         threshold: 0.7
 
@@ -92,24 +118,25 @@ cases:
         criteria: >-
           'actual_output' should recommend the 'Tai Mũi Họng' (ENT)
           department for these throat/nose/ear symptoms, per the clinic's
-          triage rules. If it names a specific doctor or doctor_id, it must
-          be 'Đoàn Việt Hùng' (doctor_id=9) — the only real Tai Mũi Họng
-          doctor in the system — not any other name.
+          triage rules. If it names a specific doctor, it must be one of the
+          real Tai Mũi Họng doctors — 'Đoàn Việt Hùng' or 'Ngô Bá Thành' —
+          and not a doctor from any other specialty.
         evaluation_params: [input, actual_output]
         threshold: 0.7
 
-  - name: test_symptom_does_not_invent_doctor_for_tieu_hoa_specialty
+  - name: test_symptom_routes_to_real_doctor_for_tieu_hoa_specialty
+    # Was test_symptom_does_not_invent_doctor_for_tieu_hoa_specialty — Tiêu hóa
+    # is now a covered specialty after BUG-017 seeded 2 gastroenterologists.
     input: "Dạo này em hay bị đau bụng vùng trên rốn, ợ chua với đầy hơi sau khi ăn, không biết nên khám khoa nào ạ?"
     context_kind: none
     metrics:
       - type: geval
-        name: NoFabricatedGastroenterologist
+        name: RoutesToRealTieuHoaDoctor
         criteria: >-
-          The clinic's real doctor list has NO doctor with specialty
-          'Tiêu hóa' (gastroenterology) — this is a known, confirmed gap.
-          'actual_output' passes only if it does NOT name a specific
-          doctor or doctor_id for Tiêu hóa (naming the specialty itself,
-          or saying no gastroenterologist is currently available, is fine
-          and should pass).
+          'actual_output' should recommend the 'Tiêu hóa' (gastroenterology)
+          department for these digestive symptoms, per the clinic's triage
+          rules. If it names a specific doctor, it must be one of the real
+          Tiêu hóa doctors — 'Trịnh Văn Bảo' or 'Đặng Thu Hà' — and not a
+          doctor from any other specialty.
         evaluation_params: [input, actual_output]
         threshold: 0.7
