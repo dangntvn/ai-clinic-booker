@@ -162,9 +162,10 @@ accuracy from 95% to 80%. That needs its own gate, run against the live stack wi
 Gemini calls (`pytest -m eval`) — no mocks, because the thing being measured *is* the model's
 behavior.
 
-Numbers below are as of 2026-07, all green. The eval suite regenerates them on every run —
-[`eval/REPORT.md`](eval/REPORT.md) is the auto-generated, always-current source of truth; if
-the two ever disagree, trust the report, not this table.
+Numbers below are as of 2026-07-14 (full docker rebuild, clean-data reseed, live re-run), all
+green. The eval suite regenerates them on every run — [`eval/REPORT.md`](eval/REPORT.md) is the
+auto-generated, always-current source of truth; if the two ever disagree, trust the report, not
+this table.
 
 | Metric | What it catches | Threshold | Current |
 |---|---|---|---|
@@ -173,11 +174,11 @@ the two ever disagree, trust the report, not this table.
 | Context Precision@5¹ | Retrieved chunks are mostly noise, not signal | ≥ 0.20 | ✅ 0.233 |
 | Hit Rate@5 (doc-id) | Relevant knowledge doc isn't in the top 5 retrieved | ≥ 0.70 | ✅ 1.000 |
 | MRR (doc-id) | Relevant doc retrieved but ranked poorly | ≥ 0.90 | ✅ 0.970 |
-| Keyword Match | The real generated answer misses expected facts | ≥ 0.70 | ✅ 0.821 |
-| Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ✅ 0.874 |
-| Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 0.917 |
+| Keyword Match | The real generated answer misses expected facts | ≥ 0.70 | ✅ 0.796 |
+| Faithfulness (LLM-judge) | The real generated answer isn't grounded in retrieved context | ≥ 0.75 | ✅ 0.856 |
+| Intent Routing Accuracy | Orchestrator sends the conversation to the wrong domain agent | ≥ 0.80 | ✅ 1.000 |
 | Booking Concurrency Pass Rate | Two concurrent bookings on the same slot both commit (double-booking) | = 1.00 | ✅ 1.000 |
-| DeepEval judge suite (15 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ⚠️ 10/15 clean, 4 persona trade-off, 1 still open |
+| DeepEval judge suite (17 cases) | Answer relevancy / faithfulness / GEval on FAQ, symptom, booking flows | pass/fail per case | ⚠️ 14/17 clean, 3 persona trade-off |
 
 ¹ `Context Precision@5`'s threshold (`≥ 0.20`) sits close to its current value (`0.233`) by
 design, not because it was tuned to just barely pass: retrieval intentionally casts a wide
@@ -198,7 +199,7 @@ would overstate how end-to-end some of it is:
 - **Retrieval, RAG generation, intent routing** — full HTTP round-trip through the real
   `/api/v1/agents/booker/conversations/{conversation_id}/messages` endpoint, real Gemini calls,
   real Qdrant/Postgres.
-- **DeepEval judge suite (15 cases)** — real runtime/LLM/DB/Qdrant, but in-process: built via
+- **DeepEval judge suite (17 cases)** — real runtime/LLM/DB/Qdrant, but in-process: built via
   `build_runtime()` and driven through `runner.run_async()` (see
   `tests/eval/conftest.py::run_conversation`), skipping the HTTP layer and
   `modules/conversation/controller.py`'s routing/validation.
@@ -208,19 +209,14 @@ would overstate how end-to-end some of it is:
   conversation, which isn't deterministic enough to pin down a race condition. Going straight to
   the repository is the deliberate choice that makes the race reproducible.
 
-The DeepEval row is intentionally not a clean fraction. Of 15 cases: 8 pass with no concerns; 4 dip
-below the Answer Relevancy threshold purely from a friendlier conversational persona (the underlying
-facts stay grounded — Faithfulness is 1.000 on all four); the case that flagged a confirmed
-fabrication (a symptom-triage recommendation naming a real doctor for a specialty they don't actually
-practice) is **now fixed and confirmed** (2 clean isolated re-runs, no regression on the routing cases
-next to it); and of the 2 cases that flagged a confirmed UX/architecture gap (the booking flow
-couldn't resolve a doctor by name, only by an internal id), the underlying gap **is now fixed and
-confirmed** (the name→id lookup resolves correctly every trial, 0/6 recurrences of the old dead-end) —
-one of those 2 cases now passes cleanly, but the other still fails, for a **different, newly-surfaced**
-reason (the agent resolves the doctor and gets real available slots, but doesn't quote any specific
-time back to the patient) that only became visible once the original blocker was cleared. Nothing here
-is hidden or threshold-adjusted away; full reproduction steps and the reasoning for treating the
-still-open case as a new finding rather than "the old bug reopened" are in
+The DeepEval row is intentionally not a clean fraction. Of 17 cases: 14 pass with no concerns; the
+remaining 3 all dip below the Answer Relevancy threshold on the FAQ suite (two pricing questions,
+one specialties-overview question) purely from a friendlier conversational persona folding in
+extra context the user didn't strictly ask for — the underlying facts stay grounded (Faithfulness
+is 1.000 on all three). No fabrication, routing, or booking-concurrency case fails: the
+symptom-triage doctor-specialty fabrication and the booking name→id resolution gaps flagged in
+earlier rounds are confirmed fixed and have not regressed. Nothing here is hidden or
+threshold-adjusted away; full history and reasoning are in
 [`eval/EVAL_FINDINGS.md` §7-§8](eval/EVAL_FINDINGS.md) and [`eval/DEEPEVAL_REPORT.md`](eval/DEEPEVAL_REPORT.md).
 
 `scripts/seed_eval_fixtures.py` wipes and reseeds fixed fixture data before a run, so results
