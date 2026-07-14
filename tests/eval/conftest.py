@@ -156,7 +156,7 @@ def _tool_shape(name: str, *, result: object = None, exc: Exception | None = Non
             return {"status": "invalid_slot", "reason": exc.message}
         raise exc  # pragma: no cover — not a shape create_booking/update_booking catch
     if name == "check_available_slots":
-        return [s.isoformat() for s in result]
+        return {"status": "ok", "slots": [s.isoformat() for s in result]}
     if name in ("create_booking", "update_booking"):
         return {"status": "confirmed", "booking_id": result.id}
     if name == "cancel_booking":
