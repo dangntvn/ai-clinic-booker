@@ -22,14 +22,19 @@
 #              transfers straight to the Emergency Agent's dedicated runner,
 #              skipping the Orchestrator entirely (ARCH-001 §5.4, ADR-0019,
 #              BIZ-001 §3).
+#
+#              TASK-033: post_message is rate-limited (common/rate_limit.py)
+#              since an open, unauthenticated chat endpoint costs a real LLM
+#              call per message.
 ###############################################################################
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from google.genai import types
 from pydantic import BaseModel
 
 from ai_agents.core.domain import emergency_rules
 from app.runtime import build_emergency_runtime, build_runtime
+from common.rate_limit import chat_rate_limit_dependency
 
 router = APIRouter(prefix="/agents/booker/conversations", tags=["conversations"])
 
@@ -92,7 +97,11 @@ async def handle_message(conversation_id: str, text: str) -> str:
     return await _run(build_runtime(), conversation_id, session_id, text)
 
 
-@router.post("/{conversation_id}/messages", response_model=ConversationMessageResponse)
+@router.post(
+    "/{conversation_id}/messages",
+    response_model=ConversationMessageResponse,
+    dependencies=[Depends(chat_rate_limit_dependency)],
+)
 async def post_message(
     conversation_id: str, message: ConversationMessageRequest
 ) -> ConversationMessageResponse:
