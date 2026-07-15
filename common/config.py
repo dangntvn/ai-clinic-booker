@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_path: str = "./storage/logs"
     app_port: int = 8000
+    # CORS (TASK-032) — comma-separated origin list for the widget's cross-origin
+    # requests. "*" (default) is fine for local/dev; production deployments must
+    # set this explicitly since FastAPI/Starlette forbids "*" together with
+    # allow_credentials=True.
+    allowed_origins: str = "*"
 
     # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
     # gemini_llm_model/llm_temperature/llm_max_tokens below are legacy shared
@@ -141,6 +146,11 @@ class Settings(BaseSettings):
     def qdrant_url(self) -> str:
         """Qdrant HTTP endpoint composed from the qdrant_host/qdrant_port fields."""
         return f"http://{self.qdrant_host}:{self.qdrant_port}"
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        """``allowed_origins`` parsed into a list for CORSMiddleware."""
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
 
 
 settings = Settings()
