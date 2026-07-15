@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     # set this explicitly since FastAPI/Starlette forbids "*" together with
     # allow_credentials=True.
     allowed_origins: str = "*"
+    # Chat rate-limit (TASK-033) — max messages per minute per (client IP,
+    # conversation_id) key, enforced in-memory (common/rate_limit.py). MVP-only:
+    # not accurate across multiple app instances, see that module's docstring.
+    chat_rate_limit_per_minute: int = 10
 
     # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
     # gemini_llm_model/llm_temperature/llm_max_tokens below are legacy shared
