@@ -19,24 +19,21 @@
 #              cron scheduler (modules/knowledge_ingestion/cron.setup_scheduler),
 #              which was defined but never invoked anywhere until now. TASK-032:
 #              CORSMiddleware for the embeddable chat widget, origin list is
-#              env-driven (common/config.py::Settings.allowed_origins). FE-10:
-#              mounts app/static/ at /static so the built widget bundle
-#              (app/static/widget.js) is served by this backend directly —
-#              ARCH-002 §9/§11 W6 MVP hosting decision (no separate CDN yet).
+#              env-driven (common/config.py::Settings.allowed_origins). The
+#              FE-10 /static mount (ARCH-002 §9/§11 W6, "backend serves the
+#              built widget bundle directly") was removed 2026-07-16 — the
+#              widget is now hosted separately from this backend (CEO
+#              decision, see .claude/memory/2026-07-16-widget-hosting-moved-off-backend.md).
 ###############################################################################
 
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import build_router
 from common.config import settings
 from modules.knowledge_ingestion.cron import setup_scheduler
-
-_STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -58,16 +55,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(build_router())
-    # FE-10: serves app/static/widget.js at /static/widget.js (ARCH-002 §9,
-    # W6 — MVP hosting: backend serves the built widget bundle directly,
-    # no separate CDN). StaticFiles guesses Content-Type from the file
-    # extension via Python's mimetypes module. The exact value for .js
-    # depends on the mimetypes table of the running environment (e.g.
-    # "application/javascript" on Windows hosts vs. "text/javascript" on
-    # the Linux slim container used for deploy, per RFC 9239) — both are
-    # valid JS MIME types for a <script> tag, so no extra media-type
-    # handling is needed.
-    app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
     @app.get("/health")
     async def health() -> dict[str, str]:
