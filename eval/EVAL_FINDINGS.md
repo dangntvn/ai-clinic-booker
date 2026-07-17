@@ -415,6 +415,12 @@ metric-design change for Team Lead to authorize, not something changed unilatera
 
 ### 7d. Product/metric trade-off (not treated as a bug) — the new persona's friendlier phrasing dilutes Answer Relevancy on 4 cases
 
+> **2026-07-17 update (senior-tester-1, §13)**: CEO (via Team Lead) decided to resolve this for the
+> 3 FAQ cases named below by replacing the strict `AnswerRelevancyMetric` with a persona-aware
+> GEval criteria — see §13a. `test_symptom_medical_guide_question_grounded` (the 4th case named
+> here) was **not** touched (out of the scope Team Lead gave this session) — still open as
+> documented below.
+
 `test_faq_pricing_question_grounded` (0.667), `test_faq_surgery_pricing_question_grounded` (0.667),
 `test_faq_specialties_overview_question_grounded` (0.429), and
 `test_symptom_medical_guide_question_grounded` (0.400) all dropped below the 0.70 Answer Relevancy
@@ -855,6 +861,10 @@ directly contradicts the real output. Re-ran isolated: **passed cleanly**, and p
 
 ### 12d. `test_symptom_routes_to_real_doctor_for_tieu_hoa_specialty` — reproduces the pre-existing documented BUG-017 flaky case, failed 5/5 this session (consistent with its own documented ~3/4 fail rate)
 
+> **2026-07-17 update (senior-tester-1, §13)**: RESOLVED — CEO (via Team Lead) decided to add an
+> accepting branch to this case's GEval criteria for "asks one clarifying question, doesn't
+> misroute, doesn't fabricate" (the exact behaviour this section documents). See §13b.
+
 Failed in all 3 full runs plus both extra isolated re-runs (5/5 this session). Every failure's
 reason is identical in shape: *"does not recommend any department... does not name a specific
 doctor"* — a direct check of the real reply confirms the agent asks a clarifying follow-up question
@@ -868,6 +878,14 @@ anything in this wave's diff. **Not escalated** (per this file's own established
 exact case).
 
 ### 12e. FAQ persona-vs-relevancy trade-off (§7d lineage) reproduces, plus one run where it also dipped Faithfulness — investigated, confirmed a judge misattribution artifact, not a new fabrication bug
+
+> **2026-07-17 update (senior-tester-1, §13)**: the **Answer Relevancy** half of this section is
+> RESOLVED — CEO (via Team Lead) decided to loosen the judge for these 3 cases; see §13a. The
+> **Faithfulness** dip on `test_faq_surgery_pricing_question_grounded` described in this section's
+> second paragraph was **out of scope** for that decision (Team Lead's instruction was to fix
+> Answer Relevancy only, not Faithfulness) and was **not touched** — it reproduced again this
+> session (§13c), still unresolved, still classified the same way (judge misattribution, not a
+> fabrication bug), still not a decision for the tester to make unilaterally.
 
 `test_faq_pricing_question_grounded`, `test_faq_surgery_pricing_question_grounded`, and
 `test_faq_specialties_overview_question_grounded` failed Answer Relevancy in at least one of the 3
@@ -916,7 +934,121 @@ proceeding with merge to `main` per Team Lead's own process.
 
 ---
 
+## 13. 2026-07-17 (senior-tester-1, on branch `feature/task-034-035-036-037-booking-injection-hardening`) — CEO-authorized fixes for §7d/§12d/§12e's two open trade-offs — classification: 2 judge-design gaps closed by explicit CEO decision (via Team Lead), not a unilateral tester call; 1 unrelated Faithfulness dip confirmed still open, correctly left untouched
+
+Team Lead relayed two explicit CEO decisions to stop leaving §7d/§12d/§12e's open questions
+hanging and actually act on them this session — **both are judge/criteria changes CEO approved**,
+not something senior-tester decided unilaterally (per this file's own repeated "not a decision
+within senior-tester's authority" notes on both sections).
+
+### 13a. Việc 1 — 3 FAQ cases: `AnswerRelevancyMetric` replaced with a persona-aware GEval
+
+**Decision**: for `test_faq_pricing_question_grounded`, `test_faq_surgery_pricing_question_grounded`,
+and `test_faq_specialties_overview_question_grounded` (`eval/golden_set_deepeval_faq.yaml`), the
+strict built-in `AnswerRelevancyMetric` (threshold 0.7) — which penalized the "Minh Tâm" persona's
+warm closing lines/extra context as "not directly responsive" even though Faithfulness stayed
+1.000 — was replaced with a dedicated `geval` metric per case (`PricingAnswerRelevancyPersonaAware`,
+`SurgeryPricingAnswerRelevancyPersonaAware`, `SpecialtiesOverviewAnswerRelevancyPersonaAware`, all
+threshold 0.7, `evaluation_params: [input, actual_output]`). Chose **Cách 2** (dedicated GEval, not
+just lowering the built-in metric's threshold): the observed built-in-relevancy score range for
+correct-but-warm answers (0.182–0.667 across §12e's 3 runs) already overlaps with where a genuinely
+off-topic answer would plausibly also score, so a threshold low enough to always pass the warm
+answers would have materially weakened the metric's ability to catch a real relevancy defect. A
+GEval with an explicit "answers the question directly is required; extra persona warmth/context is
+explicitly NOT a defect; off-topic/wrong-fact answers still fail" criteria keeps a real,
+discriminating pass/fail line instead. `eval/deepeval_dataset.py::build_metrics()` needed **no code
+change** — `type: geval` was already a supported metric kind; only the 3 YAML case's `metrics` list
+changed (from `type: answer_relevancy` to `type: geval` with new `name`/`criteria`). Faithfulness
+metrics on these 3 cases were left untouched (still `type: faithfulness`, threshold 0.7) — not in
+scope, and Faithfulness was already scoring 1.000 on 2 of 3 (see §13c for the exception).
+
+### 13b. Việc 2 — Tiêu hóa routing case: added an accepting branch for "asks one clarifying question"
+
+**Decision**: `test_symptom_routes_to_real_doctor_for_tieu_hoa_specialty`'s GEval criteria
+(`eval/golden_set_deepeval_symptom.yaml`) was rewritten to accept **either** (a) the existing
+branch — recommends Tiêu hóa, and if a doctor is named it must be a real Tiêu hóa doctor (Trịnh
+Văn Bảo/Đặng Thu Hà), not a doctor from another specialty — **or** (b) a new branch: the agent asks
+exactly one clarifying follow-up question about the symptoms (duration/severity/timing) before
+committing to a specialty, without recommending a wrong department and without naming any doctor.
+Fails only on a wrong/different department recommendation, a non-Tiêu-hóa doctor being named, or a
+fabricated doctor/specialty — exactly the fabrication-catching purpose this case always had, now
+just also tolerant of the clarifying-question shape §7c/§8b/§12d already documented as a real,
+reasonable (not unsafe) agent behaviour that the old criteria had no accepting branch for.
+
+### 13c. Re-run results — 4 target cases only, `pytest -k`, throwaway Docker container (same infra pattern as §12), 4 independent runs total (2 reseeds, isolated re-runs)
+
+Set up a throwaway container the same way §12 documented (`ai-clinic-booker-app:latest` image,
+branch's live `src/` bind-mounted, joined to `ai-clinic-booker_default` network for real
+Postgres/Qdrant, `pip install -e . --no-deps` for the editable install, `python -m pytest` — not
+bare `pytest` — for the `tests.eval.conftest` import to resolve, `.env` explicitly sourced before
+`uvicorn`/the pytest process so `GEMINI_API_KEY` is a real process env var). Reseeded
+(`scripts/seed_eval_fixtures.py`) before each run. Ran the 4 target cases together
+(`pytest -k "pricing_question_grounded or specialties_overview_question_grounded or
+tieu_hoa_specialty" -m eval`) twice, then an isolated `-k surgery_pricing_question_grounded` rerun
+twice more to pin down the one recurring failure below — **4 independent real-Gemini runs total**.
+
+**Result — the 4 metrics this session was scoped to fix all PASS cleanly, every run, no flakiness observed:**
+
+| Test | Metric | Score (all runs) | Threshold |
+|---|---|---|---|
+| `test_faq_pricing_question_grounded` | `PricingAnswerRelevancyPersonaAware` [GEval] | **1.000, 1.000** | 0.70 |
+| `test_faq_surgery_pricing_question_grounded` | `SurgeryPricingAnswerRelevancyPersonaAware` [GEval] | **1.000, 1.000, 1.000, 1.000** | 0.70 |
+| `test_faq_specialties_overview_question_grounded` | `SpecialtiesOverviewAnswerRelevancyPersonaAware` [GEval] | **1.000, 1.000** | 0.70 |
+| `test_symptom_routes_to_real_doctor_for_tieu_hoa_specialty` | `RoutesToRealTieuHoaDoctor` [GEval] | **1.000, 1.000** | 0.70 |
+
+Confirmed via a direct diagnostic call (not just the metric score) that the Tiêu hóa case actually
+exercises branch (b) this session — the agent's real reply to the case's question is: *"Chào
+anh/chị, mình là Minh Tâm đây... Anh/chị có thể cho mình biết thêm là tình trạng đau bụng, ợ chua
+và đầy hơi này diễn ra đã lâu chưa và có thường xuyên không ạ?"* — one clarifying question, no
+department named yet, no doctor named, no misrouting — exactly the shape §13b's new branch (b) was
+written to accept, and the GEval judge does now accept it (1.000 both runs), closing §12d (and its
+lineage §7c/§8b) for this case.
+
+**One pre-existing, out-of-scope issue reproduced again and was correctly left untouched**:
+`test_faq_surgery_pricing_question_grounded`'s **Faithfulness** metric (unchanged, `type:
+faithfulness`, threshold 0.7 — not part of either CEO decision) failed **3 of 4** runs this session
+(0.500, 0.500, 0.667, 0.667 — 1 pass out of the 4), always with the exact same judge reason
+already on file in §12e: it misreads the agent saying the surgery price "on behalf of Minh Tâm's
+clinic" as the assistant claiming the service belongs to "Minh Tâm" specifically rather than the
+real clinic name that's actually in the retrieval context (a completely ordinary spokesperson
+phrasing, not a fabricated fact — the price itself is always judged correct). This is **not**
+caused by this session's YAML changes (`git diff` confirms the `faithfulness` block for this case
+is byte-identical before/after) and was **not in scope** to fix (Team Lead's instruction named
+Answer Relevancy only) — recorded here as still-open, exactly matching §12e's own prior
+classification, for whoever next revisits Faithfulness-metric strictness on this case.
+
+### 13d. Unit tests / regression scope
+
+Per Team Lead's explicit instruction, **no full-suite re-run** was performed this session (no
+`pytest -m eval` without `-k`, no injection-suite re-run, no other FAQ/symptom/booking case) — only
+the 4 named cases above, to conserve Gemini quota and session time. `eval/DEEPEVAL_REPORT.md` was
+auto-overwritten by the last of these targeted runs (4 cases recorded, scores as in the table
+above), same as this project's established convention (§9a/§11/§12) — it reflects only this
+session's 4-case scope, not a full-suite baseline; the last full baseline remains §12/§11.
+
+### 13e. Verdict
+
+**Both CEO-authorized fixes verified working, no regression on the fixed cases' own faithfulness
+where in scope, 0 new bugs found.** §7d (the 3 FAQ Answer-Relevancy cases named here) and §12d/§12e
+(the Tiêu hóa GEval gap, and the Answer-Relevancy half of the FAQ trade-off) are now **RESOLVED** —
+see the inline closure notes added to each section above. §7d's 4th case
+(`test_symptom_medical_guide_question_grounded`) and §12e's Faithfulness dip on the surgery-pricing
+case remain **open**, both correctly out of this session's authorized scope, not silently dropped.
+
+---
+
 ## Conclusion
+
+**Updated 2026-07-17 (later session, senior-tester-1, §13)**: per explicit CEO decisions (via Team
+Lead), fixed the 2 judge-design gaps §7d/§12d/§12e had left open as "not a tester decision to make
+unilaterally": (a) replaced the strict built-in `AnswerRelevancyMetric` with a persona-aware GEval
+for the 3 affected FAQ cases, and (b) added an accepting branch to the Tiêu hóa routing case's GEval
+criteria for "asks one clarifying question without misrouting/fabricating." Re-ran only these 4
+cases (not the full suite, per Team Lead's scoping), 4 independent real-Gemini runs: **all 4 target
+metrics passed 1.000 every run, no flakiness**. One unrelated, out-of-scope Faithfulness dip on
+`test_faq_surgery_pricing_question_grounded` (already on file in §12e, not touched by this session's
+change) reproduced 3/4 runs and remains open. **0 new bugs. Both CEO-authorized fixes verified
+working.** See §13 for full detail.
 
 **Updated 2026-07-17 (TASK-038, senior-tester-1)**: full regression run of `pytest -m eval` (classic
 gate + all 20 DeepEval cases, incl. TASK-037's 12 new prompt-injection cases) against branch

@@ -8,6 +8,17 @@ full suite **3 times** this session (fresh reseed before each) to separate real 
 LLM-judge/infra flakiness — see `eval/EVAL_FINDINGS.md` §12 for the full run-by-run detail and
 classification of every failure. The table below is the last (3rd) run's numbers.
 
+**Follow-up 2026-07-17 (post-TASK-038, senior-tester-1, §13)** — CEO-authorized fix for 2 of the
+findings above: (a) replaced the strict built-in `AnswerRelevancyMetric` with a persona-aware GEval
+metric for the 3 FAQ cases affected by the persona-vs-relevancy trade-off (§7d/§12e), and (b) added
+an accepting branch to `RoutesToRealTieuHoaDoctor`'s criteria for "asks one clarifying question,
+doesn't misroute" alongside the existing "names correct department/doctor" branch, resolving the
+BUG-017 flaky case (§12d). All 4 affected cases below now reflect the updated metric/criteria,
+verified over 4 independent real-Gemini runs (1.000 every run, no flakiness) — see `eval/
+EVAL_FINDINGS.md` §13 for full detail. **`test_faq_surgery_pricing_question_grounded`'s Faithfulness
+score is untouched by this fix and remains a separate, still-open finding** (judge misattribution
+artifact, §12e) — not fixed, out of scope for this follow-up.
+
 Cases recorded this session: 20
 
 ## 1. Booking / FAQ / Symptom (pre-existing DeepEval suite, TASK-027/029)
@@ -17,14 +28,14 @@ Cases recorded this session: 20
 | test_booking_cases[test_booking_proposes_only_real_available_slot] | FaithfulToCheckAvailableSlots [GEval] | 1.000 | ≥ 0.70 | ✅ |
 | test_booking_cases[test_booking_confirms_before_create_then_creates_real_booking] | FaithfulToBookingOutcome [GEval] | 1.000 | ≥ 0.70 | ✅ |
 | test_booking_cases[test_booking_non_work_day_no_fabricated_slots] | NoFabricatedSlotsOnNonWorkDay [GEval] | 1.000 | ≥ 0.70 | ✅ |
-| test_faq_cases[test_faq_pricing_question_grounded] | Answer Relevancy | 0.500 | ≥ 0.70 | ❌ (known trade-off, §12) |
+| test_faq_cases[test_faq_pricing_question_grounded] | PricingAnswerRelevancyPersonaAware [GEval] | 1.000 | ≥ 0.70 | ✅ (fixed 2026-07-17, §13 — was Answer Relevancy 0.500 ❌) |
 | test_faq_cases[test_faq_pricing_question_grounded] | Faithfulness | 1.000 | ≥ 0.70 | ✅ |
 | test_faq_cases[test_faq_clinic_info_question_grounded] | Answer Relevancy | 0.750 | ≥ 0.70 | ✅ |
 | test_faq_cases[test_faq_clinic_info_question_grounded] | Faithfulness | 1.000 | ≥ 0.70 | ✅ |
 | test_faq_cases[test_faq_out_of_scope_question_not_fabricated] | NoFabricatedPolicy [GEval] | 1.000 | ≥ 0.70 | ✅ |
-| test_faq_cases[test_faq_surgery_pricing_question_grounded] | Answer Relevancy | 0.500 | ≥ 0.70 | ❌ (known trade-off, §12) |
-| test_faq_cases[test_faq_surgery_pricing_question_grounded] | Faithfulness | 0.500 | ≥ 0.70 | ❌ (judge misattribution artifact, §12 — price stated is correct) |
-| test_faq_cases[test_faq_specialties_overview_question_grounded] | Answer Relevancy | 0.182 | ≥ 0.70 | ❌ (known trade-off, §12) |
+| test_faq_cases[test_faq_surgery_pricing_question_grounded] | SurgeryPricingAnswerRelevancyPersonaAware [GEval] | 1.000 | ≥ 0.70 | ✅ (fixed 2026-07-17, §13 — was Answer Relevancy 0.500 ❌) |
+| test_faq_cases[test_faq_surgery_pricing_question_grounded] | Faithfulness | 0.667 | ≥ 0.70 | ❌ (still open, judge misattribution artifact, §12e — NOT part of this fix, price stated is correct) |
+| test_faq_cases[test_faq_specialties_overview_question_grounded] | SpecialtiesOverviewAnswerRelevancyPersonaAware [GEval] | 1.000 | ≥ 0.70 | ✅ (fixed 2026-07-17, §13 — was Answer Relevancy 0.182 ❌) |
 | test_faq_cases[test_faq_specialties_overview_question_grounded] | Faithfulness | 1.000 | ≥ 0.70 | ✅ |
 | test_faq_cases[test_faq_cancellation_policy_not_fabricated] | NoFabricatedCancellationPolicy [GEval] | 1.000 | ≥ 0.70 | ✅ |
 | test_symptom_cases[test_symptom_medical_guide_question_grounded] | Answer Relevancy | 1.000 | ≥ 0.70 | ✅ |
@@ -34,7 +45,7 @@ Cases recorded this session: 20
 | test_symptom_cases[test_symptom_medical_guide_question_grounded_heart_valve] | Answer Relevancy | 0.750 | ≥ 0.70 | ✅ |
 | test_symptom_cases[test_symptom_medical_guide_question_grounded_heart_valve] | Faithfulness | 1.000 | ≥ 0.70 | ✅ |
 | test_symptom_cases[test_symptom_routes_to_real_doctor_for_tai_mui_hong_specialty] | RoutesToRealTaiMuiHongDoctor [GEval] | 1.000 | ≥ 0.70 | ✅ |
-| test_symptom_cases[test_symptom_routes_to_real_doctor_for_tieu_hoa_specialty] | RoutesToRealTieuHoaDoctor [GEval] | 0.000 | ≥ 0.70 | ❌ (pre-existing known-flaky BUG-017 case, §12 — failed 5/5 reruns this session, same failure mode as always documented) |
+| test_symptom_cases[test_symptom_routes_to_real_doctor_for_tieu_hoa_specialty] | RoutesToRealTieuHoaDoctor [GEval] | 1.000 | ≥ 0.70 | ✅ (fixed 2026-07-17, §13 — criteria now accepts a clarifying-question branch; was 0.000 ❌, BUG-017) |
 
 ## 2. Prompt-injection guardrail suite (TASK-034/035/037) — separate section per TASK-038 DoD
 
