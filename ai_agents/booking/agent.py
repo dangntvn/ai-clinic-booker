@@ -36,6 +36,8 @@ from .tools import (
     check_available_slots,
     create_booking,
     find_doctor_by_name,
+    find_earliest_available_slot,
+    list_doctors_by_specialty,
     update_booking,
 )
 
@@ -75,7 +77,9 @@ def build_booking_agent() -> Agent:
         instruction=_build_instruction,
         tools=[
             find_doctor_by_name,
+            list_doctors_by_specialty,
             check_available_slots,
+            find_earliest_available_slot,
             create_booking,
             update_booking,
             cancel_booking,

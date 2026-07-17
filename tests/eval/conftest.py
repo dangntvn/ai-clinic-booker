@@ -19,6 +19,17 @@
 #              dal/qdrant_client.search() call each agent's tools module
 #              binds at import time (TASK-027 DoD: don't mock actual_output).
 #
+# UPDATED 2026-07-16 (senior-tester-1, TASK-037) — added
+# run_conversation_with_authors(), used by
+# tests/eval/test_deepeval_injection.py's "emergency vs injection" regression
+# case. Unlike eval/runner.py::run_intent_eval()'s HTTP-call + read-back-from-
+# DatabaseSessionService approach (needed there because it calls the
+# out-of-process HTTP API), this helper stays in-process like
+# run_conversation()/run_conversation_turns() above and simply collects
+# `event.author` off the same `runner.run_async()` event stream those
+# functions already iterate — no extra session read needed, since the
+# authors are right there in the events this process itself just produced.
+#
 # UPDATED 2026-07-10 (senior-tester, TASK-015 batch 3/4) — added
 # _deepeval_metrics_recorder(), a session-scoped autouse fixture that
 # captures each DeepEval metric's real score/threshold/success and writes
@@ -76,6 +87,34 @@ async def run_conversation_turns(messages: list[str]) -> list[str]:
                 reply = "".join(part.text or "" for part in event.content.parts)
         replies.append(reply)
     return replies
+
+
+async def run_conversation_with_authors(text: str) -> tuple[str, set[str]]:
+    """Send one message through the real Orchestrator runtime; return (reply, authors).
+
+    ``authors`` is the set of every non-empty ``event.author`` seen on the real
+    ``runner.run_async()`` event stream for this single turn — in particular,
+    whether ``"emergency_agent"`` is among them tells you whether the
+    Orchestrator actually transferred to the Emergency Agent for this message
+    (ADR-0019's Layer-2 safety net), the same real routing signal
+    ``eval/runner.py::run_intent_eval()`` reads back from the session service
+    after an HTTP call, just captured directly here since this call is
+    already in-process.
+    """
+    conversation_id = f"eval-{uuid.uuid4()}"
+    runner = build_runtime()
+    message = types.Content(role="user", parts=[types.Part(text=text)])
+    reply = ""
+    authors: set[str] = set()
+    events = runner.run_async(
+        user_id=conversation_id, session_id=conversation_id, new_message=message
+    )
+    async for event in events:
+        if event.author:
+            authors.add(event.author)
+        if event.content and event.content.parts:
+            reply = "".join(part.text or "" for part in event.content.parts)
+    return reply, authors
 
 
 class RetrievalCapture:

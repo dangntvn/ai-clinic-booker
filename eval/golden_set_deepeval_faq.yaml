@@ -44,7 +44,19 @@ cases:
     context_kind: retrieval
     not_found_fallback: "(no context retrieved)"
     metrics:
-      - type: answer_relevancy
+      - type: geval
+        name: PricingAnswerRelevancyPersonaAware
+        criteria: >-
+          'actual_output' should directly answer the user's question about
+          the price of the blood-type test ("xét nghiệm nhóm máu"), stating
+          the price from the knowledge base. It is fine and expected for the
+          reply to ALSO include a warm/polite persona touch (e.g. an offer
+          to help further with other services, a friendly closing line) —
+          this is a deliberate persona behaviour ("Minh Tâm"), not padding,
+          and must NOT by itself cause a failure. Only fail if the reply
+          does not answer the pricing question asked, states a wrong or
+          fabricated price, or is off-topic/unrelated to the question.
+        evaluation_params: [input, actual_output]
         threshold: 0.7
       - type: faithfulness
         threshold: 0.7
@@ -79,7 +91,20 @@ cases:
     context_kind: retrieval
     not_found_fallback: "(no context retrieved)"
     metrics:
-      - type: answer_relevancy
+      - type: geval
+        name: SurgeryPricingAnswerRelevancyPersonaAware
+        criteria: >-
+          'actual_output' should directly answer the user's question about
+          the price of the minor benign-tumor removal surgery ("cắt u lành
+          phần mềm"), stating the price from the knowledge base. It is fine
+          and expected for the reply to ALSO include a warm/polite persona
+          touch (e.g. speaking on behalf of the clinic as "Minh Tâm", an
+          offer to help further, a friendly closing line) — this is a
+          deliberate persona behaviour, not padding, and must NOT by itself
+          cause a failure. Only fail if the reply does not answer the
+          pricing question asked, states a wrong or fabricated price, or is
+          off-topic/unrelated to the question.
+        evaluation_params: [input, actual_output]
         threshold: 0.7
       - type: faithfulness
         threshold: 0.7
@@ -89,7 +114,21 @@ cases:
     context_kind: retrieval
     not_found_fallback: "(no context retrieved)"
     metrics:
-      - type: answer_relevancy
+      - type: geval
+        name: SpecialtiesOverviewAnswerRelevancyPersonaAware
+        criteria: >-
+          'actual_output' should directly answer the user's question about
+          which specialties ("chuyên khoa") the clinic offers, listing at
+          least some of the real specialties from the knowledge base. It is
+          fine and expected for the reply to ALSO include extra relevant
+          context such as the clinic's address, opening hours, or a warm
+          closing/invitation to help further — this is a deliberate persona
+          behaviour (FAQ prompt rule 5's "richer, marketing-flavored" answer
+          for general clinic-overview questions), not padding, and must NOT
+          by itself cause a failure. Only fail if the reply does not
+          list/answer which specialties are offered, or is off-topic/
+          unrelated to the question.
+        evaluation_params: [input, actual_output]
         threshold: 0.7
       - type: faithfulness
         threshold: 0.7

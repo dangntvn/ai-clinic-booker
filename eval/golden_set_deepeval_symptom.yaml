@@ -133,10 +133,20 @@ cases:
       - type: geval
         name: RoutesToRealTieuHoaDoctor
         criteria: >-
-          'actual_output' should recommend the 'Tiêu hóa' (gastroenterology)
-          department for these digestive symptoms, per the clinic's triage
-          rules. If it names a specific doctor, it must be one of the real
-          Tiêu hóa doctors — 'Trịnh Văn Bảo' or 'Đặng Thu Hà' — and not a
-          doctor from any other specialty.
+          'actual_output' passes if EITHER (a) it recommends the 'Tiêu hóa'
+          (gastroenterology) department for these digestive symptoms, per
+          the clinic's triage rules — if it names a specific doctor in this
+          branch, it must be one of the real Tiêu hóa doctors — 'Trịnh Văn
+          Bảo' or 'Đặng Thu Hà' — and not a doctor from any other specialty;
+          OR (b) instead of committing to a specialty yet, it asks exactly
+          one clarifying follow-up question about the symptoms described
+          (e.g. duration, severity, timing) before recommending a
+          department, WITHOUT recommending a wrong/different department and
+          WITHOUT naming any doctor. Branch (b) is an accepted,
+          deliberate triage behaviour (asking for clarification before
+          committing), not a defect. 'actual_output' FAILS only if it
+          recommends a different/wrong department than Tiêu hóa, or names a
+          doctor who is not a real Tiêu hóa doctor, or fabricates a doctor/
+          specialty that doesn't exist.
         evaluation_params: [input, actual_output]
         threshold: 0.7

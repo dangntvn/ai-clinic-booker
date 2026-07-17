@@ -1,5 +1,15 @@
 # Eval Report
 
+**Last run: 2026-07-17 (TASK-038, senior-tester-1)** — full regression run against branch
+`feature/task-034-035-036-037-booking-injection-hardening` (TASK-034 booking auto-defaults +
+TASK-035 prompt-injection hardening + TASK-036 README cleanup + TASK-037 injection test suite),
+against a fresh `scripts/seed_eval_fixtures.py` reseed (28 doctors, 24 knowledge docs), real
+Gemini/Postgres/Qdrant, via a throwaway container running the branch's own HTTP server (not the
+shared `ai-clinic-booker-app-1`, which was stale relative to this branch — see
+`eval/EVAL_FINDINGS.md` §12 for the full run notes and comparison against the 2026-07-14 baseline
+(§11). This table reflects the numbers from the last of 3 full `pytest -m eval` runs performed this
+session (all 3 were consistent; see §12 for the other 2 runs' numbers).
+
 RAG questions: 27 · cutoff k = 5
 
 ## 1. RAG retrieval + generation quality
@@ -12,7 +22,7 @@ RAG questions: 27 · cutoff k = 5
 | Hit Rate@5 (doc-id) | 1.000 | ≥ 0.70 | ✅ |
 | MRR (doc-id) | 0.970 | ≥ 0.90 | ✅ |
 | Keyword Match | 0.796 | ≥ 0.70 | ✅ |
-| Faithfulness | 0.856 | ≥ 0.75 | ✅ |
+| Faithfulness | 0.865 | ≥ 0.75 | ✅ |
 
 ### Per-question breakdown
 
@@ -39,7 +49,7 @@ RAG questions: 27 · cutoff k = 5
 | 19 | liên hệ ai khi đến khám | 3 | 0.20 | 1.00 | 1.00 |
 | 20 | gặp ai khi tới phòng khám | 4 | 0.20 | 0.00 | 0.00 |
 | 21 | Huyết áp bao nhiêu thì được coi là cao huyết áp | 1 | 0.25 | 0.00 | 0.00 |
-| 22 | Dấu hiệu nhận biết hở van tim là gì | 1 | 0.25 | 0.33 | 0.50 |
+| 22 | Dấu hiệu nhận biết hở van tim là gì | 1 | 0.25 | 0.33 | 0.75 |
 | 23 | Xét nghiệm tổng phân tích tế bào máu giá bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |
 | 24 | Cắt u lành phần mềm chi phí bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |
 | 25 | Đo chỉ số cơ thể giá bao nhiêu | 1 | 0.20 | 1.00 | 1.00 |

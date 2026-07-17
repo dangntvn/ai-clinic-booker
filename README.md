@@ -346,17 +346,15 @@ medical decisions.
 
 ## About
 
-Built by **Dang NT** — a software engineer with 18+ years of experience across system
-architecture, fullstack development, and AI applications. I design systems end to end:
-drawing the module boundaries, writing the code, and — as this project shows — proving the
-result with measurement rather than assertion.
+Built by **Dang NT** — a software engineer working across system architecture, fullstack
+development, and AI applications. I design systems end to end: drawing the module boundaries,
+writing the code, and — as this project shows — proving the result with measurement rather
+than assertion.
 
 This repository is a portfolio piece. Every non-trivial architecture decision is recorded
 with its rationale in the [decision log](docs/01-architecture.md#decision-log),
 every quality claim is backed by the [evaluation harness](#evaluation), and every shortcut is
 named in [Out of scope](#out-of-scope).
-
-**Let's talk** — open to architecture, fullstack, and AI engineering roles.
 
 - LinkedIn: [linkedin.com/in/dangnt](https://www.linkedin.com/in/dangnt/)
 - Email: [dangnt.vn@gmail.com](mailto:dangnt.vn@gmail.com)

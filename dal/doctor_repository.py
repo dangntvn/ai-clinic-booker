@@ -78,14 +78,21 @@ class DoctorRepository(BaseRepository[Doctor]):
 
     async def list_active(self) -> list[Doctor]:
         """Return every active doctor — the set rendered into agent context."""
-        stmt = select(self.model).where(self.model.is_active.is_(True))
+        stmt = select(self.model).where(self.model.is_active.is_(True)).order_by(self.model.id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def list_by_specialty(self, specialty: str) -> list[Doctor]:
-        """Return active doctors for one specialty (BIZ-001 §6 department)."""
-        stmt = select(self.model).where(
-            self.model.specialty == specialty, self.model.is_active.is_(True)
+        """Return active doctors for one specialty (BIZ-001 §6 department).
+
+        Ordered by id so callers that auto-pick "the first result" (e.g. the
+        Booking Agent's no-doctor-named fallback, BUG-029) get a deterministic
+        pick instead of depending on unordered SQL result order.
+        """
+        stmt = (
+            select(self.model)
+            .where(self.model.specialty == specialty, self.model.is_active.is_(True))
+            .order_by(self.model.id)
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
