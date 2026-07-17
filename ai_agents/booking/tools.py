@@ -14,22 +14,42 @@
 #
 # Description: Booking Agent tools — thin wrappers over dal/ repositories
 #              (booking_repository for slots/bookings, doctor_repository for
-#              the name->doctor_id lookup added for BUG-015); no SQL, no
-#              race-condition handling here (constraint lives in dal/,
-#              ARCH-001 §4). Name matching is a pure core/domain helper, not
-#              SQL. Each tool owns its own DB session since ADK tool functions
-#              are called independently by the LLM, not injected with a shared
-#              request session the way FastAPI Depends() works.
+#              the name->doctor_id lookup added for BUG-015, and the
+#              specialty-based listing/multi-day scan added for TASK-034's
+#              doctor/date auto-defaults); no SQL, no race-condition handling
+#              here (constraint lives in dal/, ARCH-001 §4). Name matching is
+#              a pure core/domain helper, not SQL. Each tool owns its own DB
+#              session since ADK tool functions are called independently by
+#              the LLM, not injected with a shared request session the way
+#              FastAPI Depends() works.
 ###############################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from common.database import AsyncSessionFactory
 from core.exceptions import InvalidSlotError, NotFoundError, SlotTakenError
 from dal.booking_repository import BookingRepository
-from dal.doctor_repository import DoctorRepository
+from dal.doctor_repository import Doctor, DoctorRepository
 
 from ..core.domain.doctor_lookup import name_matches
+
+# BUG-031: cap on how many consecutive days find_earliest_available_slot scans
+# — a whole-week window is enough to answer "khám sớm nhất có thể" without
+# unbounded DB round-trips if a doctor is fully booked for a long stretch.
+_MAX_SCAN_DAYS = 7
+
+
+def _doctor_to_dict(d: Doctor) -> dict:
+    """Shape a Doctor row into the dict find_doctor_by_name/list_doctors_by_specialty
+    return — doctor_id front and center since that's the only field the agent
+    is allowed to pass into check_available_slots/create_booking."""
+    return {
+        "doctor_id": d.id,
+        "full_name": d.full_name,
+        "title": d.title,
+        "specialty": d.specialty,
+        "work_days": d.work_days,
+    }
 
 
 async def find_doctor_by_name(name: str) -> list[dict]:
@@ -55,17 +75,35 @@ async def find_doctor_by_name(name: str) -> list[dict]:
     async with AsyncSessionFactory() as session:
         repo = DoctorRepository(session)
         doctors = await repo.list_active()
-    return [
-        {
-            "doctor_id": d.id,
-            "full_name": d.full_name,
-            "title": d.title,
-            "specialty": d.specialty,
-            "work_days": d.work_days,
-        }
-        for d in doctors
-        if name_matches(name, d.full_name)
-    ]
+    return [_doctor_to_dict(d) for d in doctors if name_matches(name, d.full_name)]
+
+
+async def list_doctors_by_specialty(specialty: str | None = None) -> list[dict]:
+    """List active doctors, optionally by specialty, to auto-pick one (BUG-029).
+
+    Use this when the patient has NOT named a specific doctor. Pass the
+    specialty already known (from a Symptom Agent handoff, or one the patient
+    just stated) to get candidates for that specialty; pass specialty=None (or
+    the clinic's default specialty, e.g. "Nội tổng quát") when no specialty is
+    known at all, so the flow can auto-select a reasonable default doctor
+    instead of blocking the booking on an extra question.
+
+    Args:
+        specialty: One of the clinic's specialty names (BIZ-001 §6), or None
+            to list every active doctor regardless of specialty.
+
+    Returns:
+        One dict per matching active doctor, same shape as
+        find_doctor_by_name: {"doctor_id": int, "full_name": str,
+        "title": str | None, "specialty": str, "work_days": list[str]}. Empty
+        list if no active doctor matches — do NOT fabricate a doctor_id in
+        that case; tell the patient honestly and offer a different specialty
+        instead of silently substituting one.
+    """
+    async with AsyncSessionFactory() as session:
+        repo = DoctorRepository(session)
+        doctors = await repo.list_by_specialty(specialty) if specialty else await repo.list_active()
+    return [_doctor_to_dict(d) for d in doctors]
 
 
 async def check_available_slots(doctor_id: int, date_iso: str) -> dict:
@@ -101,6 +139,61 @@ async def check_available_slots(doctor_id: int, date_iso: str) -> dict:
         except NotFoundError:
             return {"status": "doctor_not_found"}
     return {"status": "ok", "slots": [s.isoformat() for s in slots]}
+
+
+async def find_earliest_available_slot(
+    doctor_id: int, start_date_iso: str, max_days: int = _MAX_SCAN_DAYS
+) -> dict:
+    """Scan forward from a date to find the earliest day with an open slot (BUG-031).
+
+    Use this when the patient states no date preference at all (e.g. "khám
+    sớm nhất có thể", "lúc nào trống thì khám") — after doctor_id is already
+    known (find_doctor_by_name/list_doctors_by_specialty). Scans
+    start_date_iso and each day after it, capped at _MAX_SCAN_DAYS (7) days
+    total, and returns the first day whose slot list isn't empty — this
+    replaces calling check_available_slots per day in a loop from the agent
+    side with one deterministic tool call.
+
+    Args:
+        doctor_id: The doctor to check — must be a real id, never fabricated.
+        start_date_iso: First date to check, "YYYY-MM-DD" — normally today
+            (the NGÀY THAM CHIẾU anchor), since "sớm nhất có thể" means
+            starting from now, not some later day.
+        max_days: How many consecutive days to scan. Callers should not pass
+            more than _MAX_SCAN_DAYS; values above it are silently capped.
+
+    Returns:
+        {"status": "ok", "date_iso": "YYYY-MM-DD", "slots": [<ISO datetime
+        str>, ...]} for the first day in the window with a non-empty slot
+        list — "slots" is already the real result for that day, no need to
+        call check_available_slots again for it.
+
+        {"status": "no_slot_in_window", "days_checked": int} if every day in
+        the window is closed/fully booked — tell the patient honestly and
+        offer to check further out or a different doctor, never fabricate a
+        date.
+
+        {"status": "doctor_not_found"} if doctor_id doesn't resolve to an
+        active doctor (BUG-017) — same meaning as check_available_slots's
+        doctor_not_found; say no such doctor was found, do not say "no slots".
+    """
+    start_date = datetime.fromisoformat(start_date_iso).date()
+    capped_days = min(max_days, _MAX_SCAN_DAYS)
+    async with AsyncSessionFactory() as session:
+        repo = BookingRepository(session)
+        for offset in range(capped_days):
+            target_date = start_date + timedelta(days=offset)
+            try:
+                slots = await repo.check_available_slots(doctor_id, target_date)
+            except NotFoundError:
+                return {"status": "doctor_not_found"}
+            if slots:
+                return {
+                    "status": "ok",
+                    "date_iso": target_date.isoformat(),
+                    "slots": [s.isoformat() for s in slots],
+                }
+    return {"status": "no_slot_in_window", "days_checked": capped_days}
 
 
 async def create_booking(doctor_id: int, slot_time_iso: str, patient_name: str, phone: str) -> dict:
