@@ -1,0 +1,342 @@
+# Fixture bác sĩ — dữ liệu HOÀN TOÀN GIẢ ĐỊNH/ẨN DANH (không phải người thật), dùng riêng cho eval.
+# Field khớp đúng tên cột model `data/doctor_repository.py::Doctor`.
+# specialty PHẢI là 1 trong 14 giá trị enum SPECIALTIES — validate cứng ở modules/doctor/services.py::validate_specialty.
+# work_days: seed_eval_fixtures.py ghi đè bằng TEST_WORK_DAYS cố định cho mọi bác sĩ, không đọc từ field này.
+# fee: chưa có giá trị mẫu — để null.
+
+doctors:
+  - full_name: "Bùi Thị Ngọc Mai"
+    title: "Bác sĩ"
+    specialty: "Nội tổng quát"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Vũ Thị Thanh Hà"
+    title: "Bác sĩ"
+    specialty: "Nội tổng quát"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: "Nhiều năm kinh nghiệm khám và điều trị các bệnh lý nội khoa thông thường."
+    education: null
+
+  - full_name: "Đặng Quốc Bảo"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Nhi"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Phan Thị Minh Châu"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Sản – Phụ khoa"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: "Có kinh nghiệm khám và tư vấn các vấn đề sản phụ khoa cho phụ nữ ở nhiều độ tuổi."
+    education: null
+
+  - full_name: "Nguyễn Đình Khoa"
+    title: "Thạc sĩ, Bác sĩ chuyên khoa"
+    specialty: "Thần kinh"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: "Chuyên khám và tư vấn các vấn đề liên quan đến thần kinh."
+    education: null
+
+  - full_name: "Trần Thị Bích Vân"
+    title: "Bác sĩ"
+    specialty: "Da liễu"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Nguyễn Văn Thắng"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Tai Mũi Họng"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Lê Thị Thu Trang"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Mắt"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Nguyễn Thị Diễm My"
+    title: "Bác sĩ"
+    specialty: "Răng Hàm Mặt"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Hoàng Anh Dũng"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Cơ xương khớp"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Đinh Thị Phương Thảo"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Cơ xương khớp"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Vũ Đình Long"
+    title: "Bác sĩ Chuyên khoa II"
+    specialty: "Tim mạch"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Nguyễn Thị Hoài Thu"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Tim mạch"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Trịnh Quang Huy"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Tiêu hóa"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Lê Thị Ánh Tuyết"
+    title: "Bác sĩ"
+    specialty: "Tiêu hóa"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Bùi Xuân Trường"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Hô hấp"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Cao Thị Yến Nhi"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Hô hấp"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Phạm Sỹ Đức"
+    title: "Bác sĩ Chuyên khoa II"
+    specialty: "Nội tiết"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Mai Thị Lan Anh"
+    title: "Bác sĩ"
+    specialty: "Nội tiết"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Dương Minh Tuấn"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Tiết niệu – Nam khoa"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Sáng"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Phan Văn Hải"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Tiết niệu – Nam khoa"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Ngô Thị Bích Ngọc"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Nhi"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Lê Thị Hồng Nhung"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Sản – Phụ khoa"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Hoàng Văn Đạt"
+    title: "Thạc sĩ, Bác sĩ"
+    specialty: "Thần kinh"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Vũ Thị Kim Oanh"
+    title: "Bác sĩ"
+    specialty: "Da liễu"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Đỗ Xuân Trường"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Tai Mũi Họng"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Phạm Khánh Linh"
+    title: "Bác sĩ"
+    specialty: "Mắt"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Trần Quốc Việt"
+    title: "Bác sĩ Chuyên khoa I"
+    specialty: "Răng Hàm Mặt"
+    phone: null
+    work_days: null
+    room: null
+    shift: "Chiều"
+    fee: null
+    is_active: true
+    bio: null
+    education: null

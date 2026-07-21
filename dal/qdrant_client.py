@@ -55,6 +55,11 @@ def ensure_collection(vector_size: int) -> None:
             collection_name=settings.qdrant_collection,
             vectors_config=models.VectorParams(size=vector_size, distance=models.Distance.COSINE),
         )
+        client.create_payload_index(
+            collection_name=settings.qdrant_collection,
+            field_name="category",
+            field_schema=models.PayloadSchemaType.KEYWORD,
+        )
 
 
 def upsert_chunks(points: list[dict]) -> None:

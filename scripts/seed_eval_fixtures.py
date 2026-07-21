@@ -23,6 +23,7 @@
 ###############################################################################
 
 import asyncio
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -35,7 +36,26 @@ from common.config import settings
 from common.database import AsyncSessionFactory
 from dal.qdrant_client import get_qdrant_client
 
-FIXTURES_DIR = Path(__file__).parent.parent / "eval" / "fixtures"
+_SUPPORTED_LANGS = {"vn", "jp", "en"}
+
+
+def _seed_lang() -> str:
+    """Pick the fixture language from SEED_LANG — never guess a default.
+
+    Each language's fixtures (doctors, addresses, phone numbers) are
+    fully independent datasets, so silently falling back to one (e.g.
+    "vn") could seed the wrong language's data without anyone noticing.
+    """
+    lang = os.environ.get("SEED_LANG")
+    if lang not in _SUPPORTED_LANGS:
+        raise RuntimeError(
+            f"SEED_LANG={lang!r} is not set to one of {sorted(_SUPPORTED_LANGS)} — "
+            "set SEED_LANG=vn|jp|en explicitly before running this script."
+        )
+    return lang
+
+
+FIXTURES_DIR = Path(__file__).parent.parent / "eval" / "fixtures" / _seed_lang()
 API_BASE = "http://localhost:8000/api/v1"
 
 # TASK-026 decision (eval/data_requirements.md §5.1, option a): the real site
@@ -94,19 +114,16 @@ def _parse_fixture(path: Path) -> dict:
     return {"category": meta["category"], "title": meta["title"], "content": body.strip()}
 
 
-# doctors.yaml (verified-real) is seeded FIRST so its rows keep ids 3–13 (the
-# ids eval cases hardcode); doctors_coverage_fill.yaml (synthetic top-up so
-# every specialty has >= 2 active doctors, BUG-017) is seeded AFTER, taking
-# ids 14+. Keep this order stable so a reseed reproduces the same ids.
-_DOCTOR_FIXTURES = ("doctors.yaml", "doctors_coverage_fill.yaml")
+# doctors.yaml holds every doctor for the language in seed order — ids are
+# assigned sequentially starting at DOCTOR_ID_SEQUENCE_START, so keep this
+# file's row order stable across reseeds to reproduce the same ids.
+_DOCTORS_FILE = "doctors.yaml"
 
 
-async def _seed_doctor_fixture(http: httpx.AsyncClient, filename: str) -> list[int]:
-    fixture = yaml.safe_load((FIXTURES_DIR / filename).read_text(encoding="utf-8"))
+async def seed_doctors(http: httpx.AsyncClient) -> list[int]:
+    fixture = yaml.safe_load((FIXTURES_DIR / _DOCTORS_FILE).read_text(encoding="utf-8"))
     ids = []
     for doctor in fixture["doctors"]:
-        # coverage-fill rows carry name/title/specialty only; .get() keeps the
-        # richer real-doctor rows working while letting the sparse ones default.
         body = {
             "full_name": doctor["full_name"],
             "title": doctor.get("title"),
@@ -122,13 +139,6 @@ async def _seed_doctor_fixture(http: httpx.AsyncClient, filename: str) -> list[i
         resp = await http.post(f"{API_BASE}/doctors", json=body)
         resp.raise_for_status()
         ids.append(resp.json()["id"])
-    return ids
-
-
-async def seed_doctors(http: httpx.AsyncClient) -> list[int]:
-    ids: list[int] = []
-    for filename in _DOCTOR_FIXTURES:
-        ids.extend(await _seed_doctor_fixture(http, filename))
     return ids
 
 
