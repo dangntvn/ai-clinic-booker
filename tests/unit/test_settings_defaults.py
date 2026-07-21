@@ -45,6 +45,9 @@ _ENV_VARS_UNDER_TEST = [
     "EMERGENCY_LLM_MODEL",
     "EMERGENCY_LLM_TEMPERATURE",
     "EMERGENCY_LLM_MAX_TOKENS",
+    "POSTGRES_SSL",
+    "QDRANT_HTTPS",
+    "QDRANT_API_KEY",
 ]
 
 
@@ -107,3 +110,51 @@ def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
     settings = Settings(_env_file=None)
 
     assert settings.gemini_embedding_model == "text-embedding-004"
+
+
+# Managed-service settings (demo/deploy-render branch — Neon/Supabase Postgres,
+# Qdrant Cloud) default off/empty so local docker-compose is unaffected; see
+# common/config.py's postgres_ssl/qdrant_https/qdrant_api_key docstrings.
+
+
+def test_postgres_ssl_defaults_to_false_and_no_connect_args():
+    settings = Settings(_env_file=None)
+
+    assert settings.postgres_ssl is False
+    assert settings.postgres_async_connect_args == {}
+    assert settings.postgres_sync_connect_args == {}
+
+
+def test_postgres_ssl_true_adds_connect_args(monkeypatch):
+    monkeypatch.setenv("POSTGRES_SSL", "true")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.postgres_ssl is True
+    assert settings.postgres_async_connect_args == {"ssl": "require"}
+    assert settings.postgres_sync_connect_args == {"sslmode": "require"}
+
+
+def test_qdrant_https_defaults_to_false_and_http_scheme():
+    settings = Settings(_env_file=None)
+
+    assert settings.qdrant_https is False
+    assert settings.qdrant_url.startswith("http://")
+
+
+def test_qdrant_https_true_switches_to_https_scheme(monkeypatch):
+    monkeypatch.setenv("QDRANT_HTTPS", "true")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.qdrant_https is True
+    assert settings.qdrant_url.startswith("https://")
+
+
+def test_qdrant_api_key_defaults_to_empty_and_is_env_overridable(monkeypatch):
+    settings = Settings(_env_file=None)
+    assert settings.qdrant_api_key == ""
+
+    monkeypatch.setenv("QDRANT_API_KEY", "test-key")
+    settings = Settings(_env_file=None)
+    assert settings.qdrant_api_key == "test-key"

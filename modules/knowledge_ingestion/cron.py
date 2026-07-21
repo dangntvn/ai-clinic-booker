@@ -33,7 +33,19 @@ logger = get_logger(__name__)
 # (v3, sync mode) is the driver installed in pyproject.toml, not psycopg2.
 _sync_db_url = settings.database_url.replace("+asyncpg", "+psycopg")
 
-scheduler = AsyncIOScheduler(jobstores={"default": SQLAlchemyJobStore(url=_sync_db_url)})
+# SQLAlchemyJobStore.__init__(url=..., engine_options=None, ...) forwards
+# engine_options straight to create_engine(url, **engine_options) (verified against the
+# installed apscheduler source) — passing connect_args here (same sslmode
+# settings.postgres_sync_connect_args used by alembic/env.py) keeps this jobstore's
+# engine consistent with the rest of the app's SSL handling for managed Postgres.
+scheduler = AsyncIOScheduler(
+    jobstores={
+        "default": SQLAlchemyJobStore(
+            url=_sync_db_url,
+            engine_options={"connect_args": settings.postgres_sync_connect_args},
+        )
+    }
+)
 
 
 async def poll_chunk_jobs() -> None:

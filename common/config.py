@@ -102,7 +102,7 @@ class Settings(BaseSettings):
     postgres_db: str = "ai_clinic_booker"
     postgres_user: str = "postgres"
     postgres_password: str = ""
-    # Managed Postgres (Neon/Supabase, used by the HF Space demo deploy) rejects non-SSL
+    # Managed Postgres (Neon/Supabase, used by the Render.com demo deploy) rejects non-SSL
     # connections; local docker-compose Postgres has no such requirement, so this defaults to
     # off. Kept as a single connect_args flag (see postgres_*_connect_args below) rather than a
     # database_url query-string param because asyncpg and psycopg disagree on the param name
@@ -116,7 +116,7 @@ class Settings(BaseSettings):
     # Qdrant — composed into qdrant_url below.
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    # Managed Qdrant (e.g. Qdrant Cloud, used by the HF Space demo deploy) is HTTPS-only and
+    # Managed Qdrant (e.g. Qdrant Cloud, used by the Render.com demo deploy) is HTTPS-only and
     # requires an api-key header; local docker-compose Qdrant needs neither, so both default
     # to the previous plain-HTTP/no-auth behaviour and must be opted into via env. Same
     # CONV-001 §2 naming exception as postgres_ssl above (env var `QDRANT_HTTPS`).
