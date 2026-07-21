@@ -60,6 +60,14 @@ Cloud are still the managed services used, independent of which platform hosts t
     earlier pass of this adaptation, then fixed once `code-reviewer` flagged it.
   - None of these change default behavior for local dev (`docker-compose.yml` unchanged,
     unaffected — all three default off/empty).
+- `common/config.py` / `app/main.py` — added a fourth opt-in, default-**on** setting,
+  `ENABLE_INGESTION_CRON` (bool, default `true`): when set to `false`, `app/main.py`'s
+  `_lifespan` skips calling `modules/knowledge_ingestion/cron.setup_scheduler()` /
+  `scheduler.start()` entirely (logs `ingestion_cron.disabled` instead) — the ingestion cron
+  code itself is untouched, just not started. This Render demo deploy is the only place that
+  sets it to `false` (CEO runs the ingestion/cron pipeline on a local machine instead; Render
+  only needs to serve chat/API). Local docker-compose and every other deploy keep the cron
+  running as before unless this is explicitly set.
 - `render.yaml` (new file, root of this repo) — a Render Blueprint declaring the Web Service
   (Docker runtime, health check path `/health`) and the full list of environment variable
   *names* this app needs, so connecting the repo in the Render dashboard pre-fills the
@@ -107,6 +115,7 @@ real values for the demo to work (everything else already has a usable default i
 | `QDRANT_HTTPS` | `true` |
 | `QDRANT_API_KEY` | Qdrant Cloud cluster API key |
 | `QDRANT_COLLECTION` | Collection name — keep in sync with whatever ingestion writes to |
+| `ENABLE_INGESTION_CRON` | `false` — CEO runs the ingestion/cron pipeline (`modules/knowledge_ingestion/cron.py`) on a local machine instead; this Render deploy only needs to serve chat/API traffic. Defaults to `true` (cron runs in-process) everywhere else — local docker-compose is unaffected unless this is explicitly set. See `common/config.py::Settings.enable_ingestion_cron` / `app/main.py::_lifespan` for how the scheduler start is skipped (code untouched, just not invoked). |
 
 Everything else (`APP_ENV`, `LOG_LEVEL`, `CHAT_RATE_LIMIT_PER_MINUTE`, per-agent
 `{ORCHESTRATOR,BOOKING,SYMPTOM,FAQ,EMERGENCY}_LLM_*`, `SIMILARITY_THRESHOLD`,
@@ -129,7 +138,10 @@ told to expect it, especially right after a period of no traffic.
 
 - Knowledge ingestion (populating Qdrant with the clinic's actual content) still has to be run
   once against the managed Qdrant Cloud instance — same `modules/knowledge_ingestion` pipeline,
-  just pointed at the service's env vars instead of local docker-compose.
+  just pointed at the service's env vars instead of local docker-compose. This is intentional
+  and expected with `ENABLE_INGESTION_CRON=false` set on Render (see above): CEO runs that
+  pipeline from a local machine against the same Postgres/Qdrant Cloud instances, so the
+  in-process cron on Render would otherwise just be redundant polling.
 - No CI/CD wired up; deploying is triggered by pushing to `demo/deploy-render` (Render can
   auto-deploy on push if configured in the dashboard) or a manual redeploy from the dashboard.
 - No eval/DeepEval run as part of this deploy — out of scope per the task this branch was

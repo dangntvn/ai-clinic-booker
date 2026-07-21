@@ -132,6 +132,18 @@ class Settings(BaseSettings):
     faq_similarity_threshold: float = 0.6
     top_k: int = 6
 
+    # Ingestion cron toggle (Render demo deploy, docs/render-deploy.md) — lets a deploy opt out
+    # of running the APScheduler-based ingestion cron (modules/knowledge_ingestion/cron.py)
+    # in-process, while leaving every line of that scheduler/jobstore code untouched for later
+    # reuse (e.g. a real production deploy, or flipping it back on). Defaults to True so local
+    # docker-compose and every existing deploy keep running the cron exactly as before; the
+    # Render demo deploy is the only place that sets this to false (CEO runs ingestion/cron on
+    # a local machine instead, Render only serves chat/API). Same CONV-001 §2 boolean-prefix
+    # exception as postgres_ssl/qdrant_https above: kept as `enable_...` (not `should_enable_...`)
+    # so the field name matches the env var (`ENABLE_INGESTION_CRON`) used verbatim across
+    # render.yaml/docs/render-deploy.md/this file, not a name read only in application logic.
+    enable_ingestion_cron: bool = True
+
     # Ingestion (ADR-0021) — chunk_max_size/overlap match ARCH-001 §5.5.
     embedding_batch_size: int = 100
     semantic_chunker_threshold_type: str = "percentile"

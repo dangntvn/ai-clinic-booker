@@ -107,3 +107,11 @@ services:
       # Ingestion (ADR-0021)
       - key: EMBEDDING_BATCH_SIZE
         value: "100"
+
+      # Ingestion cron toggle — CEO runs modules/knowledge_ingestion's cron pipeline from a
+      # local machine against these same Postgres/Qdrant Cloud instances; Render only serves
+      # chat/API, so the in-process scheduler is disabled here (see docs/render-deploy.md).
+      # Every other deploy (local docker-compose, a future real production deploy) defaults to
+      # true (cron runs as before) and doesn't need this var set at all.
+      - key: ENABLE_INGESTION_CRON
+        value: "false"
