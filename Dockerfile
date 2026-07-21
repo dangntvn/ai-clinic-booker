@@ -10,6 +10,14 @@ WORKDIR /app
 COPY . .
 RUN pip install --no-cache-dir .
 
+# Demo deploy note (branch demo/deploy-hf-space, docs/hf-space-deploy.md): this same image is
+# also what's pushed to the HF Space (Docker SDK) for the live demo. HF Spaces proxies traffic
+# to whatever port the Space's README.md frontmatter declares via `app_port` — set to 8000 there
+# so this port doesn't need to change. Postgres/Qdrant are managed external services in that
+# deploy (Neon/Supabase, Qdrant Cloud) reachable purely via env vars (HF Space Secrets); nothing
+# in this Dockerfile or the app depends on docker-compose.yml's postgres/qdrant containers.
+EXPOSE 8000
+
 # Run migrations then serve — "automatic on first boot", no separate manual
 # step (TASK-016 DoD). Safe to re-run: alembic upgrade head is idempotent
 # once the schema is at head.

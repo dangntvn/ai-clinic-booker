@@ -67,6 +67,9 @@ def run_migrations_online() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # sslmode (libpq/psycopg naming — see Settings.postgres_sync_connect_args) required by
+        # managed Postgres like Neon/Supabase; empty dict (no-op) for local docker-compose.
+        connect_args=settings.postgres_sync_connect_args,
     )
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

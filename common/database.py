@@ -28,8 +28,12 @@ from common.config import settings
 
 # Module-level engine and session factory are created once at import time and
 # reused for the lifetime of the process. echo=False keeps SQL out of logs in
-# production; flip to True locally when debugging query issues.
-engine = create_async_engine(settings.database_url, echo=False)
+# production; flip to True locally when debugging query issues. connect_args
+# carries the asyncpg-specific SSL flag (settings.postgres_ssl) required by
+# managed Postgres like Neon/Supabase; empty dict (no-op) for local docker-compose.
+engine = create_async_engine(
+    settings.database_url, echo=False, connect_args=settings.postgres_async_connect_args
+)
 AsyncSessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 
 

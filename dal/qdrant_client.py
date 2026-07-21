@@ -31,14 +31,16 @@ def get_qdrant_client() -> QdrantClient:
     """Return the process-wide Qdrant client, creating it on first use.
 
     The connection URL is read from ``settings.qdrant_url``, keeping all
-    infrastructure coordinates in one place.
+    infrastructure coordinates in one place. ``api_key`` is only required for
+    managed Qdrant Cloud clusters (empty/None is fine for local docker-compose
+    Qdrant, which has no auth).
 
     Returns:
         QdrantClient: A ready-to-use Qdrant client instance.
     """
     global _client
     if _client is None:
-        _client = QdrantClient(url=settings.qdrant_url)
+        _client = QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key or None)
     return _client
 
 

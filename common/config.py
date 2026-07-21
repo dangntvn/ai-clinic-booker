@@ -102,10 +102,26 @@ class Settings(BaseSettings):
     postgres_db: str = "ai_clinic_booker"
     postgres_user: str = "postgres"
     postgres_password: str = ""
+    # Managed Postgres (Neon/Supabase, used by the HF Space demo deploy) rejects non-SSL
+    # connections; local docker-compose Postgres has no such requirement, so this defaults to
+    # off. Kept as a single connect_args flag (see postgres_*_connect_args below) rather than a
+    # database_url query-string param because asyncpg and psycopg disagree on the param name
+    # (asyncpg wants `ssl`, libpq/psycopg wants `sslmode`) — a single string wouldn't work for
+    # both the app's async engine (common/database.py) and alembic's sync engine.
+    # CONV-001 §2 exception: kept without an is_/has_/should_ prefix so the field name matches
+    # its env var 1:1 (`POSTGRES_SSL`) — a name a deployer sets by copying from a provider's own
+    # docs/dashboard, not a name read in application business logic.
+    postgres_ssl: bool = False
 
     # Qdrant — composed into qdrant_url below.
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
+    # Managed Qdrant (e.g. Qdrant Cloud, used by the HF Space demo deploy) is HTTPS-only and
+    # requires an api-key header; local docker-compose Qdrant needs neither, so both default
+    # to the previous plain-HTTP/no-auth behaviour and must be opted into via env. Same
+    # CONV-001 §2 naming exception as postgres_ssl above (env var `QDRANT_HTTPS`).
+    qdrant_https: bool = False
+    qdrant_api_key: str = ""
     qdrant_collection: str = "ai_clinic_knowledge"
     similarity_threshold: float = 0.7  # BUG-002: 0.5 let every irrelevant-topic query "ground"
     # FAQ-only recall knob (Nhóm B task 5 — FAQ improvements, 2026-07-10). FAQ answers non-medical clinic content (policy/clinic_info)
@@ -148,8 +164,38 @@ class Settings(BaseSettings):
 
     @property
     def qdrant_url(self) -> str:
-        """Qdrant HTTP endpoint composed from the qdrant_host/qdrant_port fields."""
-        return f"http://{self.qdrant_host}:{self.qdrant_port}"
+        """Qdrant endpoint composed from the qdrant_host/qdrant_port fields.
+
+        Scheme is http unless qdrant_https is set (managed Qdrant Cloud clusters are
+        HTTPS-only; local docker-compose Qdrant is plain HTTP).
+        """
+        scheme = "https" if self.qdrant_https else "http"
+        return f"{scheme}://{self.qdrant_host}:{self.qdrant_port}"
+
+    @property
+    def postgres_async_connect_args(self) -> dict:
+        """Extra kwargs for create_async_engine (common/database.py, asyncpg driver).
+
+        asyncpg's SQLAlchemy dialect passes connect_args straight through as kwargs to
+        asyncpg.connect(), which has no `sslmode` kwarg (only `sslmode` inside a raw DSN
+        *string* is parsed that way) — but asyncpg's own `ssl` kwarg natively accepts the
+        same libpq-style mode strings (asyncpg.connect_utils.SSLMode.parse), so passing the
+        string "require" here (not the bool True) keeps this in sync with
+        postgres_sync_connect_args below instead of asking for the stricter
+        certificate-verifying behaviour a plain `ssl=True` would trigger.
+        """
+        return {"ssl": "require"} if self.postgres_ssl else {}
+
+    @property
+    def postgres_sync_connect_args(self) -> dict:
+        """Extra kwargs for alembic's sync engine (alembic/env.py, psycopg/libpq driver).
+
+        libpq expects `sslmode`, not asyncpg's `ssl` kwarg name — see
+        postgres_async_connect_args. Same "require" value on both sides: encrypt the
+        connection, don't require certificate verification (adequate for Neon/Supabase,
+        which don't ship a customer-facing root CA to verify against).
+        """
+        return {"sslmode": "require"} if self.postgres_ssl else {}
 
     @property
     def allowed_origins_list(self) -> list[str]:
