@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from common.admin_lock import require_admin_unlocked
 from common.database import get_session
 from core.exceptions import AppException
 from modules.booking import services
@@ -45,7 +46,7 @@ async def list_bookings(
     )
 
 
-@router.post("/{booking_id}/cancel")
+@router.post("/{booking_id}/cancel", dependencies=[Depends(require_admin_unlocked)])
 async def cancel_booking(booking_id: int, session: AsyncSession = Depends(get_session)):
     try:
         return await services.cancel_booking(session, booking_id)
@@ -53,7 +54,7 @@ async def cancel_booking(booking_id: int, session: AsyncSession = Depends(get_se
         raise HTTPException(status_code=404, detail=e.message) from e
 
 
-@router.post("/{booking_id}/reschedule")
+@router.post("/{booking_id}/reschedule", dependencies=[Depends(require_admin_unlocked)])
 async def reschedule_booking(
     booking_id: int, body: RescheduleIn, session: AsyncSession = Depends(get_session)
 ):

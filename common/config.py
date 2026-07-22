@@ -67,6 +67,15 @@ class Settings(BaseSettings):
     # conversation_id) key, enforced in-memory (common/rate_limit.py). MVP-only:
     # not accurate across multiple app instances, see that module's docstring.
     chat_rate_limit_per_minute: int = 10
+    # Admin API lock (security hardening) — when true, blocks the admin/write
+    # CRUD routes (doctor create/update/deactivate, booking cancel/reschedule,
+    # all of modules/knowledge) with a 403 (common/admin_lock.py). Defaults to
+    # false so local dev keeps full access with zero config; set
+    # ADMIN_API_LOCKED=true only on public deploys (e.g. Render) where those
+    # admin routes shouldn't be reachable. Read-only doctor/booking lookups and
+    # the chat endpoint (modules/conversation) never depend on this — they stay
+    # open regardless of this flag.
+    admin_api_locked: bool = False
 
     # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
     # gemini_llm_model/llm_temperature/llm_max_tokens below are legacy shared
