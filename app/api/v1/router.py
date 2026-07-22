@@ -17,8 +17,9 @@
 #              controller under /api/v1 — no business logic here.
 ###############################################################################
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from common.admin_lock import require_admin_unlocked
 from modules.booking.controller import router as booking_router
 from modules.conversation.controller import router as conversation_router
 from modules.doctor.controller import router as doctor_router
@@ -30,6 +31,11 @@ def build_router() -> APIRouter:
     router = APIRouter(prefix="/api/v1")
     router.include_router(doctor_router)
     router.include_router(booking_router)
-    router.include_router(knowledge_router)
+    # Unlike doctor/booking above, the knowledge admin screen has no public
+    # read-only use case (its GET is an admin listing, not a customer-facing
+    # lookup) — so all 5 routes, including the GET, are locked together at
+    # the sub-router level instead of annotating each one individually
+    # (common/admin_lock.py).
+    router.include_router(knowledge_router, dependencies=[Depends(require_admin_unlocked)])
     router.include_router(conversation_router)
     return router
