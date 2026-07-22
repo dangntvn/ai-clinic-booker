@@ -1,35 +1,38 @@
 ---
-title: Thông tin liên hệ, lễ tân và cách liên lạc với Phòng khám Đa khoa Tâm An
+title: Contact information, reception, and how to reach Tam An General Clinic
 category: clinic_info
 fetched_date: 2026-07-10
 ---
 
-# Khi đến khám thì liên hệ ai? Thông tin liên hệ và lễ tân phòng khám
+# Who do I contact when I arrive? Clinic contact and reception information
 
-Khi đến phòng khám thì liên hệ ai, gặp ai khi tới khám, hỏi ai đầu tiên? Số điện thoại lễ tân
-là số nào, liên hệ với ai khi đến phòng khám, gọi điện cho ai để hỏi và đặt lịch? Đây là những
-câu hỏi thường gặp của bệnh nhân trước khi tới khám. Dưới đây là thông tin liên hệ đầy đủ.
+Who do I contact when I arrive at the clinic, who do I meet first, who do I ask first?
+What is the reception phone number, who do I contact when I arrive at the clinic, who
+do I call to ask questions and book an appointment? These are frequently asked questions
+from patients before their visit. Below is the complete contact information.
 
-## Khi đến khám thì gặp ai, liên hệ ai đầu tiên
+## Who to meet and contact first when you arrive
 
-Khi bạn đến Phòng khám Đa khoa Tâm An, hãy đến **quầy lễ tân** ngay sảnh đón tiếp đầu
-tiên. Nhân viên lễ tân sẽ tiếp đón, hướng dẫn bạn đăng ký khám, lấy số thứ tự và chỉ dẫn tới
-đúng chuyên khoa cần khám. Nếu chưa biết nên khám khoa nào, bạn cứ hỏi lễ tân để được tư vấn.
+When you arrive at Tam An General Clinic, please go to the **reception desk** right at
+the front lobby first. The reception staff will greet you, guide you through registration,
+give you a queue number, and direct you to the correct specialty department. If you don't
+know which department to visit, just ask the receptionist for guidance.
 
-## Số điện thoại lễ tân và hotline
+## Reception phone number and hotline
 
-- Hotline / số điện thoại lễ tân tư vấn và đặt lịch: **0888 999 000**
-- Bạn có thể gọi hotline này để hỏi thông tin, đặt lịch hẹn trước, hoặc được nối máy tới bộ
-  phận cần liên hệ.
-- Email liên hệ: lienhe@tamanclinic.vn
+- Hotline / reception phone number for consultation and booking: **0888 999 000**
+- You can call this hotline to ask for information, book an appointment in advance, or be
+  transferred to the department you need.
+- Contact email: lienhe@tamanclinic.vn
 
-## Địa chỉ và giờ làm việc
+## Address and operating hours
 
-- Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội
-- Giờ hoạt động: Thứ 2 - Chủ nhật, 07h30 - 17h00
-- Bạn có thể đến trực tiếp quầy lễ tân để được nhân viên đón tiếp và hỗ trợ.
+- Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi
+- Operating hours: Monday - Sunday, 07:30 - 17:00
+- You can come directly to the reception desk to be greeted and assisted by staff.
 
-## Tóm lại
+## Summary
 
-Khi đến khám bạn liên hệ **quầy lễ tân** để được đón tiếp và hướng dẫn; nếu muốn hỏi trước
-hoặc đặt lịch thì gọi **hotline / số điện thoại lễ tân 0888 999 000**.
+When you arrive, contact the **reception desk** to be greeted and guided; if you want to
+ask questions in advance or book an appointment, call the **hotline / reception phone
+number 0888 999 000**.

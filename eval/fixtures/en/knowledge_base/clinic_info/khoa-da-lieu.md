@@ -1,21 +1,21 @@
 ---
-title: Khoa Da Liễu
+title: Dermatology Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Da Liễu
+# Dermatology Department
 
-Khoa Da Liễu là chuyên khoa mũi nhọn của phòng khám, với đội ngũ bác sĩ được đào tạo tại các bệnh viện da liễu hàng đầu Hà Nội và trang thiết bị chẩn đoán/điều trị hiện đại.
+The Dermatology Department is a flagship specialty of the clinic, with a team of doctors trained at leading dermatology hospitals in Hanoi and modern diagnostic/treatment equipment.
 
-## Các nhóm bệnh lý da thường gặp
-- Nhiễm nấm: nấm da đầu, lang ben, nấm móng (lây lan nhanh)
-- Viêm da: nhiều dạng viêm da với triệu chứng phồng rộp, bong tróc
-- Nhiễm virus: zona và các bệnh liên quan
-- Ký sinh trùng: ghẻ và các bệnh tương tự
+## Common groups of skin conditions
+- Fungal infections: scalp ringworm, tinea versicolor, nail fungus (fast-spreading)
+- Dermatitis: multiple forms of dermatitis with symptoms such as blistering and peeling
+- Viral infections: shingles (herpes zoster) and related conditions
+- Parasitic infections: scabies and similar conditions
 
-## Bác sĩ phụ trách
-BS. Đào Thanh Thủy.
+## Attending doctor
+Dr. Đào Thanh Thủy.
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm việc: Thứ 2 - Chủ nhật, 07h30 - 17h00.
+## Contact
+Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

@@ -1,17 +1,17 @@
 ---
-title: Bảng giá dịch vụ Ngoại khoa
+title: 外科サービス料金表
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Ngoại khoa
+# 外科サービス料金表
 
-Phòng khám Đa khoa Tâm An công khai bảng giá dịch vụ ngoại khoa, gồm:
+タムアン総合クリニック（Phòng khám Đa khoa Tâm An）は、以下を含む外科サービスの料金表を公開しています。
 
-- Khám ngoại chấn thương
-- Khám ngoại tổng hợp
-- Cắt u lành phần mềm: từ 1.200.000 VNĐ
+- 外傷外科診察
+- 総合外科診察
+- 軟部良性腫瘍摘出：1,200,000ドンから
 
-Ghi chú: nội dung trang gốc trình bày bảng giá đầy đủ theo định dạng 3 cột (STT, Tên dịch vụ, Giá dịch vụ VNĐ); các mức giá chi tiết khác ngoài mục trên không được liệt kê rõ trong dữ liệu trích xuất — cần xem trực tiếp trang gốc nếu cần đầy đủ, không suy đoán thêm số liệu.
+備考：元のページでは、3列形式（No.、サービス名、料金（ドン））で料金表全体が記載されていますが、上記以外の詳細な料金は抽出データに明記されていません — 詳細が必要な場合は元のページを直接ご確認ください。数値を推測することはしません。
 
-Hotline: 0888 999 000.
+ホットライン：0888 999 000。

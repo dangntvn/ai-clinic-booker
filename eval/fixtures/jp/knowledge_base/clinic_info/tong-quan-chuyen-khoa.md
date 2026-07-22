@@ -1,39 +1,34 @@
 ---
-title: Danh sách các chuyên khoa và dịch vụ của Phòng khám Đa khoa Tâm An
+title: タムアン総合クリニック（Phòng khám Đa khoa Tâm An）の診療科・サービス一覧
 category: clinic_info
 fetched_date: 2026-07-10
 ---
 
-# Bên bạn khám những gì? Danh sách đầy đủ các chuyên khoa và dịch vụ
+# どのような診療を行っていますか？ 診療科・サービスの全一覧
 
-Bên bạn khám những gì? Bên mình khám chữa những bệnh gì? Ở đây khám những gì? Phòng khám
-có những chuyên khoa nào, có những khoa nào, có bao nhiêu chuyên khoa, và cung cấp những
-dịch vụ gì? Đây là những câu hỏi thường gặp nhất của bệnh nhân khi liên hệ với phòng khám.
+「そちらではどのような診療をしていますか？」「どんな病気を診てもらえますか？」「ここでは何を診察していますか？」「どのような診療科がありますか、いくつの診療科がありますか、どんなサービスを提供していますか？」——これらは、患者様がクリニックに問い合わせる際によくある質問です。
 
-Phòng khám Đa khoa Tâm An hiện có 12 chuyên khoa, khám và điều trị đa dạng các bệnh
-lý cho cả người lớn và trẻ em. Dưới đây là danh sách đầy đủ các chuyên khoa và dịch vụ mà
-phòng khám đang khám và cung cấp.
+タムアン総合クリニック（Phòng khám Đa khoa Tâm An）は現在12の診療科を有し、成人・小児を問わず幅広い疾患の診察・治療を行っています。以下は、当クリニックが現在診療・提供している診療科およびサービスの完全な一覧です。
 
-## Danh sách 12 chuyên khoa của phòng khám
+## クリニックの12診療科一覧
 
-1. Khoa Nội Tổng Hợp — khám tổng quát và các bệnh nội khoa thường gặp.
-2. Khoa Ngoại — sơ cứu, cấp cứu và các can thiệp ngoại khoa.
-3. Khoa Nhi — khám và điều trị bệnh cho trẻ em.
-4. Khoa Mắt — khám và chăm sóc các bệnh về mắt.
-5. Khoa Da Liễu — khám và điều trị các bệnh về da.
-6. Khoa Răng – Hàm – Mặt — nha khoa và các dịch vụ răng miệng.
-7. Khoa Sản Phụ Khoa — khám thai và chăm sóc sức khỏe sinh sản nữ.
-8. Khoa Siêu Âm — siêu âm chẩn đoán các cơ quan trong cơ thể.
-9. Khoa Tai – Mũi – Họng — khám và điều trị bệnh tai, mũi, họng.
-10. Khoa Tâm Thần — khám và tư vấn sức khỏe tâm lý, tâm thần.
-11. Khoa Xét Nghiệm — các dịch vụ xét nghiệm chẩn đoán.
-12. Khoa X-Quang — chụp X-quang và chẩn đoán hình ảnh.
+1. 内科（総合内科）— 総合健診および一般的な内科疾患の診察。
+2. 外科 — 応急処置、救急対応および外科的処置。
+3. 小児科 — 子どもの診察・治療。
+4. 眼科 — 眼疾患の診察・ケア。
+5. 皮膚科 — 皮膚疾患の診察・治療。
+6. 歯科・口腔外科 — 歯科および口腔関連サービス。
+7. 産婦人科 — 妊婦健診および女性生殖健康ケア。
+8. 超音波検査科 — 体内臓器の超音波診断。
+9. 耳鼻咽喉科 — 耳・鼻・喉の疾患の診察・治療。
+10. 精神科 — 心理的・精神的健康の診察・相談。
+11. 検査科 — 各種検査診断サービス。
+12. 放射線科／画像診断科（X線）— X線撮影および画像診断。
 
-## Các dịch vụ khám sức khỏe khác
+## その他の健康診断サービス
 
-Ngoài các chuyên khoa trên, phòng khám còn cung cấp các gói dịch vụ khám sức khỏe: khám
-sức khỏe cá nhân, khám sức khỏe doanh nghiệp, khám sức khỏe lái xe, và khám sức khỏe theo
-yêu cầu bảo hiểm.
+上記の診療科に加え、当クリニックでは個人健康診断、企業向け健康診断、運転免許用健康診断、保険加入に必要な健康診断など、各種健診パッケージも提供しています。
 
-## Liên hệ
-Hotline tư vấn và đặt lịch: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ hoạt động: Thứ 2 - Chủ nhật, 07h30 - 17h00.
+## お問い合わせ
+
+ご相談・ご予約用ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、07:30〜17:00。

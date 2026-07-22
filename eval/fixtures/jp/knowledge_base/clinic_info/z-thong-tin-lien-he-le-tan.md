@@ -1,35 +1,29 @@
 ---
-title: Thông tin liên hệ, lễ tân và cách liên lạc với Phòng khám Đa khoa Tâm An
+title: タムアン総合クリニック（Phòng khám Đa khoa Tâm An）の受付・連絡先情報
 category: clinic_info
 fetched_date: 2026-07-10
 ---
 
-# Khi đến khám thì liên hệ ai? Thông tin liên hệ và lễ tân phòng khám
+# 来院時は誰に連絡すればよいですか？ 受付・連絡先情報
 
-Khi đến phòng khám thì liên hệ ai, gặp ai khi tới khám, hỏi ai đầu tiên? Số điện thoại lễ tân
-là số nào, liên hệ với ai khi đến phòng khám, gọi điện cho ai để hỏi và đặt lịch? Đây là những
-câu hỏi thường gặp của bệnh nhân trước khi tới khám. Dưới đây là thông tin liên hệ đầy đủ.
+「来院したら誰に連絡すればいいですか？」「受診時は誰に会えばいいですか、最初に誰に尋ねればいいですか？」「受付の電話番号は何番ですか、来院時は誰に連絡すればいいですか、予約や問い合わせは誰に電話すればいいですか？」——これらは、受診前の患者様からよく寄せられる質問です。以下に詳しい連絡先情報を記載します。
 
-## Khi đến khám thì gặp ai, liên hệ ai đầu tiên
+## 来院時、最初に誰に会えばよいか
 
-Khi bạn đến Phòng khám Đa khoa Tâm An, hãy đến **quầy lễ tân** ngay sảnh đón tiếp đầu
-tiên. Nhân viên lễ tân sẽ tiếp đón, hướng dẫn bạn đăng ký khám, lấy số thứ tự và chỉ dẫn tới
-đúng chuyên khoa cần khám. Nếu chưa biết nên khám khoa nào, bạn cứ hỏi lễ tân để được tư vấn.
+タムアン総合クリニック（Phòng khám Đa khoa Tâm An）にご来院の際は、まず受付エントランスの**受付カウンター**へお越しください。受付スタッフが対応し、受診手続き、順番札の発行、必要な診療科へのご案内をいたします。どの診療科を受診すればよいか分からない場合は、受付にご相談いただければご案内いたします。
 
-## Số điện thoại lễ tân và hotline
+## 受付電話番号・ホットライン
 
-- Hotline / số điện thoại lễ tân tư vấn và đặt lịch: **0888 999 000**
-- Bạn có thể gọi hotline này để hỏi thông tin, đặt lịch hẹn trước, hoặc được nối máy tới bộ
-  phận cần liên hệ.
-- Email liên hệ: lienhe@tamanclinic.vn
+- 受付・ご相談・ご予約用ホットライン（電話番号）：**0888 999 000**
+- このホットラインにお電話いただくと、情報照会、事前予約のほか、必要な部署へのお取り次ぎも可能です。
+- お問い合わせメール：lienhe@tamanclinic.vn
 
-## Địa chỉ và giờ làm việc
+## 住所・診療時間
 
-- Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội
-- Giờ hoạt động: Thứ 2 - Chủ nhật, 07h30 - 17h00
-- Bạn có thể đến trực tiếp quầy lễ tân để được nhân viên đón tiếp và hỗ trợ.
+- 住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội
+- 診療時間：月曜〜日曜、07:30〜17:00
+- 受付カウンターに直接お越しいただければ、スタッフが対応・ご案内いたします。
 
-## Tóm lại
+## まとめ
 
-Khi đến khám bạn liên hệ **quầy lễ tân** để được đón tiếp và hướng dẫn; nếu muốn hỏi trước
-hoặc đặt lịch thì gọi **hotline / số điện thoại lễ tân 0888 999 000**.
+ご来院の際は**受付カウンター**にご連絡いただければ、対応・ご案内いたします。事前にお問い合わせやご予約をご希望の場合は、**ホットライン（受付電話番号）0888 999 000** までお電話ください。

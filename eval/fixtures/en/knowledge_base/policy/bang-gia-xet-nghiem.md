@@ -1,14 +1,14 @@
 ---
-title: Bảng giá dịch vụ Xét nghiệm
+title: Laboratory/Testing Service Price List
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Xét nghiệm
+# Laboratory/Testing Service Price List
 
-- Tổng phân tích tế bào máu ngoại vi: 150.000 VNĐ
-- Xét nghiệm nhóm máu: từ 75.000 VNĐ
+- Complete peripheral blood cell count: 150,000 VND
+- Blood typing test: from 75,000 VND
 
-Ghi chú: đây là 2 dịch vụ có giá cụ thể xuất hiện trong dữ liệu trích xuất; danh mục xét nghiệm đầy đủ (sinh hóa, vi sinh, nước tiểu...) có trên trang gốc nhưng không kèm giá cụ thể trong lần trích xuất này — không suy đoán thêm giá.
+Note: these are the 2 services with specific prices appearing in the extracted data; the full testing catalog (biochemistry, microbiology, urine, etc.) is on the original page but without specific prices in this extraction — no additional prices are assumed.
 
 Hotline: 0888 999 000.

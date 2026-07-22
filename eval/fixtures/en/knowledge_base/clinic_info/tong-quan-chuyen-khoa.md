@@ -1,39 +1,40 @@
 ---
-title: Danh sách các chuyên khoa và dịch vụ của Phòng khám Đa khoa Tâm An
+title: List of specialties and services at Tam An General Clinic
 category: clinic_info
 fetched_date: 2026-07-10
 ---
 
-# Bên bạn khám những gì? Danh sách đầy đủ các chuyên khoa và dịch vụ
+# What do you examine? Full list of specialties and services
 
-Bên bạn khám những gì? Bên mình khám chữa những bệnh gì? Ở đây khám những gì? Phòng khám
-có những chuyên khoa nào, có những khoa nào, có bao nhiêu chuyên khoa, và cung cấp những
-dịch vụ gì? Đây là những câu hỏi thường gặp nhất của bệnh nhân khi liên hệ với phòng khám.
+What do you examine? What conditions do you treat here? What is examined here? What
+specialties does the clinic have, how many departments/specialties are there, and what
+services are provided? These are the most frequently asked questions from patients
+contacting the clinic.
 
-Phòng khám Đa khoa Tâm An hiện có 12 chuyên khoa, khám và điều trị đa dạng các bệnh
-lý cho cả người lớn và trẻ em. Dưới đây là danh sách đầy đủ các chuyên khoa và dịch vụ mà
-phòng khám đang khám và cung cấp.
+Tam An General Clinic currently has 12 specialties, examining and treating a wide range
+of conditions for both adults and children. Below is the full list of specialties and
+services the clinic examines and provides.
 
-## Danh sách 12 chuyên khoa của phòng khám
+## List of the clinic's 12 specialties
 
-1. Khoa Nội Tổng Hợp — khám tổng quát và các bệnh nội khoa thường gặp.
-2. Khoa Ngoại — sơ cứu, cấp cứu và các can thiệp ngoại khoa.
-3. Khoa Nhi — khám và điều trị bệnh cho trẻ em.
-4. Khoa Mắt — khám và chăm sóc các bệnh về mắt.
-5. Khoa Da Liễu — khám và điều trị các bệnh về da.
-6. Khoa Răng – Hàm – Mặt — nha khoa và các dịch vụ răng miệng.
-7. Khoa Sản Phụ Khoa — khám thai và chăm sóc sức khỏe sinh sản nữ.
-8. Khoa Siêu Âm — siêu âm chẩn đoán các cơ quan trong cơ thể.
-9. Khoa Tai – Mũi – Họng — khám và điều trị bệnh tai, mũi, họng.
-10. Khoa Tâm Thần — khám và tư vấn sức khỏe tâm lý, tâm thần.
-11. Khoa Xét Nghiệm — các dịch vụ xét nghiệm chẩn đoán.
-12. Khoa X-Quang — chụp X-quang và chẩn đoán hình ảnh.
+1. Internal Medicine Department — general check-ups and common internal medicine conditions.
+2. Surgery Department — first aid, emergency care, and surgical interventions.
+3. Pediatrics Department — examination and treatment for children.
+4. Ophthalmology Department — eye examination and care.
+5. Dermatology Department — examination and treatment of skin conditions.
+6. Dental Department (Odonto-Stomatology) — dentistry and oral care services.
+7. Obstetrics & Gynecology Department — prenatal check-ups and female reproductive health care.
+8. Ultrasound Department — diagnostic ultrasound of internal organs.
+9. ENT (Otolaryngology) Department — examination and treatment of ear, nose, and throat conditions.
+10. Psychiatry Department — psychological and mental health examination and counseling.
+11. Laboratory/Testing Department — diagnostic testing services.
+12. Radiology/Imaging Department (X-Ray) — X-ray imaging and diagnosis.
 
-## Các dịch vụ khám sức khỏe khác
+## Other health check-up services
 
-Ngoài các chuyên khoa trên, phòng khám còn cung cấp các gói dịch vụ khám sức khỏe: khám
-sức khỏe cá nhân, khám sức khỏe doanh nghiệp, khám sức khỏe lái xe, và khám sức khỏe theo
-yêu cầu bảo hiểm.
+In addition to the specialties above, the clinic also offers health check-up packages:
+individual health check-ups, corporate health check-ups, driver's health check-ups, and
+insurance-required health check-ups.
 
-## Liên hệ
-Hotline tư vấn và đặt lịch: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ hoạt động: Thứ 2 - Chủ nhật, 07h30 - 17h00.
+## Contact
+Consultation and booking hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

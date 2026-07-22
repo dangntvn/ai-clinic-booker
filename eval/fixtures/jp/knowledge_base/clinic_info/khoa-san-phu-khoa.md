@@ -1,23 +1,26 @@
 ---
-title: Khoa Sản Phụ Khoa
+title: 産婦人科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Sản Phụ Khoa
+# 産婦人科
 
-Khoa Sản Phụ Khoa cung cấp dịch vụ chăm sóc sức khỏe sinh sản toàn diện: chăm sóc phụ nữ khi mang thai và trong khi sinh, chẩn đoán/điều trị/ngăn ngừa các tình trạng ảnh hưởng tới hệ sinh sản nữ.
+産婦人科では、妊娠中・分娩時の女性のケアや、女性生殖器系に影響する疾患の診断・治療・予防など、総合的な生殖医療サービスを提供しています。
 
-## Dịch vụ
-- Cấp cứu ban đầu về sản, phụ khoa
-- Khám thai và quản lý thai sản
-- Khám bệnh phụ khoa thông thường
-- Đặt thuốc âm đạo
-- Đốt điều trị lộ tuyến cổ tử cung
-- Soi cổ tử cung và lấy bệnh phẩm tìm tế bào ung thư
+## サービス内容
 
-## Bác sĩ phụ trách
-Nguyễn Thị Thúy.
+- 産婦人科の応急処置
+- 妊婦健診・妊娠管理
+- 一般的な婦人科疾患の診察
+- 腟坐薬の投与
+- 子宮頸部びらんの電気焼灼治療
+- 子宮頸部の視診およびがん細胞検査のための検体採取
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn.
+## 担当医
+
+Nguyễn Thị Thúy 医師。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。メール：lienhe@tamanclinic.vn。

@@ -1,13 +1,13 @@
 ---
-title: Bảng giá dịch vụ Nha khoa
+title: Dental Service Price List
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Nha khoa
+# Dental Service Price List
 
-Phòng khám cung cấp các gói khám nha khoa với ưu đãi cho các dịch vụ: nhổ răng khôn, niềng răng, bọc sứ, cấy ghép Implant.
+The clinic offers dental check-up packages with promotions for services such as: wisdom tooth extraction, orthodontic braces, porcelain crowns, and dental implants.
 
-Ghi chú: mức giá cụ thể cho từng dịch vụ nha khoa không thể hiện rõ trong nội dung trích xuất được — không suy đoán số liệu, cần xem trực tiếp trang gốc để có giá chính xác.
+Note: specific prices for each dental service are not clearly shown in the extracted content — no figures are assumed; see the original page directly for accurate pricing.
 
 Hotline: 0888 999 000.

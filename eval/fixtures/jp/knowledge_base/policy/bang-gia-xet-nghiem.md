@@ -1,14 +1,14 @@
 ---
-title: Bảng giá dịch vụ Xét nghiệm
+title: 検査サービス料金表
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Xét nghiệm
+# 検査サービス料金表
 
-- Tổng phân tích tế bào máu ngoại vi: 150.000 VNĐ
-- Xét nghiệm nhóm máu: từ 75.000 VNĐ
+- 末梢血球算定検査：150,000ドン
+- 血液型検査：75,000ドンから
 
-Ghi chú: đây là 2 dịch vụ có giá cụ thể xuất hiện trong dữ liệu trích xuất; danh mục xét nghiệm đầy đủ (sinh hóa, vi sinh, nước tiểu...) có trên trang gốc nhưng không kèm giá cụ thể trong lần trích xuất này — không suy đoán thêm giá.
+備考：抽出データに具体的な料金が記載されているのはこの2つの検査サービスのみです。完全な検査項目一覧（生化学、微生物、尿検査など）は元のページに掲載されていますが、今回の抽出データには具体的な料金が含まれていません — 数値を推測することはしません。
 
-Hotline: 0888 999 000.
+ホットライン：0888 999 000。

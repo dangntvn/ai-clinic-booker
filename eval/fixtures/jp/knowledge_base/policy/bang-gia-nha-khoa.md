@@ -1,13 +1,13 @@
 ---
-title: Bảng giá dịch vụ Nha khoa
+title: 歯科サービス料金表
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Nha khoa
+# 歯科サービス料金表
 
-Phòng khám cung cấp các gói khám nha khoa với ưu đãi cho các dịch vụ: nhổ răng khôn, niềng răng, bọc sứ, cấy ghép Implant.
+当クリニックでは、親知らずの抜歯、矯正歯科、セラミッククラウン、インプラント埋入など、優待価格の歯科診療パッケージを提供しています。
 
-Ghi chú: mức giá cụ thể cho từng dịch vụ nha khoa không thể hiện rõ trong nội dung trích xuất được — không suy đoán số liệu, cần xem trực tiếp trang gốc để có giá chính xác.
+備考：各歯科サービスの具体的な料金は抽出データに明記されていません — 数値を推測することはせず、正確な料金は元のページを直接ご確認ください。
 
-Hotline: 0888 999 000.
+ホットライン：0888 999 000。

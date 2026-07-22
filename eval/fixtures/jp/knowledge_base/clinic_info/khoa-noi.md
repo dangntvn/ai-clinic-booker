@@ -1,22 +1,25 @@
 ---
-title: Khoa Nội Tổng Hợp
+title: 内科（総合内科）
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Nội Tổng Hợp
+# 内科（総合内科）
 
-Khoa Nội tổng hợp là một trong những khoa đầu tiên giúp xác định các bất thường sức khỏe. Khoa khám và điều trị gần như mọi bệnh lý như tim mạch, hô hấp, tiêu hóa, nội tiết, nội thần kinh, xương khớp, da liễu.
+総合内科は、健康上の異常を最初に発見するための重要な診療科の一つです。循環器、呼吸器、消化器、内分泌、神経内科、筋骨格系、皮膚科など、ほぼすべての内科疾患の診察・治療を行っています。
 
-## Dịch vụ
-- Khám bệnh, chữa bệnh và sơ cứu cho các bệnh nội khoa thông thường
-- Khám sức khỏe tổng quát định kỳ
-- Hỗ trợ chẩn đoán bệnh lý khi có triệu chứng chưa rõ nguyên nhân
+## サービス内容
 
-## Đội ngũ bác sĩ (theo trang khoa)
-Phạm Thị Lan Hương, Trần Thị Kim Anh, Phạm Quốc Cường.
+- 一般的な内科疾患の診察、治療および応急処置
+- 定期的な総合健康診断
+- 原因不明の症状に対する診断支援
 
-Ghi chú dữ liệu: "Phạm Quốc Cường" được nhắc tới trên trang khoa này nhưng không xuất hiện trong danh sách bác sĩ thật ở `/bac-si/` (đã xác minh 2026-07-08) — có thể nội dung trang khoa chưa cập nhật đồng bộ. Không đưa người này vào `doctors.yaml`.
+## 医師陣（診療科ページ掲載）
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ hoạt động: Thứ 2 - Chủ nhật, 7:30 - 17:00.
+Phạm Thị Lan Hương、Trần Thị Kim Anh、Phạm Quốc Cường。
+
+データに関する備考：「Phạm Quốc Cường」は本診療科ページに記載がありますが、`/bac-si/`（医師紹介ページ）の実際の医師一覧には表示されていません（2026-07-08確認済み）— 診療科ページの内容が同期更新されていない可能性があります。この人物は `doctors.yaml` に含めないでください。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、7:30〜17:00。

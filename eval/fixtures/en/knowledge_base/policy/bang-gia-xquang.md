@@ -1,13 +1,13 @@
 ---
-title: Bảng giá dịch vụ X-Quang
+title: X-Ray Service Price List
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ X-Quang
+# X-Ray Service Price List
 
-Trang bảng giá liệt kê một danh mục riêng cho dịch vụ chẩn đoán hình ảnh X-Quang.
+The price list page lists a separate category for X-Ray diagnostic imaging services.
 
-Ghi chú: mức giá cụ thể theo từng loại chụp (X-quang răng, CT Cone Beam, tim phổi, cột sống...) không thể hiện rõ trong nội dung trích xuất được ở lần lấy dữ liệu này — không suy đoán số liệu, cần xem trực tiếp trang gốc.
+Note: specific prices for each type of scan (dental X-ray, CT Cone Beam, chest X-ray, spine X-ray, etc.) are not clearly shown in the content extracted at this data collection — no figures are assumed; see the original page directly.
 
 Hotline: 0888 999 000.

@@ -1,25 +1,28 @@
 ---
-title: Giới thiệu Phòng khám Đa khoa Tâm An
+title: タムアン総合クリニック（Phòng khám Đa khoa Tâm An）のご紹介
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Giới thiệu
+# クリニックのご紹介
 
-Phòng khám Đa khoa Tâm An thuộc Công ty Cổ phần Sức khỏe và Môi trường, thành lập năm 2015 bởi các bác sĩ giàu kinh nghiệm từ các bệnh viện tuyến trung ương. Sứ mệnh: tiên phong trong dịch vụ chăm sóc sức khỏe dự phòng.
+タムアン総合クリニック（Phòng khám Đa khoa Tâm An）は、Công ty Cổ phần Sức khỏe và Môi trường（保健環境株式会社）傘下の医療機関で、中央基幹病院出身の経験豊富な医師陣により2015年に設立されました。使命は、予防医療サービスの分野で先駆的な存在となることです。
 
-## Thông tin liên hệ
-- Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội
-- Hotline: 0888 999 000
-- Email: lienhe@tamanclinic.vn
-- Giờ hoạt động: Thứ 2 - Chủ nhật, 07h30 - 17h00
+## お問い合わせ先
 
-## Dịch vụ
-- Khám sức khỏe cá nhân
-- Chương trình khám sức khỏe doanh nghiệp (tại chỗ và lưu động)
-- Khám sức khỏe lái xe
-- Khám sức khỏe theo yêu cầu bảo hiểm
-- Nhiều chuyên khoa: răng hàm mặt, da liễu, mắt, nhi và các khoa khác
+- 住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội
+- ホットライン：0888 999 000
+- メール：lienhe@tamanclinic.vn
+- 診療時間：月曜〜日曜、07:30〜17:00
 
-## Khách hàng tiêu biểu
-Phòng khám phục vụ nhiều doanh nghiệp lớn: Canon, Yamaha, FPT, EVN, Sony.
+## サービス内容
+
+- 個人健康診断
+- 企業向け健康診断プログラム（出張健診を含む）
+- 運転免許用健康診断
+- 保険加入に必要な健康診断
+- 歯科・口腔外科、皮膚科、眼科、小児科など多数の診療科
+
+## 主な取引企業
+
+当クリニックは Canon、Yamaha、FPT、EVN、Sony など多くの大手企業に健診サービスを提供しています。

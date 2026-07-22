@@ -1,29 +1,29 @@
 ---
-title: Khoa Mắt
+title: Ophthalmology Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Mắt
+# Ophthalmology Department
 
-Khoa Mắt cung cấp dịch vụ chăm sóc mắt toàn diện.
+The Ophthalmology Department provides comprehensive eye care services.
 
-## Bệnh lý điều trị
-- Rối loạn khúc xạ (cận thị)
-- Bệnh lý đáy mắt (rách/bong võng mạc)
-- Viêm kết giác mạc
-- Đục thủy tinh thể
-- Tăng nhãn áp (glaucoma)
-- Rối loạn tuyến giáp ảnh hưởng đến mắt
+## Conditions treated
+- Refractive errors (myopia)
+- Fundus disorders (retinal tear/detachment)
+- Keratoconjunctivitis
+- Cataract
+- Glaucoma (increased intraocular pressure)
+- Thyroid disorders affecting the eyes
 
-## Dịch vụ chính
-Khám bệnh, chữa bệnh thông thường, cấp cứu ban đầu, tiêm dưới kết mạc, lấy dị vật, thông rửa lệ đạo.
+## Main services
+General examination and treatment, initial emergency care, subconjunctival injection, foreign body removal, lacrimal duct irrigation.
 
-## Trang thiết bị
-Máy đo khúc xạ tự động, đo nhãn áp không tiếp xúc, soi đáy mắt, chụp huỳnh quang võng mạc.
+## Equipment
+Automatic refractometer, non-contact tonometer, fundoscopy, fluorescein retinal angiography.
 
-## Bác sĩ phụ trách
+## Attending doctor
 Nguyễn Thị Hải.
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h.
+## Contact
+Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

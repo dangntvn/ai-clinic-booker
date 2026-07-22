@@ -1,23 +1,26 @@
 ---
-title: Khoa Ngoại
+title: 外科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Ngoại
+# 外科
 
-Khoa Ngoại là một trong những khoa chuyên môn mũi nhọn, đầu tư lớn về thiết bị và cơ sở hạ tầng. Chuyên điều trị các tổn thương và bệnh lý ngoại khoa cả bên trong và bên ngoài cơ thể.
+外科は当クリニックの主力診療科の一つであり、設備・インフラへの投資が大きく、体内外の外科的損傷や疾患の治療を専門としています。
 
-## Dịch vụ chính
-- Sơ cứu và cấp cứu ngoại khoa
-- Khám và xử trí vết thương
-- Mổ u nang, u nông
-- Chăm sóc sức khỏe ban đầu
+## 主なサービス
 
-## Đội ngũ bác sĩ (theo trang khoa)
-Vũ Huy Nùng.
+- 外科的応急処置・救急対応
+- 創傷の診察と処置
+- 嚢胞・表在性腫瘍の摘出手術
+- 一次医療ケア
 
-Ghi chú: nhãn chuyên khoa "Ngoại" của các bác sĩ liên quan không map được vào 1 trong 14 giá trị enum `SPECIALTIES` của hệ thống — không dùng nội dung này để tạo bản ghi `doctors`, chỉ dùng làm `clinic_info` (xem TASK-024 Step 4).
+## 医師陣（診療科ページ掲載）
 
-## Liên hệ
-Hotline: 0888 999 000. Giờ làm việc: Thứ 2 - Chủ nhật, 07h30 - 17h.
+Vũ Huy Nùng 医師。
+
+備考：当該医師に関連する「外科」という専門ラベルは、システムの `SPECIALTIES` enum（14種類）のいずれにもマッピングできません — このラベルで `doctors` レコードを作成せず、`clinic_info` としてのみ使用してください（TASK-024 Step 4 参照）。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。診療時間：月曜〜日曜、07:30〜17:00。

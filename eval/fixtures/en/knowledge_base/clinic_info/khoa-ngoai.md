@@ -1,23 +1,23 @@
 ---
-title: Khoa Ngoại
+title: Surgery Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Ngoại
+# Surgery Department
 
-Khoa Ngoại là một trong những khoa chuyên môn mũi nhọn, đầu tư lớn về thiết bị và cơ sở hạ tầng. Chuyên điều trị các tổn thương và bệnh lý ngoại khoa cả bên trong và bên ngoài cơ thể.
+The Surgery Department is one of the clinic's flagship specialties, with heavy investment in equipment and infrastructure. It specializes in treating surgical injuries and conditions both inside and on the surface of the body.
 
-## Dịch vụ chính
-- Sơ cứu và cấp cứu ngoại khoa
-- Khám và xử trí vết thương
-- Mổ u nang, u nông
-- Chăm sóc sức khỏe ban đầu
+## Main services
+- First aid and surgical emergency care
+- Wound examination and management
+- Removal of cysts and superficial tumors
+- Primary health care
 
-## Đội ngũ bác sĩ (theo trang khoa)
+## Medical team (per department page)
 Vũ Huy Nùng.
 
-Ghi chú: nhãn chuyên khoa "Ngoại" của các bác sĩ liên quan không map được vào 1 trong 14 giá trị enum `SPECIALTIES` của hệ thống — không dùng nội dung này để tạo bản ghi `doctors`, chỉ dùng làm `clinic_info` (xem TASK-024 Step 4).
+Note: the "Ngoại" (Surgery) specialty label for the related doctors could not be mapped to any of the system's 14 `SPECIALTIES` enum values — this content is not used to create `doctors` records, and is used only as `clinic_info` (see TASK-024 Step 4).
 
-## Liên hệ
-Hotline: 0888 999 000. Giờ làm việc: Thứ 2 - Chủ nhật, 07h30 - 17h.
+## Contact
+Hotline: 0888 999 000. Operating hours: Monday - Sunday, 07:30 - 17:00.

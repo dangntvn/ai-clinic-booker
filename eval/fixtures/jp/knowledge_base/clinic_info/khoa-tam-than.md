@@ -1,23 +1,26 @@
 ---
-title: Khoa Tâm Thần
+title: 精神科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Tâm Thần
+# 精神科
 
-Khoa Tâm Thần thăm khám và điều trị các bệnh lý liên quan đến sức khỏe tâm lý và tâm thần, giúp bệnh nhân vượt qua áp lực tâm lý và quay lại cuộc sống bình thường.
+精神科では、心理的・精神的健康に関わる疾患の診察・治療を行い、患者様が心理的ストレスを乗り越え、通常の生活に戻れるようサポートしています。
 
-## Dịch vụ
-- Khám, tư vấn và điều trị ngoại trú các vấn đề tâm lý
-- Trắc nghiệm tâm lý chuyên sâu
-- Liệu pháp tâm lý trị liệu
-- Xử lý cấp cứu tâm thần và động kinh
+## サービス内容
 
-## Bác sĩ nổi bật
-Đỗ Như Chinh.
+- 心理的問題に関する外来診察・相談・治療
+- 専門的な心理検査
+- 心理療法（カウンセリング）
+- 精神科的緊急事態およびてんかん発作への対応
 
-Ghi chú: nhãn chuyên khoa "Tâm thần" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` của hệ thống — chỉ dùng nội dung này làm `clinic_info`, không tạo bản ghi `doctors` với specialty này (xem TASK-024 Step 4; lưu ý bác sĩ Đỗ Như Chinh có nhãn chuyên khoa thật trong bio ở `/bac-si/` là "Thần kinh", khác với tên khoa này, và "Thần kinh" thì map được enum).
+## 著名な医師
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ hoạt động: Thứ 2 - Chủ nhật, 7h30 - 17h.
+Đỗ Như Chinh 医師。
+
+備考：「精神科」という専門ラベルは、システムの `SPECIALTIES` enum（14種類）のいずれにもマッピングできません — この内容は `clinic_info` としてのみ使用し、このラベルで `doctors` レコードを作成しないでください（TASK-024 Step 4 参照。なお Đỗ Như Chinh 医師の `/bac-si/`（医師紹介ページ）のプロフィールに記載された実際の専門ラベルは「神経内科（Thần kinh）」であり、この診療科名とは異なります。「神経内科」は enum にマッピング可能です）。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。メール：lienhe@tamanclinic.vn。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、7:30〜17:00。

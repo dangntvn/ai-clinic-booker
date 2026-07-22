@@ -1,24 +1,24 @@
 ---
-title: Khoa X-Quang
+title: Radiology/Imaging Department (X-Ray)
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa X-Quang
+# Radiology/Imaging Department (X-Ray)
 
-Khoa X-Quang chuyên chẩn đoán các tổn thương sâu bên trong cơ thể, hỗ trợ bác sĩ đưa ra kết luận bệnh và phương án điều trị chính xác.
+The Radiology/Imaging Department specializes in diagnosing deep internal injuries, helping doctors reach accurate conclusions and treatment plans.
 
-## Dịch vụ chính
-- Chụp X-quang răng (toàn cảnh, Cephalo)
-- Chụp CT Cone Beam
-- Chụp tim phổi (thẳng, nghiêng)
-- Chụp cột sống thắt lưng
-- Khảo sát hệ tiêu hóa, tiết niệu và các cơ quan khác
+## Main services
+- Dental X-ray (panoramic, Cephalometric)
+- CT Cone Beam scan
+- Chest X-ray (frontal, lateral)
+- Lumbar spine X-ray
+- Examination of the digestive system, urinary system, and other organs
 
-## Bác sĩ phụ trách
-Phùng Thị Thúy (nhãn chuyên khoa trong bio: "Chẩn đoán hình ảnh").
+## Attending doctor
+Phùng Thị Thúy (specialty label in bio: "Chẩn đoán hình ảnh" / Diagnostic Imaging).
 
-Ghi chú: nhãn "Chẩn đoán hình ảnh"/"X-Quang" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` — chỉ dùng nội dung này làm `clinic_info`, không tạo bản ghi `doctors` với specialty này (TASK-024 Step 4).
+Note: the "Chẩn đoán hình ảnh" (Diagnostic Imaging) / "X-Quang" (X-Ray) label cannot be mapped to any of the 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (TASK-024 Step 4).
 
-## Liên hệ
-Hotline: 0888 999 000. Giờ làm việc: Thứ 2 - Chủ nhật, 7h30 - 17h. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+## Contact
+Hotline: 0888 999 000. Operating hours: Monday - Sunday, 7:30 - 17:00. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi.

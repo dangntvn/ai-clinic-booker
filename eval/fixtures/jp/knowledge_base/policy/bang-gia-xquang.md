@@ -1,13 +1,13 @@
 ---
-title: Bảng giá dịch vụ X-Quang
+title: X線検査サービス料金表
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ X-Quang
+# X線検査サービス料金表
 
-Trang bảng giá liệt kê một danh mục riêng cho dịch vụ chẩn đoán hình ảnh X-Quang.
+料金表ページには、X線画像診断サービス専用のカテゴリが記載されています。
 
-Ghi chú: mức giá cụ thể theo từng loại chụp (X-quang răng, CT Cone Beam, tim phổi, cột sống...) không thể hiện rõ trong nội dung trích xuất được ở lần lấy dữ liệu này — không suy đoán số liệu, cần xem trực tiếp trang gốc.
+備考：撮影種別ごとの具体的な料金（歯科X線、コーンビームCT、胸部X線、脊椎X線など）は、今回のデータ抽出時点の内容には明記されていません — 数値を推測することはせず、詳細は元のページを直接ご確認ください。
 
-Hotline: 0888 999 000.
+ホットライン：0888 999 000。

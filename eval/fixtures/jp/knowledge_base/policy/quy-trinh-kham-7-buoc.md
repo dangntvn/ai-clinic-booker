@@ -1,23 +1,23 @@
 ---
-title: Quy trình khám sức khỏe tại Phòng khám Đa khoa Tâm An
+title: タムアン総合クリニック（Phòng khám Đa khoa Tâm An）の受診プロセス
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Quy trình khám sức khỏe — 7 bước
+# 受診プロセス — 7ステップ
 
-**Bước 1 — Đặt lịch hoặc đến trực tiếp**: liên hệ tổng đài, website, hoặc fanpage để đặt lịch 24/7; nếu chưa đặt trước vẫn có thể đến trực tiếp địa chỉ 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+**ステップ1 — 予約または直接来院**：24時間365日、コールセンター、ウェブサイト、またはファンページを通じて予約が可能です。事前予約なしでも、45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội に直接来院いただけます。
 
-**Bước 2 — Tiếp đón và làm thủ tục**: nhân viên tiếp đón và hướng dẫn làm thủ tục tại quầy lễ tân, mỗi khách hàng nhận một hồ sơ để tự giữ.
+**ステップ2 — 受付・手続き**：受付スタッフが対応し、受付カウンターで手続きをご案内します。各患者様は自身で保管するカルテを1部受け取ります。
 
-**Bước 3 — Khám tổng quát**: bác sĩ khoa nội khám chung, khai thác tiền sử bệnh và xác định hướng điều trị phù hợp.
+**ステップ3 — 一般健診**：内科医が全体的な診察を行い、既往歴を確認したうえで、適切な治療方針を決定します。
 
-**Bước 4 — Thanh toán**: quay lại lễ tân để thanh toán các dịch vụ được bác sĩ chỉ định.
+**ステップ4 — お会計**：医師の指示に基づくサービスの料金を支払うため、受付に戻ります。
 
-**Bước 5 — Khám chuyên khoa**: thực hiện các xét nghiệm, chẩn đoán hình ảnh theo yêu cầu.
+**ステップ5 — 専門診療**：必要に応じて検査や画像診断を実施します。
 
-**Bước 6 — Tư vấn kết quả**: bác sĩ giải thích chi tiết kết quả và hướng dẫn điều trị nếu cần.
+**ステップ6 — 結果説明**：医師が結果を詳しく説明し、必要に応じて治療方針をご案内します。
 
-**Bước 7 — Hoàn thành**: nhận kết quả và kết thúc quá trình khám.
+**ステップ7 — 完了**：結果を受け取り、受診プロセスが完了します。
 
-Ghi chú: trang gốc không nêu chính sách hủy/đổi lịch cụ thể hoặc chính sách thanh toán BHYT riêng — đây là khoảng trống thật của nguồn dữ liệu, không tự suy đoán/bịa thêm (xem TASK-026 mục gap).
+備考：元のページには、具体的なキャンセル・予約変更ポリシーや、健康保険（BHYT）の支払いに関する個別の規定は記載されていません — これはデータソース自体に存在する情報の欠落であり、推測・補完はしません（TASK-026のギャップ項目参照）。

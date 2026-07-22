@@ -1,14 +1,14 @@
 ---
-title: Bảng giá dịch vụ Sản khoa và Siêu âm
+title: Obstetrics & Ultrasound Service Price List
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Sản & Siêu âm
+# Obstetrics & Ultrasound Service Price List
 
-- Chích áp xe tầng sinh môn: 900.000 VNĐ
-- Khám thai và các dịch vụ siêu âm sản phụ khoa khác có bảng giá riêng trên trang gốc
+- Perineal abscess incision: 900,000 VND
+- Prenatal check-ups and other obstetric/gynecological ultrasound services have a separate price list on the original page
 
-Ghi chú: chỉ 1 mức giá cụ thể xuất hiện rõ trong dữ liệu trích xuất; các dịch vụ khác trong danh mục này chưa có giá cụ thể trong lần trích xuất — không suy đoán số liệu.
+Note: only 1 specific price appears clearly in the extracted data; other services in this category do not have specific prices in this extraction — no figures are assumed.
 
 Hotline: 0888 999 000.

@@ -1,17 +1,17 @@
 ---
-title: Bảng giá dịch vụ Ngoại khoa
+title: Surgical Service Price List
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Ngoại khoa
+# Surgical Service Price List
 
-Phòng khám Đa khoa Tâm An công khai bảng giá dịch vụ ngoại khoa, gồm:
+Tam An General Clinic publishes its surgical service price list, including:
 
-- Khám ngoại chấn thương
-- Khám ngoại tổng hợp
-- Cắt u lành phần mềm: từ 1.200.000 VNĐ
+- Trauma surgery examination
+- General surgery examination
+- Removal of benign soft-tissue tumors: from 1,200,000 VND
 
-Ghi chú: nội dung trang gốc trình bày bảng giá đầy đủ theo định dạng 3 cột (STT, Tên dịch vụ, Giá dịch vụ VNĐ); các mức giá chi tiết khác ngoài mục trên không được liệt kê rõ trong dữ liệu trích xuất — cần xem trực tiếp trang gốc nếu cần đầy đủ, không suy đoán thêm số liệu.
+Note: the original page presents the full price list in a 3-column format (No., Service name, Price VND); other detailed prices beyond the item above are not clearly listed in the extracted data — see the original page directly if the full list is needed, no figures are assumed.
 
 Hotline: 0888 999 000.

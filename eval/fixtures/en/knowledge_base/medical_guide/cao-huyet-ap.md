@@ -1,26 +1,26 @@
 ---
-title: Cao huyết áp – Hiểu đúng, sống khoẻ
+title: Hypertension – Understanding it correctly, living healthily
 category: medical_guide
 fetched_date: 2026-07-08
 ---
 
-# Cao huyết áp – Hiểu đúng, sống khoẻ
+# Hypertension – Understanding it correctly, living healthily
 
-**Lưu ý phạm vi:** nội dung tham khảo sức khỏe cộng đồng, không dùng để agent tự chẩn đoán thay bác sĩ.
+**Scope note:** community health reference content, not to be used by the agent to self-diagnose in place of a doctor.
 
-## Định nghĩa
-Huyết áp là áp lực của dòng máu lên thành động mạch khi tim co bóp và nghỉ. Bình thường khoảng 120/80 mmHg; cao huyết áp được xác định khi ≥ 140/90 mmHg.
+## Definition
+Blood pressure is the pressure of blood flow against artery walls as the heart contracts and rests. Normal is around 120/80 mmHg; hypertension (high blood pressure) is defined as ≥ 140/90 mmHg.
 
-## Nguyên nhân
-- Nguyên phát (90-95% trường hợp): liên quan lối sống và di truyền
-- Thứ phát: do bệnh lý khác gây ra (bệnh thận, rối loạn nội tiết)
+## Causes
+- Primary (90-95% of cases): related to lifestyle and genetics
+- Secondary: caused by other conditions (kidney disease, endocrine disorders)
 
-## Triệu chứng
-Phần lớn không có triệu chứng rõ rệt. Một số có thể gặp: đau đầu âm ỉ hoặc vùng sau gáy, chóng mặt, hoa mắt, tim đập nhanh, mệt mỏi, mất ngủ, chảy máu cam.
+## Symptoms
+Most cases have no obvious symptoms. Some people may experience: dull headache or pain at the back of the head, dizziness, blurred vision, rapid heartbeat, fatigue, insomnia, nosebleeds.
 
-## Phòng ngừa / điều trị
-- Giảm muối dưới 5g/ngày
-- Tập thể dục 30 phút/ngày, 5 ngày/tuần
-- Bỏ thuốc lá và rượu bia
-- Giảm căng thẳng
-- Dùng thuốc theo đúng chỉ định bác sĩ, không tự ý ngưng thuốc
+## Prevention / treatment
+- Reduce salt intake to under 5g/day
+- Exercise 30 minutes/day, 5 days/week
+- Quit smoking and alcohol
+- Reduce stress
+- Take medication exactly as prescribed by the doctor, do not stop medication on your own

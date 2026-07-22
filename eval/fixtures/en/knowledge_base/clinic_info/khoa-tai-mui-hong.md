@@ -1,25 +1,25 @@
 ---
-title: Khoa Tai – Mũi – Họng
+title: ENT (Otolaryngology) Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Tai – Mũi – Họng
+# ENT (Otolaryngology) Department
 
-Tai – Mũi – Họng là khu vực cửa ngõ của cơ thể, thường xuyên tiếp xúc với vi khuẩn và khói bụi; các vấn đề ở khu vực này có thể ảnh hưởng tới các cơ quan khác do cấu trúc giải phẫu đặc biệt.
+Ear-Nose-Throat is the body's gateway area, frequently exposed to bacteria and dust; problems in this area can affect other organs due to its distinctive anatomical structure.
 
-## Các bệnh lý thường gặp
-- Viêm mũi họng xuất tiết
-- Viêm tai với nguy cơ biến chứng (viêm não, nội sọ)
-- Viêm xoang nặng (nhiễm trùng ổ mắt, đe dọa thị lực)
-- Viêm phế quản, viêm phổi
-- Viêm cầu thận, viêm khớp từ viêm amidan mãn tính
+## Common conditions
+- Exudative rhinopharyngitis
+- Otitis with risk of complications (encephalitis, intracranial infection)
+- Severe sinusitis (orbital infection, threatening vision)
+- Bronchitis, pneumonia
+- Glomerulonephritis and arthritis from chronic tonsillitis
 
-## Dịch vụ chính
-Khám bệnh, chữa bệnh thông thường, chọc dò xoang, chích rạch viêm tai, cắt polip, cầm máu cam, lấy dị vật, nạo VA.
+## Main services
+General examination and treatment, sinus puncture, ear incision and drainage for otitis, polyp removal, nosebleed control, foreign body removal, adenoidectomy.
 
-## Bác sĩ phụ trách
+## Attending doctor
 Đoàn Việt Hùng.
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+## Contact
+Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi.

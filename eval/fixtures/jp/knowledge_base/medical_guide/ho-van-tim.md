@@ -1,24 +1,28 @@
 ---
-title: Dấu hiệu nhận biết hở van tim và mức độ nguy hiểm
+title: 心臓弁膜症（弁逆流）の兆候と危険度
 category: medical_guide
 fetched_date: 2026-07-08
 ---
 
-# Dấu hiệu nhận biết hở van tim và mức độ nguy hiểm
+# 心臓弁膜症（弁逆流）の兆候と危険度
 
-**Lưu ý phạm vi:** nội dung tham khảo sức khỏe cộng đồng, không dùng để agent tự chẩn đoán thay bác sĩ.
+**適用範囲に関する注意：** 本内容は一般向けの健康参考情報であり、エージェントが医師の代わりに自己診断を行うために使用してはなりません。
 
-## Định nghĩa
-Hở van tim là tình trạng các lá van không đóng kín hoàn toàn, khiến máu trào ngược trở lại buồng tim thay vì được bơm đi khắp cơ thể.
+## 定義
 
-## Các loại hở van tim
-- Hở van hai lá: máu trào ngược từ tâm thất trái lên nhĩ trái
-- Hở van ba lá: máu trào ngược từ tâm thất phải lên nhĩ phải
-- Hở van động mạch chủ: máu trào ngược từ động mạch chủ về thất trái
-- Hở van động mạch phổi: máu trào ngược từ động mạch phổi về thất phải
+弁逆流（閉鎖不全）とは、心臓弁の弁尖が完全に閉じないため、血液が全身に送り出される代わりに心臓内へ逆流してしまう状態です。
 
-## Dấu hiệu nhận biết (mức độ 2-4/4)
-Khó thở khi gắng sức, mệt mỏi kéo dài, tim đập nhanh, ho khan nhất là về đêm, choáng váng, ngất xỉu, phù mắt cá chân hoặc bàn chân.
+## 弁逆流の種類
 
-## Mức độ nguy hiểm
-Biến chứng gồm: suy tim, rối loạn nhịp tim, viêm nội tâm mạc nhiễm trùng, đột quỵ. Hở van mức độ 4/4 có nguy cơ cao gây suy tim nặng và đe dọa tính mạng nếu không điều trị kịp thời.
+- 僧帽弁閉鎖不全：左心室から左心房へ血液が逆流
+- 三尖弁閉鎖不全：右心室から右心房へ血液が逆流
+- 大動脈弁閉鎖不全：大動脈から左心室へ血液が逆流
+- 肺動脈弁閉鎖不全：肺動脈から右心室へ血液が逆流
+
+## 主な兆候（重症度2〜4/4）
+
+労作時の息切れ、持続する倦怠感、動悸、特に夜間の乾いた咳、めまい、失神、足首や足の浮腫。
+
+## 危険度
+
+合併症には、心不全、不整脈、感染性心内膜炎、脳卒中などがあります。重症度4/4の弁逆流は、適切な治療が行われない場合、重篤な心不全を引き起こし、生命を脅かす危険性が高くなります。

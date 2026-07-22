@@ -1,23 +1,26 @@
 ---
-title: Khoa Siêu Âm
+title: 超音波検査科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Siêu Âm
+# 超音波検査科
 
-Khoa Siêu Âm cung cấp các kỹ thuật siêu âm chẩn đoán thường quy và chuyên sâu về tim, mạch, tiêu hóa, tiết niệu, sản phụ khoa và các cơ quan khác; phối hợp với các khoa khác để chẩn đoán và điều trị.
+超音波検査科では、心臓、血管、消化器、泌尿器、産婦人科およびその他の臓器に関する一般的な診断用超音波検査と専門的な超音波検査を提供しており、他の診療科と連携して診断・治療にあたっています。
 
-## Ưu điểm
-- Không xâm lấn, không gây đau
-- Không sử dụng bức xạ, an toàn
-- Chi phí thấp hơn các phương pháp chẩn đoán khác
-- Hình ảnh rõ nét, thấy rõ mô mềm
+## メリット
 
-## Dịch vụ chính
-Siêu âm tuyến giáp, ổ bụng, thai 2D/4D, tuyến vú và nhiều dịch vụ khác.
+- 非侵襲的で痛みを伴わない
+- 放射線を使用せず安全
+- 他の診断方法に比べて費用が低い
+- 鮮明な画像が得られ、軟部組織を明瞭に観察できる
 
-Ghi chú: trang khoa không nêu tên bác sĩ phụ trách riêng; nhãn "Siêu âm" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` dù có bác sĩ nào phụ trách — chỉ dùng nội dung này làm `clinic_info` (TASK-024 Step 4).
+## 主なサービス
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h.
+甲状腺超音波、腹部超音波、胎児2D/4D超音波、乳腺超音波など多数のサービス。
+
+備考：診療科ページには担当医個人名の記載がありません。「超音波検査」というラベルは、たとえ担当医がいたとしても、システムの `SPECIALTIES` enum（14種類）のいずれにもマッピングできません — この内容は `clinic_info` としてのみ使用してください（TASK-024 Step 4）。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。メール：lienhe@tamanclinic.vn。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、07:30〜17:00。

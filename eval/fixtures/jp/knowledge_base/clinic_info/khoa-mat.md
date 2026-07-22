@@ -1,29 +1,34 @@
 ---
-title: Khoa Mắt
+title: 眼科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Mắt
+# 眼科
 
-Khoa Mắt cung cấp dịch vụ chăm sóc mắt toàn diện.
+眼科では総合的な眼疾患のケアサービスを提供しています。
 
-## Bệnh lý điều trị
-- Rối loạn khúc xạ (cận thị)
-- Bệnh lý đáy mắt (rách/bong võng mạc)
-- Viêm kết giác mạc
-- Đục thủy tinh thể
-- Tăng nhãn áp (glaucoma)
-- Rối loạn tuyến giáp ảnh hưởng đến mắt
+## 対応疾患
 
-## Dịch vụ chính
-Khám bệnh, chữa bệnh thông thường, cấp cứu ban đầu, tiêm dưới kết mạc, lấy dị vật, thông rửa lệ đạo.
+- 屈折異常（近視）
+- 眼底疾患（網膜裂孔・網膜剥離）
+- 結膜炎・角膜炎
+- 白内障
+- 緑内障
+- 甲状腺疾患に伴う眼症状
 
-## Trang thiết bị
-Máy đo khúc xạ tự động, đo nhãn áp không tiếp xúc, soi đáy mắt, chụp huỳnh quang võng mạc.
+## 主なサービス
 
-## Bác sĩ phụ trách
-Nguyễn Thị Hải.
+診察、一般的な治療、応急処置、結膜下注射、異物除去、涙道洗浄。
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h.
+## 設備
+
+自動屈折測定器、非接触型眼圧計、眼底検査装置、網膜蛍光造影装置。
+
+## 担当医
+
+Nguyễn Thị Hải 医師。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、07:30〜17:00。

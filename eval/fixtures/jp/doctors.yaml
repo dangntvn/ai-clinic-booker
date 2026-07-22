@@ -3,339 +3,343 @@
 # specialty PHẢI là 1 trong 14 giá trị enum SPECIALTIES — validate cứng ở modules/doctor/services.py::validate_specialty.
 # work_days: seed_eval_fixtures.py ghi đè bằng TEST_WORK_DAYS cố định cho mọi bác sĩ, không đọc từ field này.
 # fee: chưa có giá trị mẫu — để null.
+#
+# JP fixture: full_name giữ nguyên tiếng Việt gốc (tên riêng, không dịch/không phiên âm katakana).
+# title dịch sang tiếng Nhật y tế chuẩn; specialty GIỮ NGUYÊN tiếng Việt (enum SPECIALTIES hard-code,
+# không được dịch — xem TODO_TRANSLATE.md / task note).
 
 doctors:
   - full_name: "Bùi Thị Ngọc Mai"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Nội tổng quát"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Vũ Thị Thanh Hà"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Nội tổng quát"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
-    bio: "Nhiều năm kinh nghiệm khám và điều trị các bệnh lý nội khoa thông thường."
+    bio: "一般内科疾患の診察・治療において豊富な経験を有しています。"
     education: null
 
   - full_name: "Đặng Quốc Bảo"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Nhi"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Phan Thị Minh Châu"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Sản – Phụ khoa"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
-    bio: "Có kinh nghiệm khám và tư vấn các vấn đề sản phụ khoa cho phụ nữ ở nhiều độ tuổi."
+    bio: "幅広い年齢層の女性を対象に、産婦人科の診察・相談の経験を有しています。"
     education: null
 
   - full_name: "Nguyễn Đình Khoa"
-    title: "Thạc sĩ, Bác sĩ chuyên khoa"
+    title: "医学修士・専門医"
     specialty: "Thần kinh"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
-    bio: "Chuyên khám và tư vấn các vấn đề liên quan đến thần kinh."
+    bio: "神経系疾患に関する診察・相談を専門としています。"
     education: null
 
   - full_name: "Trần Thị Bích Vân"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Da liễu"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Nguyễn Văn Thắng"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Tai Mũi Họng"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Lê Thị Thu Trang"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Mắt"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Nguyễn Thị Diễm My"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Răng Hàm Mặt"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Hoàng Anh Dũng"
-    title: "Thạc sĩ, Bác sĩ"
+    title: "医学修士・医師"
     specialty: "Cơ xương khớp"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Đinh Thị Phương Thảo"
-    title: "Thạc sĩ, Bác sĩ"
+    title: "医学修士・医師"
     specialty: "Cơ xương khớp"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Vũ Đình Long"
-    title: "Bác sĩ Chuyên khoa II"
+    title: "専門医（レベルII）"
     specialty: "Tim mạch"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Nguyễn Thị Hoài Thu"
-    title: "Thạc sĩ, Bác sĩ"
+    title: "医学修士・医師"
     specialty: "Tim mạch"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Trịnh Quang Huy"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Tiêu hóa"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Lê Thị Ánh Tuyết"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Tiêu hóa"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Bùi Xuân Trường"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Hô hấp"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Cao Thị Yến Nhi"
-    title: "Thạc sĩ, Bác sĩ"
+    title: "医学修士・医師"
     specialty: "Hô hấp"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Phạm Sỹ Đức"
-    title: "Bác sĩ Chuyên khoa II"
+    title: "専門医（レベルII）"
     specialty: "Nội tiết"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Mai Thị Lan Anh"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Nội tiết"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Dương Minh Tuấn"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Tiết niệu – Nam khoa"
     phone: null
     work_days: null
     room: null
-    shift: "Sáng"
+    shift: "午前"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Phan Văn Hải"
-    title: "Thạc sĩ, Bác sĩ"
+    title: "医学修士・医師"
     specialty: "Tiết niệu – Nam khoa"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Ngô Thị Bích Ngọc"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Nhi"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Lê Thị Hồng Nhung"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Sản – Phụ khoa"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Hoàng Văn Đạt"
-    title: "Thạc sĩ, Bác sĩ"
+    title: "医学修士・医師"
     specialty: "Thần kinh"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Vũ Thị Kim Oanh"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Da liễu"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Đỗ Xuân Trường"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Tai Mũi Họng"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Phạm Khánh Linh"
-    title: "Bác sĩ"
+    title: "医師"
     specialty: "Mắt"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null
     education: null
 
   - full_name: "Trần Quốc Việt"
-    title: "Bác sĩ Chuyên khoa I"
+    title: "専門医（レベルI）"
     specialty: "Răng Hàm Mặt"
     phone: null
     work_days: null
     room: null
-    shift: "Chiều"
+    shift: "午後"
     fee: null
     is_active: true
     bio: null

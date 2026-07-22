@@ -1,26 +1,30 @@
 ---
-title: Cao huyết áp – Hiểu đúng, sống khoẻ
+title: 高血圧 — 正しい理解と健康的な生活
 category: medical_guide
 fetched_date: 2026-07-08
 ---
 
-# Cao huyết áp – Hiểu đúng, sống khoẻ
+# 高血圧 — 正しい理解と健康的な生活
 
-**Lưu ý phạm vi:** nội dung tham khảo sức khỏe cộng đồng, không dùng để agent tự chẩn đoán thay bác sĩ.
+**適用範囲に関する注意：** 本内容は一般向けの健康参考情報であり、エージェントが医師の代わりに自己診断を行うために使用してはなりません。
 
-## Định nghĩa
-Huyết áp là áp lực của dòng máu lên thành động mạch khi tim co bóp và nghỉ. Bình thường khoảng 120/80 mmHg; cao huyết áp được xác định khi ≥ 140/90 mmHg.
+## 定義
 
-## Nguyên nhân
-- Nguyên phát (90-95% trường hợp): liên quan lối sống và di truyền
-- Thứ phát: do bệnh lý khác gây ra (bệnh thận, rối loạn nội tiết)
+血圧とは、心臓が収縮・拡張する際に血流が動脈壁に及ぼす圧力のことです。正常値はおよそ120/80 mmHgであり、140/90 mmHg以上の場合を高血圧と定義します。
 
-## Triệu chứng
-Phần lớn không có triệu chứng rõ rệt. Một số có thể gặp: đau đầu âm ỉ hoặc vùng sau gáy, chóng mặt, hoa mắt, tim đập nhanh, mệt mỏi, mất ngủ, chảy máu cam.
+## 原因
 
-## Phòng ngừa / điều trị
-- Giảm muối dưới 5g/ngày
-- Tập thể dục 30 phút/ngày, 5 ngày/tuần
-- Bỏ thuốc lá và rượu bia
-- Giảm căng thẳng
-- Dùng thuốc theo đúng chỉ định bác sĩ, không tự ý ngưng thuốc
+- 本態性高血圧（全体の90〜95%）：生活習慣および遺伝的要因に関連
+- 二次性高血圧：他の疾患（腎疾患、内分泌異常など）に起因
+
+## 症状
+
+多くの場合、明らかな症状はありません。一部の患者では、鈍い頭痛や後頭部の痛み、めまい、目のかすみ、動悸、倦怠感、不眠、鼻血などが見られることがあります。
+
+## 予防・治療
+
+- 塩分摂取を1日5g未満に抑える
+- 1日30分、週5日の運動を行う
+- 喫煙・飲酒をやめる
+- ストレスを軽減する
+- 医師の指示通りに服薬し、自己判断で服薬を中止しない

@@ -1,24 +1,27 @@
 ---
-title: Khoa Răng – Hàm – Mặt
+title: 歯科・口腔外科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Răng – Hàm – Mặt
+# 歯科・口腔外科
 
-Khoa nha khoa hoạt động theo tiêu chí "hiện đại – nhanh chóng – tận tâm", tập trung mang lại hàm răng khỏe và nụ cười đẹp cho bệnh nhân.
+歯科・口腔外科は「現代的・迅速・誠実」をモットーに、患者の皆様に健康な歯と美しい笑顔をお届けすることに注力しています。
 
-## Dịch vụ
-- Khám và tư vấn chuyên sâu về răng – hàm – mặt
-- Điều trị các bệnh lý nha khoa
-- Tư vấn thẩm mỹ nụ cười
-- Nhổ răng, rạch áp xe, lấy cao răng, tiểu phẫu răng miệng
-- Phục hình răng giả
-- Chỉnh nha
-- Điều trị tủy răng
+## サービス内容
 
-## Đội ngũ bác sĩ
-BS. Lê Thị Huyền Trang.
+- 歯科・口腔外科に関する専門的な診察・相談
+- 歯科疾患の治療
+- スマイルデザイン（審美歯科）相談
+- 抜歯、膿瘍切開、歯石除去、口腔内小手術
+- 義歯（入れ歯）作製
+- 矯正歯科
+- 歯内治療（根管治療）
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm việc: Thứ 2 - Chủ nhật, 7:30 - 17:00. Email: lienhe@tamanclinic.vn.
+## 医師陣
+
+Lê Thị Huyền Trang 医師。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、7:30〜17:00。メール：lienhe@tamanclinic.vn。

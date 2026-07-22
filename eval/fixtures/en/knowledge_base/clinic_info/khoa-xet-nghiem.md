@@ -1,23 +1,23 @@
 ---
-title: Khoa Xét Nghiệm
+title: Laboratory/Testing Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Xét Nghiệm
+# Laboratory/Testing Department
 
-Khoa Xét Nghiệm cung cấp dịch vụ xét nghiệm toàn diện: huyết học, sinh hóa, vi sinh, và tổng phân tích nước tiểu.
+The Laboratory/Testing Department provides comprehensive testing services: hematology, biochemistry, microbiology, and complete urinalysis.
 
-## Dịch vụ chính
-- Huyết học: tổng phân tích tế bào máu, nhóm máu, đông máu
-- Sinh hóa: đường huyết, mỡ máu, chức năng gan/thận, chức năng tuyến giáp
-- Vi sinh: nuôi cấy vi khuẩn/nấm, xét nghiệm cúm, giải phẫu bệnh
-- Nước tiểu: tổng phân tích và xét nghiệm nước tiểu 24 giờ
+## Main services
+- Hematology: complete blood count, blood typing, coagulation tests
+- Biochemistry: blood glucose, blood lipids, liver/kidney function, thyroid function
+- Microbiology: bacterial/fungal culture, influenza testing, histopathology
+- Urine: complete urinalysis and 24-hour urine testing
 
-## Bác sĩ phụ trách
+## Attending doctor
 Ngô Quang Minh.
 
-Ghi chú: nhãn chuyên khoa "Xét nghiệm" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` — chỉ dùng nội dung này làm `clinic_info`, không tạo bản ghi `doctors` với specialty này (TASK-024 Step 4).
+Note: the "Xét nghiệm" (Testing) specialty label cannot be mapped to any of the 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (TASK-024 Step 4).
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+## Contact
+Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Operating hours: Monday - Sunday, 07:30 - 17:00. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi.

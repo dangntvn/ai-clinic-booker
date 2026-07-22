@@ -1,23 +1,26 @@
 ---
-title: Khoa Xét Nghiệm
+title: 検査科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Xét Nghiệm
+# 検査科
 
-Khoa Xét Nghiệm cung cấp dịch vụ xét nghiệm toàn diện: huyết học, sinh hóa, vi sinh, và tổng phân tích nước tiểu.
+検査科では、血液学、生化学、微生物学、および尿検査全般にわたる総合的な検査サービスを提供しています。
 
-## Dịch vụ chính
-- Huyết học: tổng phân tích tế bào máu, nhóm máu, đông máu
-- Sinh hóa: đường huyết, mỡ máu, chức năng gan/thận, chức năng tuyến giáp
-- Vi sinh: nuôi cấy vi khuẩn/nấm, xét nghiệm cúm, giải phẫu bệnh
-- Nước tiểu: tổng phân tích và xét nghiệm nước tiểu 24 giờ
+## 主なサービス
 
-## Bác sĩ phụ trách
-Ngô Quang Minh.
+- 血液学：血球算定検査、血液型検査、凝固検査
+- 生化学：血糖、血中脂質、肝機能・腎機能、甲状腺機能
+- 微生物学：細菌・真菌培養、インフルエンザ検査、病理検査
+- 尿検査：尿一般検査および24時間尿検査
 
-Ghi chú: nhãn chuyên khoa "Xét nghiệm" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` — chỉ dùng nội dung này làm `clinic_info`, không tạo bản ghi `doctors` với specialty này (TASK-024 Step 4).
+## 担当医
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+Ngô Quang Minh 医師。
+
+備考：「検査」という専門ラベルは、システムの `SPECIALTIES` enum（14種類）のいずれにもマッピングできません — この内容は `clinic_info` としてのみ使用し、このラベルで `doctors` レコードを作成しないでください（TASK-024 Step 4）。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。メール：lienhe@tamanclinic.vn。診療時間：月曜〜日曜、07:30〜17:00。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。

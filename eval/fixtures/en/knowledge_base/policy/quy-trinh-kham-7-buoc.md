@@ -1,23 +1,23 @@
 ---
-title: Quy trình khám sức khỏe tại Phòng khám Đa khoa Tâm An
+title: Health check-up process at Tam An General Clinic
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Quy trình khám sức khỏe — 7 bước
+# Health check-up process — 7 steps
 
-**Bước 1 — Đặt lịch hoặc đến trực tiếp**: liên hệ tổng đài, website, hoặc fanpage để đặt lịch 24/7; nếu chưa đặt trước vẫn có thể đến trực tiếp địa chỉ 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+**Step 1 — Book an appointment or walk in**: contact the call center, website, or fanpage to book 24/7; if you have not booked in advance, you can still walk in directly to 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi.
 
-**Bước 2 — Tiếp đón và làm thủ tục**: nhân viên tiếp đón và hướng dẫn làm thủ tục tại quầy lễ tân, mỗi khách hàng nhận một hồ sơ để tự giữ.
+**Step 2 — Reception and check-in**: staff greet you and guide you through check-in at the reception desk; each patient receives a file to keep with them.
 
-**Bước 3 — Khám tổng quát**: bác sĩ khoa nội khám chung, khai thác tiền sử bệnh và xác định hướng điều trị phù hợp.
+**Step 3 — General examination**: an internal medicine doctor performs a general examination, takes the medical history, and determines the appropriate course of treatment.
 
-**Bước 4 — Thanh toán**: quay lại lễ tân để thanh toán các dịch vụ được bác sĩ chỉ định.
+**Step 4 — Payment**: return to the reception desk to pay for the services prescribed by the doctor.
 
-**Bước 5 — Khám chuyên khoa**: thực hiện các xét nghiệm, chẩn đoán hình ảnh theo yêu cầu.
+**Step 5 — Specialty examination**: perform the tests and imaging diagnostics as requested.
 
-**Bước 6 — Tư vấn kết quả**: bác sĩ giải thích chi tiết kết quả và hướng dẫn điều trị nếu cần.
+**Step 6 — Results consultation**: the doctor explains the results in detail and provides treatment guidance if needed.
 
-**Bước 7 — Hoàn thành**: nhận kết quả và kết thúc quá trình khám.
+**Step 7 — Completion**: receive the results and conclude the examination process.
 
-Ghi chú: trang gốc không nêu chính sách hủy/đổi lịch cụ thể hoặc chính sách thanh toán BHYT riêng — đây là khoảng trống thật của nguồn dữ liệu, không tự suy đoán/bịa thêm (xem TASK-026 mục gap).
+Note: the original page does not state a specific cancellation/rescheduling policy or a separate health-insurance (BHYT) payment policy — this is a genuine gap in the source data, not assumed or fabricated (see TASK-026 gap section).

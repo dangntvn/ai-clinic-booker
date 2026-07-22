@@ -1,24 +1,24 @@
 ---
-title: Dấu hiệu nhận biết hở van tim và mức độ nguy hiểm
+title: Signs of heart valve regurgitation and its severity
 category: medical_guide
 fetched_date: 2026-07-08
 ---
 
-# Dấu hiệu nhận biết hở van tim và mức độ nguy hiểm
+# Signs of heart valve regurgitation and its severity
 
-**Lưu ý phạm vi:** nội dung tham khảo sức khỏe cộng đồng, không dùng để agent tự chẩn đoán thay bác sĩ.
+**Scope note:** community health reference content, not to be used by the agent to self-diagnose in place of a doctor.
 
-## Định nghĩa
-Hở van tim là tình trạng các lá van không đóng kín hoàn toàn, khiến máu trào ngược trở lại buồng tim thay vì được bơm đi khắp cơ thể.
+## Definition
+Heart valve regurgitation is a condition in which the valve leaflets do not close completely, causing blood to flow backward into the heart chamber instead of being pumped throughout the body.
 
-## Các loại hở van tim
-- Hở van hai lá: máu trào ngược từ tâm thất trái lên nhĩ trái
-- Hở van ba lá: máu trào ngược từ tâm thất phải lên nhĩ phải
-- Hở van động mạch chủ: máu trào ngược từ động mạch chủ về thất trái
-- Hở van động mạch phổi: máu trào ngược từ động mạch phổi về thất phải
+## Types of valve regurgitation
+- Mitral regurgitation: blood flows backward from the left ventricle to the left atrium
+- Tricuspid regurgitation: blood flows backward from the right ventricle to the right atrium
+- Aortic regurgitation: blood flows backward from the aorta to the left ventricle
+- Pulmonary regurgitation: blood flows backward from the pulmonary artery to the right ventricle
 
-## Dấu hiệu nhận biết (mức độ 2-4/4)
-Khó thở khi gắng sức, mệt mỏi kéo dài, tim đập nhanh, ho khan nhất là về đêm, choáng váng, ngất xỉu, phù mắt cá chân hoặc bàn chân.
+## Signs (severity grade 2-4/4)
+Shortness of breath on exertion, prolonged fatigue, rapid heartbeat, dry cough especially at night, dizziness, fainting, swelling of the ankles or feet.
 
-## Mức độ nguy hiểm
-Biến chứng gồm: suy tim, rối loạn nhịp tim, viêm nội tâm mạc nhiễm trùng, đột quỵ. Hở van mức độ 4/4 có nguy cơ cao gây suy tim nặng và đe dọa tính mạng nếu không điều trị kịp thời.
+## Severity
+Complications include: heart failure, arrhythmia, infective endocarditis, stroke. Grade 4/4 regurgitation carries a high risk of severe heart failure and is life-threatening if not treated promptly.

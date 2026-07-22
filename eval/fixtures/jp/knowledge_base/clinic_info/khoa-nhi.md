@@ -1,24 +1,27 @@
 ---
-title: Khoa Nhi
+title: 小児科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Nhi
+# 小児科
 
-Khoa Nhi cung cấp chẩn đoán và điều trị cho trẻ em, đầu tư lớn về cơ sở vật chất, trang thiết bị đồng bộ, hiện đại, đội ngũ bác sĩ có kinh nghiệm lâu năm.
+小児科では、子どもの診断・治療を行っており、充実した設備・最新の医療機器、そして長年の経験を持つ医師陣を有しています。
 
-## Các bệnh lý điều trị
-- Bệnh tai-mũi-họng (viêm VA, viêm tai giữa)
-- Bệnh mắt (viêm kết mạc, tắc tuyến lệ)
-- Bệnh truyền nhiễm (cúm, tay chân miệng, sởi)
-- Vấn đề da liễu và tiêu hóa
+## 対応疾患
 
-## Dịch vụ chuyên khoa
-- Khám sức khỏe tổng quát cho trẻ
-- Điều trị các bệnh về hô hấp, tiêu hóa, tim mạch
-- Tư vấn về chăm sóc và dinh dưỡng trẻ
-- Sàng lọc bệnh bẩm sinh sơ sinh
+- 耳鼻咽喉疾患（アデノイド炎、中耳炎）
+- 眼疾患（結膜炎、涙道閉塞）
+- 感染症（インフルエンザ、手足口病、麻疹）
+- 皮膚・消化器の問題
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h.
+## 専門サービス
+
+- 子どもの総合健康診断
+- 呼吸器・消化器・循環器疾患の治療
+- 育児・栄養に関する相談
+- 新生児先天性疾患スクリーニング
+
+## お問い合わせ
+
+ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、07:30〜17:00。

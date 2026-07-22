@@ -1,24 +1,24 @@
 ---
-title: Khoa Nhi
+title: Pediatrics Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Nhi
+# Pediatrics Department
 
-Khoa Nhi cung cấp chẩn đoán và điều trị cho trẻ em, đầu tư lớn về cơ sở vật chất, trang thiết bị đồng bộ, hiện đại, đội ngũ bác sĩ có kinh nghiệm lâu năm.
+The Pediatrics Department provides diagnosis and treatment for children, with heavy investment in facilities, synchronized modern equipment, and a team of doctors with many years of experience.
 
-## Các bệnh lý điều trị
-- Bệnh tai-mũi-họng (viêm VA, viêm tai giữa)
-- Bệnh mắt (viêm kết mạc, tắc tuyến lệ)
-- Bệnh truyền nhiễm (cúm, tay chân miệng, sởi)
-- Vấn đề da liễu và tiêu hóa
+## Conditions treated
+- ENT conditions (adenoiditis, otitis media)
+- Eye conditions (conjunctivitis, blocked tear duct)
+- Infectious diseases (influenza, hand-foot-mouth disease, measles)
+- Dermatological and digestive issues
 
-## Dịch vụ chuyên khoa
-- Khám sức khỏe tổng quát cho trẻ
-- Điều trị các bệnh về hô hấp, tiêu hóa, tim mạch
-- Tư vấn về chăm sóc và dinh dưỡng trẻ
-- Sàng lọc bệnh bẩm sinh sơ sinh
+## Specialty services
+- General health check-ups for children
+- Treatment of respiratory, digestive, and cardiovascular conditions
+- Counseling on childcare and nutrition
+- Newborn congenital disease screening
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h.
+## Contact
+Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

@@ -1,24 +1,27 @@
 ---
-title: Khoa X-Quang
+title: 放射線科／画像診断科（X線）
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa X-Quang
+# 放射線科／画像診断科（X線）
 
-Khoa X-Quang chuyên chẩn đoán các tổn thương sâu bên trong cơ thể, hỗ trợ bác sĩ đưa ra kết luận bệnh và phương án điều trị chính xác.
+放射線科は体内深部の損傷を診断する専門科であり、医師が正確な病名診断と治療方針を決定する際のサポートを行っています。
 
-## Dịch vụ chính
-- Chụp X-quang răng (toàn cảnh, Cephalo)
-- Chụp CT Cone Beam
-- Chụp tim phổi (thẳng, nghiêng)
-- Chụp cột sống thắt lưng
-- Khảo sát hệ tiêu hóa, tiết niệu và các cơ quan khác
+## 主なサービス
 
-## Bác sĩ phụ trách
-Phùng Thị Thúy (nhãn chuyên khoa trong bio: "Chẩn đoán hình ảnh").
+- 歯科X線撮影（パノラマ、セファロ）
+- コーンビームCT撮影
+- 胸部X線撮影（正面・側面）
+- 腰椎X線撮影
+- 消化器系、泌尿器系、その他臓器の検査
 
-Ghi chú: nhãn "Chẩn đoán hình ảnh"/"X-Quang" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` — chỉ dùng nội dung này làm `clinic_info`, không tạo bản ghi `doctors` với specialty này (TASK-024 Step 4).
+## 担当医
 
-## Liên hệ
-Hotline: 0888 999 000. Giờ làm việc: Thứ 2 - Chủ nhật, 7h30 - 17h. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+Phùng Thị Thúy 医師（プロフィール記載の専門ラベル：「画像診断」）。
+
+備考：「画像診断」／「X線」というラベルは、システムの `SPECIALTIES` enum（14種類）のいずれにもマッピングできません — この内容は `clinic_info` としてのみ使用し、このラベルで `doctors` レコードを作成しないでください（TASK-024 Step 4）。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。診療時間：月曜〜日曜、7:30〜17:00。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。

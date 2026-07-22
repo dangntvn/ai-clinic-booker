@@ -1,14 +1,14 @@
 ---
-title: Bảng giá dịch vụ Sản khoa và Siêu âm
+title: 産科・超音波検査サービス料金表
 category: policy
 fetched_date: 2026-07-08
 ---
 
-# Bảng giá dịch vụ Sản & Siêu âm
+# 産科・超音波検査サービス料金表
 
-- Chích áp xe tầng sinh môn: 900.000 VNĐ
-- Khám thai và các dịch vụ siêu âm sản phụ khoa khác có bảng giá riêng trên trang gốc
+- 会陰膿瘍切開：900,000ドン
+- 妊婦健診およびその他の産婦人科超音波検査サービスは、元のページに別途料金表があります。
 
-Ghi chú: chỉ 1 mức giá cụ thể xuất hiện rõ trong dữ liệu trích xuất; các dịch vụ khác trong danh mục này chưa có giá cụ thể trong lần trích xuất — không suy đoán số liệu.
+備考：抽出データに明記されていた具体的な料金は上記1件のみです。このカテゴリの他のサービスについては、今回の抽出データに具体的な料金が含まれていません — 数値を推測することはしません。
 
-Hotline: 0888 999 000.
+ホットライン：0888 999 000。

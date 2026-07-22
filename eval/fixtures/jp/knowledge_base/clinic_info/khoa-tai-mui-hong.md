@@ -1,25 +1,29 @@
 ---
-title: Khoa Tai – Mũi – Họng
+title: 耳鼻咽喉科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Tai – Mũi – Họng
+# 耳鼻咽喉科
 
-Tai – Mũi – Họng là khu vực cửa ngõ của cơ thể, thường xuyên tiếp xúc với vi khuẩn và khói bụi; các vấn đề ở khu vực này có thể ảnh hưởng tới các cơ quan khác do cấu trúc giải phẫu đặc biệt.
+耳鼻咽喉領域は身体の「玄関口」にあたり、常に細菌や粉塵にさらされているため、この部位の疾患は特殊な解剖学的構造により他の臓器にも影響を及ぼすことがあります。
 
-## Các bệnh lý thường gặp
-- Viêm mũi họng xuất tiết
-- Viêm tai với nguy cơ biến chứng (viêm não, nội sọ)
-- Viêm xoang nặng (nhiễm trùng ổ mắt, đe dọa thị lực)
-- Viêm phế quản, viêm phổi
-- Viêm cầu thận, viêm khớp từ viêm amidan mãn tính
+## よくある疾患
 
-## Dịch vụ chính
-Khám bệnh, chữa bệnh thông thường, chọc dò xoang, chích rạch viêm tai, cắt polip, cầm máu cam, lấy dị vật, nạo VA.
+- 滲出性鼻咽頭炎
+- 合併症（脳炎、頭蓋内感染）のリスクを伴う中耳炎
+- 重症副鼻腔炎（眼窩感染、視力障害のおそれ）
+- 気管支炎、肺炎
+- 慢性扁桃炎に起因する糸球体腎炎、関節炎
 
-## Bác sĩ phụ trách
-Đoàn Việt Hùng.
+## 主なサービス
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội.
+診察、一般的な治療、副鼻腔穿刺、中耳炎切開、鼻茸切除、鼻出血止血、異物除去、アデノイド切除。
+
+## 担当医
+
+Đoàn Việt Hùng 医師。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。

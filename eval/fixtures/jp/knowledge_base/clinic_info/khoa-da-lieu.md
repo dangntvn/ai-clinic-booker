@@ -1,21 +1,24 @@
 ---
-title: Khoa Da Liễu
+title: 皮膚科
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Da Liễu
+# 皮膚科
 
-Khoa Da Liễu là chuyên khoa mũi nhọn của phòng khám, với đội ngũ bác sĩ được đào tạo tại các bệnh viện da liễu hàng đầu Hà Nội và trang thiết bị chẩn đoán/điều trị hiện đại.
+皮膚科は当クリニックの主力診療科の一つであり、ハノイの主要皮膚科病院で研修を受けた医師陣と、最新の診断・治療機器を備えています。
 
-## Các nhóm bệnh lý da thường gặp
-- Nhiễm nấm: nấm da đầu, lang ben, nấm móng (lây lan nhanh)
-- Viêm da: nhiều dạng viêm da với triệu chứng phồng rộp, bong tróc
-- Nhiễm virus: zona và các bệnh liên quan
-- Ký sinh trùng: ghẻ và các bệnh tương tự
+## よくある皮膚疾患のグループ
 
-## Bác sĩ phụ trách
-BS. Đào Thanh Thủy.
+- 真菌感染症：頭部白癬、癜風（でんぷう）、爪白癬（伝播が速い）
+- 皮膚炎：水疱・落屑を伴う様々なタイプの皮膚炎
+- ウイルス感染症：帯状疱疹および関連疾患
+- 寄生虫症：疥癬（かいせん）など類似疾患
 
-## Liên hệ
-Hotline: 0888 999 000. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm việc: Thứ 2 - Chủ nhật, 07h30 - 17h00.
+## 担当医
+
+Đào Thanh Thủy 医師。
+
+## お問い合わせ
+
+ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、07:30〜17:00。

@@ -1,23 +1,23 @@
 ---
-title: Khoa Siêu Âm
+title: Ultrasound Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Siêu Âm
+# Ultrasound Department
 
-Khoa Siêu Âm cung cấp các kỹ thuật siêu âm chẩn đoán thường quy và chuyên sâu về tim, mạch, tiêu hóa, tiết niệu, sản phụ khoa và các cơ quan khác; phối hợp với các khoa khác để chẩn đoán và điều trị.
+The Ultrasound Department provides routine and specialized diagnostic ultrasound techniques for the heart, blood vessels, digestive system, urinary system, obstetrics/gynecology, and other organs; it coordinates with other departments for diagnosis and treatment.
 
-## Ưu điểm
-- Không xâm lấn, không gây đau
-- Không sử dụng bức xạ, an toàn
-- Chi phí thấp hơn các phương pháp chẩn đoán khác
-- Hình ảnh rõ nét, thấy rõ mô mềm
+## Advantages
+- Non-invasive, painless
+- No radiation, safe
+- Lower cost than other diagnostic methods
+- Clear imaging, good visualization of soft tissue
 
-## Dịch vụ chính
-Siêu âm tuyến giáp, ổ bụng, thai 2D/4D, tuyến vú và nhiều dịch vụ khác.
+## Main services
+Thyroid ultrasound, abdominal ultrasound, 2D/4D fetal ultrasound, breast ultrasound, and many other services.
 
-Ghi chú: trang khoa không nêu tên bác sĩ phụ trách riêng; nhãn "Siêu âm" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` dù có bác sĩ nào phụ trách — chỉ dùng nội dung này làm `clinic_info` (TASK-024 Step 4).
+Note: the department page does not list a specific attending doctor; the "Siêu âm" (Ultrasound) label cannot be mapped to any of the 14 `SPECIALTIES` enum values even if a doctor were assigned — this content is used only as `clinic_info` (TASK-024 Step 4).
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ làm: Thứ 2 - Chủ nhật, 07h30 - 17h.
+## Contact
+Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

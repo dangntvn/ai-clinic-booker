@@ -1,23 +1,23 @@
 ---
-title: Khoa Tâm Thần
+title: Psychiatry Department
 category: clinic_info
 fetched_date: 2026-07-08
 ---
 
-# Khoa Tâm Thần
+# Psychiatry Department
 
-Khoa Tâm Thần thăm khám và điều trị các bệnh lý liên quan đến sức khỏe tâm lý và tâm thần, giúp bệnh nhân vượt qua áp lực tâm lý và quay lại cuộc sống bình thường.
+The Psychiatry Department examines and treats conditions related to psychological and mental health, helping patients overcome psychological pressure and return to normal life.
 
-## Dịch vụ
-- Khám, tư vấn và điều trị ngoại trú các vấn đề tâm lý
-- Trắc nghiệm tâm lý chuyên sâu
-- Liệu pháp tâm lý trị liệu
-- Xử lý cấp cứu tâm thần và động kinh
+## Services
+- Outpatient examination, consultation, and treatment of psychological issues
+- In-depth psychological testing
+- Psychotherapy
+- Psychiatric and epileptic emergency management
 
-## Bác sĩ nổi bật
+## Notable doctor
 Đỗ Như Chinh.
 
-Ghi chú: nhãn chuyên khoa "Tâm thần" không map được vào 1 trong 14 giá trị enum `SPECIALTIES` của hệ thống — chỉ dùng nội dung này làm `clinic_info`, không tạo bản ghi `doctors` với specialty này (xem TASK-024 Step 4; lưu ý bác sĩ Đỗ Như Chinh có nhãn chuyên khoa thật trong bio ở `/bac-si/` là "Thần kinh", khác với tên khoa này, và "Thần kinh" thì map được enum).
+Note: the "Tâm thần" (Psychiatry) specialty label cannot be mapped to any of the system's 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (see TASK-024 Step 4; note that Dr. Đỗ Như Chinh's actual specialty label in the bio at `/bac-si/` is "Thần kinh" (Neurology), different from this department name, and "Thần kinh" does map to the enum).
 
-## Liên hệ
-Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Địa chỉ: 45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội. Giờ hoạt động: Thứ 2 - Chủ nhật, 7h30 - 17h.
+## Contact
+Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.
