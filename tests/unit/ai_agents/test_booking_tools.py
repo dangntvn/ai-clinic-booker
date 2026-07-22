@@ -20,6 +20,10 @@
 #              logic and return shape, since after the BUG-017 data seed every
 #              specialty has doctors and the "empty roster" state can no longer
 #              be reproduced with real data (only simulated here).
+#              ADR-0026 (2026-07-22): `_doctor()` fixtures default to the
+#              snake_case specialty CODE (matching the real DB column); dict
+#              assertions check for the added `specialty_display` field at
+#              this process's settings.lang_suffix.
 ###############################################################################
 
 from datetime import UTC, datetime
@@ -29,7 +33,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from ai_agents.booking import tools
+from common.config import settings
 from core.exceptions import NotFoundError
+from dal.specialties import specialty_display_name
 
 
 class _FakeSession:
@@ -98,7 +104,7 @@ async def test_check_available_slots_returns_iso_strings_for_real_slots():
     }
 
 
-def _doctor(doctor_id, full_name, specialty="Nội tổng quát"):
+def _doctor(doctor_id, full_name, specialty="general_internal_medicine"):
     return SimpleNamespace(
         id=doctor_id,
         full_name=full_name,
@@ -137,3 +143,9 @@ async def test_find_doctor_by_name_matches_a_real_doctor():
 
     assert [d["doctor_id"] for d in result] == [3]
     assert result[0]["full_name"] == "Phạm Thị Lan Hương"
+    # specialty stays the internal code; specialty_display is the label the
+    # agent must read to the patient (ADR-0026) — never translated ad hoc.
+    assert result[0]["specialty"] == "general_internal_medicine"
+    assert result[0]["specialty_display"] == specialty_display_name(
+        "general_internal_medicine", settings.lang_suffix
+    )

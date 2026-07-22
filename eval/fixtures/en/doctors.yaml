@@ -1,9 +1,10 @@
 # Doctor fixture — COMPLETELY FICTIONAL/ANONYMIZED data (not real people), for eval use only.
 # Fields match the model columns in `dal/doctor_repository.py::Doctor`.
-# specialty MUST be one of the 14 SPECIALTIES enum values — hard-validated in modules/doctor/services.py::validate_specialty.
-# NOTE: `specialty` is intentionally kept in Vietnamese (unchanged) — it is the source-of-truth
-# enum from SPECIALTIES (dal/doctor_repository.py) and translating it would break ValidationError
-# validation when seeding for LANG_SUFFIX=en.
+# specialty MUST be one of the 14 snake_case codes in SPECIALTIES (dal/specialties.py, ADR-0026,
+# 2026-07-22) — hard-validated in modules/doctor/services.py::validate_specialty.
+# NOTE: `specialty` is an internal identifier code (e.g. "cardiology"), NOT a display name — it is
+# fixed across all 3 language servers (vn/jp/en) by design (ADR-0026); the English display label
+# shown to en-server patients comes from dal/specialties.py::specialty_display_name(), not this field.
 # `full_name` (ADR-0024, 2026-07-22) is a fictional English/Western name — the en server has its
 # own doctor roster, a different set of people from vn/jp, not a translation of the Vietnamese names.
 # work_days: seed_eval_fixtures.py overrides this with a fixed TEST_WORK_DAYS for every doctor, this field is not read.
@@ -12,7 +13,7 @@
 doctors:
   - full_name: "Emily Carter"
     title: "Doctor"
-    specialty: "Nội tổng quát"
+    specialty: "general_internal_medicine"
     phone: null
     work_days: null
     room: null
@@ -24,7 +25,7 @@ doctors:
 
   - full_name: "Olivia Bennett"
     title: "Doctor"
-    specialty: "Nội tổng quát"
+    specialty: "general_internal_medicine"
     phone: null
     work_days: null
     room: null
@@ -36,7 +37,7 @@ doctors:
 
   - full_name: "Jack Turner"
     title: "Specialist Doctor, Level I"
-    specialty: "Nhi"
+    specialty: "pediatrics"
     phone: null
     work_days: null
     room: null
@@ -48,7 +49,7 @@ doctors:
 
   - full_name: "Sophia Reynolds"
     title: "Specialist Doctor, Level I"
-    specialty: "Sản – Phụ khoa"
+    specialty: "obstetrics_gynecology"
     phone: null
     work_days: null
     room: null
@@ -60,7 +61,7 @@ doctors:
 
   - full_name: "Ethan Mitchell"
     title: "Master's Degree, Specialist Doctor"
-    specialty: "Thần kinh"
+    specialty: "neurology"
     phone: null
     work_days: null
     room: null
@@ -72,7 +73,7 @@ doctors:
 
   - full_name: "Grace Foster"
     title: "Doctor"
-    specialty: "Da liễu"
+    specialty: "dermatology"
     phone: null
     work_days: null
     room: null
@@ -84,7 +85,7 @@ doctors:
 
   - full_name: "Nathan Bishop"
     title: "Specialist Doctor, Level I"
-    specialty: "Tai Mũi Họng"
+    specialty: "otolaryngology"
     phone: null
     work_days: null
     room: null
@@ -96,7 +97,7 @@ doctors:
 
   - full_name: "Charlotte Hayes"
     title: "Specialist Doctor, Level I"
-    specialty: "Mắt"
+    specialty: "ophthalmology"
     phone: null
     work_days: null
     room: null
@@ -108,7 +109,7 @@ doctors:
 
   - full_name: "Henry Sullivan"
     title: "Doctor"
-    specialty: "Răng Hàm Mặt"
+    specialty: "dentistry"
     phone: null
     work_days: null
     room: null
@@ -120,7 +121,7 @@ doctors:
 
   - full_name: "Amelia Coleman"
     title: "Master's Degree, Doctor"
-    specialty: "Cơ xương khớp"
+    specialty: "musculoskeletal"
     phone: null
     work_days: null
     room: null
@@ -132,7 +133,7 @@ doctors:
 
   - full_name: "Daniel Griffin"
     title: "Master's Degree, Doctor"
-    specialty: "Cơ xương khớp"
+    specialty: "musculoskeletal"
     phone: null
     work_days: null
     room: null
@@ -144,7 +145,7 @@ doctors:
 
   - full_name: "Isabella Hendricks"
     title: "Specialist Doctor, Level II"
-    specialty: "Tim mạch"
+    specialty: "cardiology"
     phone: null
     work_days: null
     room: null
@@ -156,7 +157,7 @@ doctors:
 
   - full_name: "William Whitfield"
     title: "Master's Degree, Doctor"
-    specialty: "Tim mạch"
+    specialty: "cardiology"
     phone: null
     work_days: null
     room: null
@@ -168,7 +169,7 @@ doctors:
 
   - full_name: "Victoria Morrison"
     title: "Specialist Doctor, Level I"
-    specialty: "Tiêu hóa"
+    specialty: "gastroenterology"
     phone: null
     work_days: null
     room: null
@@ -180,7 +181,7 @@ doctors:
 
   - full_name: "James Sinclair"
     title: "Doctor"
-    specialty: "Tiêu hóa"
+    specialty: "gastroenterology"
     phone: null
     work_days: null
     room: null
@@ -192,7 +193,7 @@ doctors:
 
   - full_name: "Eleanor Barrett"
     title: "Specialist Doctor, Level I"
-    specialty: "Hô hấp"
+    specialty: "pulmonology"
     phone: null
     work_days: null
     room: null
@@ -204,7 +205,7 @@ doctors:
 
   - full_name: "Michael Preston"
     title: "Master's Degree, Doctor"
-    specialty: "Hô hấp"
+    specialty: "pulmonology"
     phone: null
     work_days: null
     room: null
@@ -216,7 +217,7 @@ doctors:
 
   - full_name: "Abigail Lawson"
     title: "Specialist Doctor, Level II"
-    specialty: "Nội tiết"
+    specialty: "endocrinology"
     phone: null
     work_days: null
     room: null
@@ -228,7 +229,7 @@ doctors:
 
   - full_name: "Thomas Kingsley"
     title: "Doctor"
-    specialty: "Nội tiết"
+    specialty: "endocrinology"
     phone: null
     work_days: null
     room: null
@@ -240,7 +241,7 @@ doctors:
 
   - full_name: "Claire Marshall"
     title: "Specialist Doctor, Level I"
-    specialty: "Tiết niệu – Nam khoa"
+    specialty: "urology_andrology"
     phone: null
     work_days: null
     room: null
@@ -252,7 +253,7 @@ doctors:
 
   - full_name: "Benjamin Donovan"
     title: "Master's Degree, Doctor"
-    specialty: "Tiết niệu – Nam khoa"
+    specialty: "urology_andrology"
     phone: null
     work_days: null
     room: null
@@ -264,7 +265,7 @@ doctors:
 
   - full_name: "Margaret Whitman"
     title: "Specialist Doctor, Level I"
-    specialty: "Nhi"
+    specialty: "pediatrics"
     phone: null
     work_days: null
     room: null
@@ -276,7 +277,7 @@ doctors:
 
   - full_name: "Samuel Sheridan"
     title: "Specialist Doctor, Level I"
-    specialty: "Sản – Phụ khoa"
+    specialty: "obstetrics_gynecology"
     phone: null
     work_days: null
     room: null
@@ -288,7 +289,7 @@ doctors:
 
   - full_name: "Julia Fletcher"
     title: "Master's Degree, Doctor"
-    specialty: "Thần kinh"
+    specialty: "neurology"
     phone: null
     work_days: null
     room: null
@@ -300,7 +301,7 @@ doctors:
 
   - full_name: "Edward Radcliffe"
     title: "Doctor"
-    specialty: "Da liễu"
+    specialty: "dermatology"
     phone: null
     work_days: null
     room: null
@@ -312,7 +313,7 @@ doctors:
 
   - full_name: "Rebecca Ashworth"
     title: "Specialist Doctor, Level I"
-    specialty: "Tai Mũi Họng"
+    specialty: "otolaryngology"
     phone: null
     work_days: null
     room: null
@@ -324,7 +325,7 @@ doctors:
 
   - full_name: "Andrew Pemberton"
     title: "Doctor"
-    specialty: "Mắt"
+    specialty: "ophthalmology"
     phone: null
     work_days: null
     room: null
@@ -336,7 +337,7 @@ doctors:
 
   - full_name: "Catherine Sutherland"
     title: "Specialist Doctor, Level I"
-    specialty: "Răng Hàm Mặt"
+    specialty: "dentistry"
     phone: null
     work_days: null
     room: null

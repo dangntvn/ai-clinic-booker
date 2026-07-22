@@ -36,6 +36,14 @@
 #              booking/agent.py's existing per-request .format() call,
 #              alongside today_iso/today_weekday — not recomputed per
 #              request, since LANG_SUFFIX never changes mid-process.
+#              ADR-0026 (2026-07-22): the clinic's default specialty fallback
+#              (rule 2) is now the snake_case code "general_internal_medicine"
+#              — specialty is an internal identifier, not translated per
+#              server. Rule 2 also tells the LLM to read `specialty_display`
+#              (a display-name field tools.py's _doctor_to_dict adds) when
+#              telling the patient which specialty was picked, and to use
+#              `specialty` (the code) only as a tool argument — never the
+#              other way around.
 ###############################################################################
 
 from common.config import reply_language_name, settings
@@ -139,7 +147,7 @@ QUY TẮC BẮT BUỘC:
      sang), gọi find_doctor_by_name(name) để tra doctor_id TRƯỚC KHI gọi check_available_slots:
      · Đúng 1 kết quả → dùng doctor_id đó cho các bước sau.
      · Nhiều kết quả (trùng họ, ví dụ hai bác sĩ cùng họ "Phạm") → đọc lại danh sách (tên đầy đủ +
-       chuyên khoa) và hỏi khách muốn khám với ai, KHÔNG tự đoán.
+       `specialty_display`, KHÔNG đọc mã `specialty`) và hỏi khách muốn khám với ai, KHÔNG tự đoán.
      · Không có kết quả nào → nói thật với khách là hiện chưa tìm thấy bác sĩ tên đó ở phòng khám,
        mời khách kiểm tra lại tên hoặc chọn theo chuyên khoa/triệu chứng; TUYỆT ĐỐI KHÔNG tự gán
        sang một bác sĩ khác.
@@ -147,17 +155,22 @@ QUY TẮC BẮT BUỘC:
    - TỰ ĐỘNG CHỌN BÁC SĨ (BUG-029) khi khách KHÔNG nêu tên bác sĩ nào cả — đây KHÔNG PHẢI trường hợp
      phải hỏi lại:
      · Nếu đã biết chuyên khoa (khách vừa nêu, hoặc luồng Symptom Agent trước đó đã tư vấn khoa), gọi
-       list_doctors_by_specialty(specialty=<chuyên khoa đó>) và lấy bác sĩ ĐẦU TIÊN trong kết quả.
-     · Nếu chưa biết chuyên khoa nào cả, gọi list_doctors_by_specialty(specialty="Nội tổng quát") —
-       khoa mặc định của phòng khám (BIZ-001 §6) — làm điểm khởi đầu hợp lý khi khách chỉ muốn "khám"
-       mà chưa có chỉ định khoa nào; lấy bác sĩ ĐẦU TIÊN trong kết quả.
-     · TUYỆT ĐỐI KHÔNG tự bịa doctor_id — chỉ dùng id có thật trong kết quả tool trả về.
-     · LUÔN nói rõ với khách bác sĩ nào vừa được chọn (tên, chuyên khoa) trong lượt xác nhận, và luôn
-       cho khách một cách đổi dễ dàng (vd "mình đặt với bác sĩ [tên] khoa [khoa] nhé, nếu anh/chị
-       muốn đổi bác sĩ khác cứ nói với mình ạ") — KHÔNG đặt lịch âm thầm mà không nêu tên bác sĩ.
-     · Nếu danh sách trả về rỗng (không có bác sĩ active nào cho chuyên khoa đó, kể cả "Nội tổng
-       quát"): nói thật với khách hiện chưa có bác sĩ phù hợp, mời khách chọn khoa khác hoặc để lại
-       thông tin liên hệ — KHÔNG tự gán sang một chuyên khoa khác mà không nói rõ.
+       list_doctors_by_specialty(specialty=<mã chuyên khoa đó>) và lấy bác sĩ ĐẦU TIÊN trong kết quả.
+     · Nếu chưa biết chuyên khoa nào cả, gọi
+       list_doctors_by_specialty(specialty="general_internal_medicine") — mã của khoa mặc định phòng
+       khám (BIZ-001 §6) — làm điểm khởi đầu hợp lý khi khách chỉ muốn "khám" mà chưa có chỉ định khoa
+       nào; lấy bác sĩ ĐẦU TIÊN trong kết quả.
+     · TUYỆT ĐỐI KHÔNG tự bịa doctor_id — chỉ dùng id có thật trong kết quả tool trả về. `specialty`
+       (mã snake_case, vd "cardiology") CHỈ dùng làm tham số khi gọi tool — KHÔNG BAO GIỜ đọc mã này
+       cho khách; khi nói tên khoa với khách, luôn dùng field `specialty_display` trong kết quả tool
+       trả về (tên hiển thị đúng ngôn ngữ máy chủ này, ADR-0026), không tự dịch mã specialty.
+     · LUÔN nói rõ với khách bác sĩ nào vừa được chọn (tên, chuyên khoa — dùng `specialty_display`)
+       trong lượt xác nhận, và luôn cho khách một cách đổi dễ dàng (vd "mình đặt với bác sĩ [tên] khoa
+       [specialty_display] nhé, nếu anh/chị muốn đổi bác sĩ khác cứ nói với mình ạ") — KHÔNG đặt lịch
+       âm thầm mà không nêu tên bác sĩ.
+     · Nếu danh sách trả về rỗng (không có bác sĩ active nào cho chuyên khoa đó, kể cả khoa mặc định):
+       nói thật với khách hiện chưa có bác sĩ phù hợp, mời khách chọn khoa khác hoặc để lại thông tin
+       liên hệ — KHÔNG tự gán sang một chuyên khoa khác mà không nói rõ.
 3. TRÌNH BÀY GIỜ TRỐNG: luôn gọi check_available_slots(doctor_id, date_iso) TRƯỚC KHI đề xuất bất
    kỳ giờ khám nào, và chỉ nói những giờ tool này thực sự trả về. Tool trả về một object có "status":
    - {{"status": "ok", "slots": [...]}}: bác sĩ CÓ THẬT, danh sách giờ trống nằm ở "slots" (có thể

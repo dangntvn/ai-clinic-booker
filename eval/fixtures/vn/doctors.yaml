@@ -1,13 +1,15 @@
 # Fixture bác sĩ — dữ liệu HOÀN TOÀN GIẢ ĐỊNH/ẨN DANH (không phải người thật), dùng riêng cho eval.
-# Field khớp đúng tên cột model `data/doctor_repository.py::Doctor`.
-# specialty PHẢI là 1 trong 14 giá trị enum SPECIALTIES — validate cứng ở modules/doctor/services.py::validate_specialty.
+# Field khớp đúng tên cột model `dal/doctor_repository.py::Doctor`.
+# specialty PHẢI là 1 trong 14 mã snake_case của SPECIALTIES (dal/specialties.py, ADR-0026,
+# 2026-07-22) — validate cứng ở modules/doctor/services.py::validate_specialty. specialty là mã
+# định danh nội bộ, KHÔNG phải nhãn hiển thị — tên hiển thị đến từ specialty_display_name().
 # work_days: seed_eval_fixtures.py ghi đè bằng TEST_WORK_DAYS cố định cho mọi bác sĩ, không đọc từ field này.
 # fee: chưa có giá trị mẫu — để null.
 
 doctors:
   - full_name: "Bùi Thị Ngọc Mai"
     title: "Bác sĩ"
-    specialty: "Nội tổng quát"
+    specialty: "general_internal_medicine"
     phone: null
     work_days: null
     room: null
@@ -19,7 +21,7 @@ doctors:
 
   - full_name: "Vũ Thị Thanh Hà"
     title: "Bác sĩ"
-    specialty: "Nội tổng quát"
+    specialty: "general_internal_medicine"
     phone: null
     work_days: null
     room: null
@@ -31,7 +33,7 @@ doctors:
 
   - full_name: "Đặng Quốc Bảo"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Nhi"
+    specialty: "pediatrics"
     phone: null
     work_days: null
     room: null
@@ -43,7 +45,7 @@ doctors:
 
   - full_name: "Phan Thị Minh Châu"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Sản – Phụ khoa"
+    specialty: "obstetrics_gynecology"
     phone: null
     work_days: null
     room: null
@@ -55,7 +57,7 @@ doctors:
 
   - full_name: "Nguyễn Đình Khoa"
     title: "Thạc sĩ, Bác sĩ chuyên khoa"
-    specialty: "Thần kinh"
+    specialty: "neurology"
     phone: null
     work_days: null
     room: null
@@ -67,7 +69,7 @@ doctors:
 
   - full_name: "Trần Thị Bích Vân"
     title: "Bác sĩ"
-    specialty: "Da liễu"
+    specialty: "dermatology"
     phone: null
     work_days: null
     room: null
@@ -79,7 +81,7 @@ doctors:
 
   - full_name: "Nguyễn Văn Thắng"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Tai Mũi Họng"
+    specialty: "otolaryngology"
     phone: null
     work_days: null
     room: null
@@ -91,7 +93,7 @@ doctors:
 
   - full_name: "Lê Thị Thu Trang"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Mắt"
+    specialty: "ophthalmology"
     phone: null
     work_days: null
     room: null
@@ -103,7 +105,7 @@ doctors:
 
   - full_name: "Nguyễn Thị Diễm My"
     title: "Bác sĩ"
-    specialty: "Răng Hàm Mặt"
+    specialty: "dentistry"
     phone: null
     work_days: null
     room: null
@@ -115,7 +117,7 @@ doctors:
 
   - full_name: "Hoàng Anh Dũng"
     title: "Thạc sĩ, Bác sĩ"
-    specialty: "Cơ xương khớp"
+    specialty: "musculoskeletal"
     phone: null
     work_days: null
     room: null
@@ -127,7 +129,7 @@ doctors:
 
   - full_name: "Đinh Thị Phương Thảo"
     title: "Thạc sĩ, Bác sĩ"
-    specialty: "Cơ xương khớp"
+    specialty: "musculoskeletal"
     phone: null
     work_days: null
     room: null
@@ -139,7 +141,7 @@ doctors:
 
   - full_name: "Vũ Đình Long"
     title: "Bác sĩ Chuyên khoa II"
-    specialty: "Tim mạch"
+    specialty: "cardiology"
     phone: null
     work_days: null
     room: null
@@ -151,7 +153,7 @@ doctors:
 
   - full_name: "Nguyễn Thị Hoài Thu"
     title: "Thạc sĩ, Bác sĩ"
-    specialty: "Tim mạch"
+    specialty: "cardiology"
     phone: null
     work_days: null
     room: null
@@ -163,7 +165,7 @@ doctors:
 
   - full_name: "Trịnh Quang Huy"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Tiêu hóa"
+    specialty: "gastroenterology"
     phone: null
     work_days: null
     room: null
@@ -175,7 +177,7 @@ doctors:
 
   - full_name: "Lê Thị Ánh Tuyết"
     title: "Bác sĩ"
-    specialty: "Tiêu hóa"
+    specialty: "gastroenterology"
     phone: null
     work_days: null
     room: null
@@ -187,7 +189,7 @@ doctors:
 
   - full_name: "Bùi Xuân Trường"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Hô hấp"
+    specialty: "pulmonology"
     phone: null
     work_days: null
     room: null
@@ -199,7 +201,7 @@ doctors:
 
   - full_name: "Cao Thị Yến Nhi"
     title: "Thạc sĩ, Bác sĩ"
-    specialty: "Hô hấp"
+    specialty: "pulmonology"
     phone: null
     work_days: null
     room: null
@@ -211,7 +213,7 @@ doctors:
 
   - full_name: "Phạm Sỹ Đức"
     title: "Bác sĩ Chuyên khoa II"
-    specialty: "Nội tiết"
+    specialty: "endocrinology"
     phone: null
     work_days: null
     room: null
@@ -223,7 +225,7 @@ doctors:
 
   - full_name: "Mai Thị Lan Anh"
     title: "Bác sĩ"
-    specialty: "Nội tiết"
+    specialty: "endocrinology"
     phone: null
     work_days: null
     room: null
@@ -235,7 +237,7 @@ doctors:
 
   - full_name: "Dương Minh Tuấn"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Tiết niệu – Nam khoa"
+    specialty: "urology_andrology"
     phone: null
     work_days: null
     room: null
@@ -247,7 +249,7 @@ doctors:
 
   - full_name: "Phan Văn Hải"
     title: "Thạc sĩ, Bác sĩ"
-    specialty: "Tiết niệu – Nam khoa"
+    specialty: "urology_andrology"
     phone: null
     work_days: null
     room: null
@@ -259,7 +261,7 @@ doctors:
 
   - full_name: "Ngô Thị Bích Ngọc"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Nhi"
+    specialty: "pediatrics"
     phone: null
     work_days: null
     room: null
@@ -271,7 +273,7 @@ doctors:
 
   - full_name: "Lê Thị Hồng Nhung"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Sản – Phụ khoa"
+    specialty: "obstetrics_gynecology"
     phone: null
     work_days: null
     room: null
@@ -283,7 +285,7 @@ doctors:
 
   - full_name: "Hoàng Văn Đạt"
     title: "Thạc sĩ, Bác sĩ"
-    specialty: "Thần kinh"
+    specialty: "neurology"
     phone: null
     work_days: null
     room: null
@@ -295,7 +297,7 @@ doctors:
 
   - full_name: "Vũ Thị Kim Oanh"
     title: "Bác sĩ"
-    specialty: "Da liễu"
+    specialty: "dermatology"
     phone: null
     work_days: null
     room: null
@@ -307,7 +309,7 @@ doctors:
 
   - full_name: "Đỗ Xuân Trường"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Tai Mũi Họng"
+    specialty: "otolaryngology"
     phone: null
     work_days: null
     room: null
@@ -319,7 +321,7 @@ doctors:
 
   - full_name: "Phạm Khánh Linh"
     title: "Bác sĩ"
-    specialty: "Mắt"
+    specialty: "ophthalmology"
     phone: null
     work_days: null
     room: null
@@ -331,7 +333,7 @@ doctors:
 
   - full_name: "Trần Quốc Việt"
     title: "Bác sĩ Chuyên khoa I"
-    specialty: "Răng Hàm Mặt"
+    specialty: "dentistry"
     phone: null
     work_days: null
     room: null

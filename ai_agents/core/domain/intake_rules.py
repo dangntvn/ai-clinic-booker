@@ -18,13 +18,35 @@
 #              BIZ-001 §4 lists them (age before pregnancy before referral
 #              letter before named request before package exam before
 #              vaccination) — order is meaningful, not incidental.
+#              PEDIATRICS/OBSTETRICS_GYNECOLOGY/GENERAL_MEDICINE are the
+#              snake_case specialty codes from dal/specialties.py (ADR-0026,
+#              2026-07-22) — SPECIALTIES has no named accessors, so these are
+#              literals validated against (not derived from) that registry via
+#              the assert below, kept as the second consumer of the single
+#              source of truth rather than a silently-drifting third copy of
+#              the enum. classify_intake() is not yet wired into the live
+#              agent runtime (ADR-0026 context) — if/when it is, its return
+#              value is meant to match the `specialty` DB column directly.
 ###############################################################################
 
 from dataclasses import dataclass
 
-PEDIATRICS = "Nhi"
-OBSTETRICS_GYNECOLOGY = "Sản – Phụ khoa"
-GENERAL_MEDICINE = "Nội tổng quát"
+from dal.specialties import SPECIALTIES
+
+PEDIATRICS = "pediatrics"
+OBSTETRICS_GYNECOLOGY = "obstetrics_gynecology"
+GENERAL_MEDICINE = "general_internal_medicine"
+
+# Fail fast at import time if dal/specialties.py's registry ever drifts from
+# these 3 codes this module depends on — cheaper than a runtime routing bug.
+assert PEDIATRICS in SPECIALTIES
+assert OBSTETRICS_GYNECOLOGY in SPECIALTIES
+assert GENERAL_MEDICINE in SPECIALTIES
+
+# "Phòng tiêm chủng" (vaccination room) is an administrative routing target,
+# NOT one of the 14 SPECIALTIES — no doctor carries this as their specialty
+# and it never goes through validate_specialty (ADR-0026 Decision §1). Kept
+# as its own constant, deliberately outside the specialty registry.
 VACCINATION_ROOM = "Phòng tiêm chủng"
 
 
