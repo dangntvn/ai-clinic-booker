@@ -31,10 +31,11 @@ def build_router() -> APIRouter:
     router = APIRouter(prefix="/api/v1")
     router.include_router(doctor_router)
     router.include_router(booking_router)
-    # Every route in knowledge_router is an admin/write CRUD route (no
-    # read-only exception here, unlike doctor/booking above) — lock the whole
-    # sub-router at once instead of annotating each of its 5 routes
-    # individually (common/admin_lock.py).
+    # Unlike doctor/booking above, the knowledge admin screen has no public
+    # read-only use case (its GET is an admin listing, not a customer-facing
+    # lookup) — so all 5 routes, including the GET, are locked together at
+    # the sub-router level instead of annotating each one individually
+    # (common/admin_lock.py).
     router.include_router(knowledge_router, dependencies=[Depends(require_admin_unlocked)])
     router.include_router(conversation_router)
     return router

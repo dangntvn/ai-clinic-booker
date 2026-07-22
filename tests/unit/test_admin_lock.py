@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Unit test for the ADMIN_API_LOCKED deploy toggle
-#              (common/admin_lock.py) — when settings.admin_api_locked is
+# Description: Unit test for the IS_ADMIN_API_LOCKED deploy toggle
+#              (common/admin_lock.py) — when settings.is_admin_api_locked is
 #              True, the admin/write CRUD routes (doctor create/update/
 #              deactivate, booking cancel/reschedule, all of
 #              modules/knowledge) must respond 403, while the read-only
@@ -45,10 +45,10 @@ def app_client(monkeypatch):
     app.dependency_overrides.clear()
 
 
-def test_admin_api_locked_defaults_to_false():
+def test_is_admin_api_locked_defaults_to_false():
     from common.config import Settings
 
-    assert Settings(_env_file=None).admin_api_locked is False
+    assert Settings(_env_file=None).is_admin_api_locked is False
 
 
 LOCKED_ADMIN_ROUTES = [
@@ -70,7 +70,7 @@ def test_admin_routes_return_403_when_locked(app_client, monkeypatch, method, pa
     # settings is a module-level singleton (common.config.settings) shared by
     # every importer (common.admin_lock, app.main, ...), so patching the one
     # attribute here is visible everywhere the flag is read.
-    monkeypatch.setattr(main_module.settings, "admin_api_locked", True)
+    monkeypatch.setattr(main_module.settings, "is_admin_api_locked", True)
 
     kwargs = {"json": body} if body is not None else {}
     response = getattr(app_client, method)(path, **kwargs)
@@ -87,7 +87,7 @@ ALWAYS_OPEN_ROUTES = [
 
 @pytest.mark.parametrize("method, path", ALWAYS_OPEN_ROUTES)
 def test_readonly_routes_never_return_403_when_locked(app_client, monkeypatch, method, path):
-    monkeypatch.setattr(main_module.settings, "admin_api_locked", True)
+    monkeypatch.setattr(main_module.settings, "is_admin_api_locked", True)
     monkeypatch.setattr("modules.doctor.services.list_doctors", AsyncMock(return_value=[]))
     monkeypatch.setattr(
         "modules.doctor.services.get_doctor", AsyncMock(return_value={"id": 1})
@@ -100,7 +100,7 @@ def test_readonly_routes_never_return_403_when_locked(app_client, monkeypatch, m
 
 
 def test_chat_route_never_return_403_when_locked(app_client, monkeypatch):
-    monkeypatch.setattr(main_module.settings, "admin_api_locked", True)
+    monkeypatch.setattr(main_module.settings, "is_admin_api_locked", True)
     monkeypatch.setattr(
         "modules.conversation.controller.handle_message",
         AsyncMock(return_value="hello back"),
@@ -116,10 +116,10 @@ def test_chat_route_never_return_403_when_locked(app_client, monkeypatch):
 
 @pytest.mark.parametrize("method, path, body", LOCKED_ADMIN_ROUTES)
 def test_admin_routes_not_locked_by_default(app_client, monkeypatch, method, path, body):
-    # admin_api_locked defaults to False — these routes must not be blocked by
+    # is_admin_api_locked defaults to False — these routes must not be blocked by
     # this dependency (they may still fail for unrelated reasons, e.g. a
     # service-layer 404 on a fake id, but never 403 from the admin lock).
-    monkeypatch.setattr(main_module.settings, "admin_api_locked", False)
+    monkeypatch.setattr(main_module.settings, "is_admin_api_locked", False)
     monkeypatch.setattr(
         "modules.doctor.services.create_doctor", AsyncMock(return_value={"id": 1})
     )

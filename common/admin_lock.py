@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Description: FastAPI dependency that locks admin/write CRUD routes on a
-#              public deploy (ADMIN_API_LOCKED=true), while leaving read-only
+#              public deploy (IS_ADMIN_API_LOCKED=true), while leaving read-only
 #              doctor/booking lookups and the chat endpoint always open. Local
 #              dev needs zero config: the flag defaults to false in
 #              common/config.py, so this dependency is a no-op unless a deploy
@@ -26,11 +26,11 @@ from common.config import settings
 
 
 def require_admin_unlocked() -> None:
-    """Block admin/write endpoints when the deploy has ADMIN_API_LOCKED=true.
+    """Block admin/write endpoints when the deploy has IS_ADMIN_API_LOCKED=true.
 
     Read-only doctor/booking lookups and the chat endpoint never depend on
     this — only the CRUD/admin routes that shouldn't be reachable from a
     public deploy.
     """
-    if settings.admin_api_locked:
+    if settings.is_admin_api_locked:
         raise HTTPException(status_code=403, detail="Admin API is locked on this deployment")

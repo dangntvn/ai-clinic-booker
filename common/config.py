@@ -71,11 +71,11 @@ class Settings(BaseSettings):
     # CRUD routes (doctor create/update/deactivate, booking cancel/reschedule,
     # all of modules/knowledge) with a 403 (common/admin_lock.py). Defaults to
     # false so local dev keeps full access with zero config; set
-    # ADMIN_API_LOCKED=true only on public deploys (e.g. Render) where those
+    # IS_ADMIN_API_LOCKED=true only on public deploys (e.g. Render) where those
     # admin routes shouldn't be reachable. Read-only doctor/booking lookups and
     # the chat endpoint (modules/conversation) never depend on this — they stay
     # open regardless of this flag.
-    admin_api_locked: bool = False
+    is_admin_api_locked: bool = False
 
     # Gemini (ADR-0006) — model choice stays env-driven, never hardcoded.
     # gemini_llm_model/llm_temperature/llm_max_tokens below are legacy shared
