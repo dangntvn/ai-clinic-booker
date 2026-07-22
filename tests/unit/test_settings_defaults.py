@@ -24,6 +24,7 @@
 ###############################################################################
 
 import pytest
+from pydantic import ValidationError
 
 from common.config import Settings
 
@@ -48,6 +49,7 @@ _ENV_VARS_UNDER_TEST = [
     "POSTGRES_SSL",
     "QDRANT_HTTPS",
     "QDRANT_API_KEY",
+    "LANG_SUFFIX",
 ]
 
 
@@ -158,3 +160,33 @@ def test_qdrant_api_key_defaults_to_empty_and_is_env_overridable(monkeypatch):
     monkeypatch.setenv("QDRANT_API_KEY", "test-key")
     settings = Settings(_env_file=None)
     assert settings.qdrant_api_key == "test-key"
+
+
+# lang_suffix (multi-server deploy, 2026-07-22) — each of the 3 independently
+# deployed backend servers (vn/jp/en) is fixed to exactly one language for its
+# whole process lifetime; this field is what dal/*_repository.py's ORM models
+# suffix their table names with. See common/config.py's field docstring and
+# Settings._validate_lang_suffix.
+
+
+def test_lang_suffix_defaults_to_vn():
+    settings = Settings(_env_file=None)
+
+    assert settings.lang_suffix == "vn"
+
+
+@pytest.mark.parametrize("suffix", ["vn", "jp", "en"])
+def test_lang_suffix_accepts_every_supported_value(monkeypatch, suffix):
+    monkeypatch.setenv("LANG_SUFFIX", suffix)
+
+    settings = Settings(_env_file=None)
+
+    assert settings.lang_suffix == suffix
+
+
+@pytest.mark.parametrize("bad_value", ["ja", "fr", "VN", "", "vn_jp"])
+def test_lang_suffix_raises_on_invalid_value(monkeypatch, bad_value):
+    monkeypatch.setenv("LANG_SUFFIX", bad_value)
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)

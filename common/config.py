@@ -18,7 +18,21 @@
 #              Gemini (ADR-0006), model selection stays env-driven per SRS-001.
 ###############################################################################
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Multi-server deploy (ARCH-001 decision 2026-07-22): 3 independent backend servers
+# (vn/jp/en), each fixed to exactly one language for its whole process lifetime, all
+# sharing one Postgres instance and one Qdrant instance. Public (not a leading
+# underscore) so other modules reuse this exact set instead of redefining their
+# own copy — scripts/seed_eval_fixtures.py's _seed_lang() imports this instead
+# of keeping its own duplicate (code-reviewer finding, 2026-07-22 review 1/3).
+# Table-name-building itself lives in dal/lang_tables.py, not here — that's
+# repository-specific knowledge that belongs behind the dal/ boundary
+# (ADR-0013/CONV-001 §4); this set is just "which language codes the app
+# supports at all", a config-layer concern common/ can own without depending
+# on dal/ (avoiding a common -> dal backward dependency).
+SUPPORTED_LANG_SUFFIXES = {"vn", "jp", "en"}
 
 
 class Settings(BaseSettings):
@@ -123,6 +137,23 @@ class Settings(BaseSettings):
     qdrant_https: bool = False
     qdrant_api_key: str = ""
     qdrant_collection: str = "ai_clinic_knowledge"
+
+    # Language partition suffix (multi-server deploy, see SUPPORTED_LANG_SUFFIXES
+    # above) — appended to the RAG content tables (knowledge_base/knowledge_chunks/
+    # ingestion_jobs, see dal/*_repository.py) so each of the 3 language-specific
+    # servers owns its own tables on the one shared Postgres instance, instead of
+    # 3 servers racing to write the same rows. Qdrant needs no equivalent field:
+    # qdrant_collection above is already set to a different value per server via
+    # env (e.g. ai_clinic_knowledge_vn/_jp/_en), so the 3 servers already use
+    # separate Qdrant collections without any extra code. alembic/env.py also
+    # reads this to give each server its own alembic_version_{suffix} tracking
+    # table (see that module's docstring for why a shared alembic_version would
+    # be a silent-skip trap across servers).
+    # Raise-fast on an invalid value here (same "never silently default" spirit
+    # as scripts/seed_eval_fixtures.py::_seed_lang()) — a typo would otherwise
+    # point a server at the wrong (or a nonexistent) set of tables with no error
+    # at startup, only a confusing failure later at first query.
+    lang_suffix: str = "vn"
     similarity_threshold: float = 0.7  # BUG-002: 0.5 let every irrelevant-topic query "ground"
     # FAQ-only recall knob (Nhóm B task 5 — FAQ improvements, 2026-07-10). FAQ answers non-medical clinic content (policy/clinic_info)
     # where a marginal miss only costs a false "not found", not the safety risk that a loose
@@ -165,6 +196,23 @@ class Settings(BaseSettings):
     not_found_message: str = "I could not find relevant information in the knowledge base."
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator("lang_suffix")
+    @classmethod
+    def _validate_lang_suffix(cls, v: str) -> str:
+        """Fail fast if LANG_SUFFIX isn't one of the 3 supported servers' languages.
+
+        Mirrors scripts/seed_eval_fixtures.py::_seed_lang()'s "never guess/silently
+        accept a bad value" stance — an invalid suffix here would otherwise point a
+        whole server's RAG tables at the wrong (or a nonexistent) table set with no
+        error until some later query fails confusingly.
+        """
+        if v not in SUPPORTED_LANG_SUFFIXES:
+            raise ValueError(
+                f"LANG_SUFFIX={v!r} is not one of {sorted(SUPPORTED_LANG_SUFFIXES)} — "
+                "set LANG_SUFFIX=vn|jp|en explicitly."
+            )
+        return v
 
     @property
     def database_url(self) -> str:

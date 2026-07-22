@@ -32,11 +32,10 @@ import httpx
 import yaml
 from sqlalchemy import text
 
-from common.config import settings
+from common.config import SUPPORTED_LANG_SUFFIXES, settings
 from common.database import AsyncSessionFactory
+from dal.lang_tables import ingestion_jobs_table, knowledge_base_table, knowledge_chunks_table
 from dal.qdrant_client import get_qdrant_client
-
-_SUPPORTED_LANGS = {"vn", "jp", "en"}
 
 
 def _seed_lang() -> str:
@@ -45,12 +44,29 @@ def _seed_lang() -> str:
     Each language's fixtures (doctors, addresses, phone numbers) are
     fully independent datasets, so silently falling back to one (e.g.
     "vn") could seed the wrong language's data without anyone noticing.
+
+    Also cross-checks against settings.lang_suffix (LANG_SUFFIX) — the two
+    env vars are independent (SEED_LANG only picks the fixtures/ directory;
+    LANG_SUFFIX only picks the DB table suffix wipe() truncates), so nothing
+    stops an operator setting SEED_LANG=jp while LANG_SUFFIX defaults to
+    "vn". Without this check that mismatch would silently TRUNCATE the wrong
+    language's tables (wipe() truncates by lang_suffix) while seeding the
+    *other* language's fixtures through the API — a data-loss footgun with no
+    error at all (code-reviewer finding, 2026-07-22 review 1/3).
     """
     lang = os.environ.get("SEED_LANG")
-    if lang not in _SUPPORTED_LANGS:
+    if lang not in SUPPORTED_LANG_SUFFIXES:
         raise RuntimeError(
-            f"SEED_LANG={lang!r} is not set to one of {sorted(_SUPPORTED_LANGS)} — "
+            f"SEED_LANG={lang!r} is not set to one of {sorted(SUPPORTED_LANG_SUFFIXES)} — "
             "set SEED_LANG=vn|jp|en explicitly before running this script."
+        )
+    if lang != settings.lang_suffix:
+        raise RuntimeError(
+            f"SEED_LANG={lang!r} does not match settings.lang_suffix={settings.lang_suffix!r} "
+            "(LANG_SUFFIX env var) — wipe() truncates tables by lang_suffix while this seeds "
+            f"the {lang!r} fixtures, so a mismatch would wipe one language's tables and seed "
+            "another's. Set LANG_SUFFIX to the same value as SEED_LANG before running this "
+            "script."
         )
     return lang
 
@@ -91,10 +107,17 @@ async def wipe() -> None:
     """Delete every row from the domain tables and the Qdrant collection."""
     _guard_against_production()
     async with AsyncSessionFactory() as session:
+        # knowledge_chunks/ingestion_jobs/knowledge_base are suffixed by
+        # settings.lang_suffix (multi-server deploy, 2026-07-22) — this script
+        # is meant to run against one server's own DB tables (matching that
+        # server's LANG_SUFFIX), not the bare pre-migration table names, which
+        # no longer exist after alembic/versions/0002_partition_knowledge_by_language.py.
+        suffix = settings.lang_suffix
         await session.execute(
             text(
-                "TRUNCATE TABLE bookings, knowledge_chunks, ingestion_jobs, "
-                "knowledge_base, doctors RESTART IDENTITY CASCADE"
+                f"TRUNCATE TABLE bookings, {knowledge_chunks_table(suffix)}, "
+                f"{ingestion_jobs_table(suffix)}, {knowledge_base_table(suffix)}, doctors "
+                "RESTART IDENTITY CASCADE"
             )
         )
         await session.execute(

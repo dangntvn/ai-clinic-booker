@@ -97,6 +97,14 @@ services:
         sync: false # required — Qdrant Cloud cluster API key
       - key: QDRANT_COLLECTION
         value: ai_clinic_knowledge
+      # Multi-server deploy (vn/jp/en) — this single-service demo blueprint only
+      # ever runs one language, so LANG_SUFFIX is fixed to vn here. A real 3-server
+      # deploy would add 2 more service blocks below, each with its own
+      # LANG_SUFFIX (jp/en) and its own QDRANT_COLLECTION suffix (e.g.
+      # ai_clinic_knowledge_jp/_en) — see common/config.py's lang_suffix docstring
+      # and alembic/versions/0002_partition_knowledge_by_language.py.
+      - key: LANG_SUFFIX
+        value: vn
       - key: SIMILARITY_THRESHOLD
         value: "0.7"
       - key: FAQ_SIMILARITY_THRESHOLD

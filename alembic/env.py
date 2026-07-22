@@ -47,6 +47,19 @@ config.set_main_option("sqlalchemy.url", settings.database_url.replace("+asyncpg
 
 target_metadata = Base.metadata
 
+# Multi-server deploy (2026-07-22): the 3 language-specific backend servers
+# (vn/jp/en) share one physical Postgres instance, which means they'd also share
+# Alembic's own bookkeeping table (``alembic_version``) if left at its default
+# name. That's a silent-skip trap: whichever server runs `alembic upgrade head`
+# first stamps the shared row at revision 0002; every other server then reads
+# "already at 0002" and skips running the migration entirely — no error, no
+# warning, just a server quietly missing its own knowledge_base_{suffix}/
+# knowledge_chunks_{suffix}/ingestion_jobs_{suffix} tables. Giving each server
+# its own ``alembic_version_{suffix}`` table (still on the one shared DB) makes
+# migration history independent per server, matching how the 3 servers' actual
+# content tables are already independent (dal/*_repository.py).
+_version_table = f"alembic_version_{settings.lang_suffix}"
+
 
 def run_migrations_offline() -> None:
     """Run migrations without a live DB connection, emitting raw SQL."""
@@ -56,6 +69,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table=_version_table,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -72,7 +86,9 @@ def run_migrations_online() -> None:
         connect_args=settings.postgres_sync_connect_args,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection, target_metadata=target_metadata, version_table=_version_table
+        )
         with context.begin_transaction():
             context.run_migrations()
 
