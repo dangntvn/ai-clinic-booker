@@ -22,8 +22,8 @@ fetched_date: 2026-07-08
 
 ## 担当医
 
-Đoàn Việt Hùng 医師。
+Yamamoto Yuto 医師。
 
 ## お問い合わせ
 
-ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。
+ホットライン：0888 999 000。住所：ハノイ市ドンダー区ラントゥオン坊グエンチータイン通り45番地。

@@ -17,7 +17,7 @@ The Obstetrics & Gynecology Department provides comprehensive reproductive healt
 - Colposcopy and cervical cell sampling for cancer screening
 
 ## Attending doctor
-Nguyễn Thị Thúy.
+Sophia Reynolds.
 
 ## Contact
 Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn.

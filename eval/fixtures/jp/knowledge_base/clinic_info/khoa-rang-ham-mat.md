@@ -20,8 +20,8 @@ fetched_date: 2026-07-08
 
 ## 医師陣
 
-Lê Thị Huyền Trang 医師。
+Kobayashi Kaito 医師。
 
 ## お問い合わせ
 
-ホットライン：0888 999 000。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。診療時間：月曜〜日曜、7:30〜17:00。メール：lienhe@tamanclinic.vn。
+ホットライン：0888 999 000。住所：ハノイ市ドンダー区ラントゥオン坊グエンチータイン通り45番地。診療時間：月曜〜日曜、7:30〜17:00。メール：lienhe@tamanclinic.vn。

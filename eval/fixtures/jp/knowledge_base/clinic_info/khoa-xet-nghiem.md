@@ -17,10 +17,10 @@ fetched_date: 2026-07-08
 
 ## 担当医
 
-Ngô Quang Minh 医師。
+Fujita Kenta 医師。
 
 備考：「検査」という専門ラベルは、システムの `SPECIALTIES` enum（14種類）のいずれにもマッピングできません — この内容は `clinic_info` としてのみ使用し、このラベルで `doctors` レコードを作成しないでください（TASK-024 Step 4）。
 
 ## お問い合わせ
 
-ホットライン：0888 999 000。メール：lienhe@tamanclinic.vn。診療時間：月曜〜日曜、07:30〜17:00。住所：45 Đường Nguyễn Chí Thanh, Phường Láng Thượng, Quận Đống Đa, Hà Nội。
+ホットライン：0888 999 000。メール：lienhe@tamanclinic.vn。診療時間：月曜〜日曜、07:30〜17:00。住所：ハノイ市ドンダー区ラントゥオン坊グエンチータイン通り45番地。

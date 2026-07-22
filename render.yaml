@@ -7,14 +7,25 @@
 # typing every key from scratch. `sync: false` vars are intentionally left with no value here —
 # Render Blueprints never store secrets in the repo; those must be filled in once in the
 # dashboard's Environment tab after the first deploy. See docs/render-deploy.md for the full
-# runbook (steps, cold-start note, etc).
+# runbook (steps, cold-start note, migrate-sequentially warning, etc).
 #
 # Do not add a PORT var here — Render injects its own $PORT into the container; the Dockerfile's
 # CMD already reads it (see docs/render-deploy.md).
+#
+# 3-server-per-language deploy (ADR-0023/ADR-0024): three Web Services below, one per
+# LANG_SUFFIX (vn/jp/en), sharing the same Postgres/Qdrant Cloud instances (fill in the same
+# POSTGRES_*/QDRANT_HOST/QDRANT_API_KEY values in all three services' Environment tabs). Each
+# service's only differences from the others are `name`, `LANG_SUFFIX`, and `QDRANT_COLLECTION`.
+#
+# MUST deploy sequentially, not in parallel, the very first time (ADR-0023 Consequences): the
+# idempotent-migration guard in alembic/versions/0001_initial_schema.py is check-then-act, not
+# atomic, and all three services migrate the same shared Postgres. Create+deploy the `vn`
+# service first, wait for its `alembic upgrade head` to finish (check deploy logs), only then
+# create+deploy `jp`, wait, then `en`. See docs/render-deploy.md for the full sequencing steps.
 
 services:
   - type: web
-    name: ai-clinic-booker-backend
+    name: ai-clinic-booker-backend-vn
     runtime: docker
     plan: free
     branch: demo/deploy-render
@@ -29,6 +40,8 @@ services:
         sync: false # set to the real frontend origin once known; see docs/render-deploy.md
       - key: CHAT_RATE_LIMIT_PER_MINUTE
         value: "10"
+      - key: IS_ADMIN_API_LOCKED
+        value: "true" # public deploy — block admin/write CRUD routes (403), see common/admin_lock.py
 
       # Gemini (ADR-0006)
       - key: GEMINI_API_KEY
@@ -96,13 +109,10 @@ services:
       - key: QDRANT_API_KEY
         sync: false # required — Qdrant Cloud cluster API key
       - key: QDRANT_COLLECTION
-        value: ai_clinic_knowledge
-      # Multi-server deploy (vn/jp/en) — this single-service demo blueprint only
-      # ever runs one language, so LANG_SUFFIX is fixed to vn here. A real 3-server
-      # deploy would add 2 more service blocks below, each with its own
-      # LANG_SUFFIX (jp/en) and its own QDRANT_COLLECTION suffix (e.g.
-      # ai_clinic_knowledge_jp/_en) — see common/config.py's lang_suffix docstring
-      # and alembic/versions/0002_partition_knowledge_by_language.py.
+        value: ai_clinic_knowledge_vn
+      # Fixed per-process language (ADR-0023/ADR-0024) — this service only ever
+      # runs `vn`. See the file-level comment above and common/config.py's
+      # lang_suffix docstring / alembic/versions/0002_partition_knowledge_by_language.py.
       - key: LANG_SUFFIX
         value: vn
       - key: SIMILARITY_THRESHOLD
@@ -121,5 +131,217 @@ services:
       # chat/API, so the in-process scheduler is disabled here (see docs/render-deploy.md).
       # Every other deploy (local docker-compose, a future real production deploy) defaults to
       # true (cron runs as before) and doesn't need this var set at all.
+      - key: ENABLE_INGESTION_CRON
+        value: "false"
+
+  - type: web
+    name: ai-clinic-booker-backend-jp
+    runtime: docker
+    plan: free
+    branch: demo/deploy-render
+    healthCheckPath: /health
+    envVars:
+      # App
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ALLOWED_ORIGINS
+        sync: false # set to the real frontend origin once known; see docs/render-deploy.md
+      - key: CHAT_RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: IS_ADMIN_API_LOCKED
+        value: "true" # public deploy — block admin/write CRUD routes (403), see common/admin_lock.py
+
+      # Gemini (ADR-0006)
+      - key: GEMINI_API_KEY
+        sync: false # required — real key, see docs/render-deploy.md
+      - key: GEMINI_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: LLM_MAX_TOKENS
+        value: "8192"
+
+      # Per-agent LLM config (TASK-017)
+      - key: ORCHESTRATOR_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: ORCHESTRATOR_LLM_TEMPERATURE
+        value: "0.0"
+      - key: ORCHESTRATOR_LLM_MAX_TOKENS
+        value: "2048"
+      - key: BOOKING_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: BOOKING_LLM_TEMPERATURE
+        value: "0.0"
+      - key: BOOKING_LLM_MAX_TOKENS
+        value: "2048"
+      - key: SYMPTOM_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: SYMPTOM_LLM_TEMPERATURE
+        value: "0.0"
+      - key: SYMPTOM_LLM_MAX_TOKENS
+        value: "2048"
+      - key: FAQ_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: FAQ_LLM_TEMPERATURE
+        value: "0.0"
+      - key: FAQ_LLM_MAX_TOKENS
+        value: "2048"
+      - key: EMERGENCY_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: EMERGENCY_LLM_TEMPERATURE
+        value: "0.0"
+      - key: EMERGENCY_LLM_MAX_TOKENS
+        value: "2048"
+
+      # Postgres (managed — Neon/Supabase) — same instance as the vn service above
+      - key: POSTGRES_HOST
+        sync: false # required — Neon/Supabase host (same value as the vn service)
+      - key: POSTGRES_PORT
+        value: "5432"
+      - key: POSTGRES_DB
+        sync: false # required — Neon/Supabase database name (same value as the vn service)
+      - key: POSTGRES_USER
+        sync: false # required — Neon/Supabase database user (same value as the vn service)
+      - key: POSTGRES_PASSWORD
+        sync: false # required — Neon/Supabase database password (same value as the vn service)
+      - key: POSTGRES_SSL
+        value: "true" # managed Postgres rejects non-SSL connections
+
+      # Qdrant (managed — Qdrant Cloud) — same instance as the vn service above
+      - key: QDRANT_HOST
+        sync: false # required — Qdrant Cloud cluster host (same value as the vn service)
+      - key: QDRANT_PORT
+        value: "6333"
+      - key: QDRANT_HTTPS
+        value: "true" # Qdrant Cloud is HTTPS-only
+      - key: QDRANT_API_KEY
+        sync: false # required — Qdrant Cloud cluster API key (same value as the vn service)
+      - key: QDRANT_COLLECTION
+        value: ai_clinic_knowledge_jp
+      # Fixed per-process language (ADR-0023/ADR-0024) — this service only ever
+      # runs `jp`. Deploy this service only after the vn service's first
+      # `alembic upgrade head` has finished — see the file-level comment above.
+      - key: LANG_SUFFIX
+        value: jp
+      - key: SIMILARITY_THRESHOLD
+        value: "0.7"
+      - key: FAQ_SIMILARITY_THRESHOLD
+        value: "0.6"
+      - key: TOP_K
+        value: "6"
+
+      # Ingestion (ADR-0021)
+      - key: EMBEDDING_BATCH_SIZE
+        value: "100"
+
+      # Ingestion cron toggle — see the vn service's comment above; same rationale applies.
+      - key: ENABLE_INGESTION_CRON
+        value: "false"
+
+  - type: web
+    name: ai-clinic-booker-backend-en
+    runtime: docker
+    plan: free
+    branch: demo/deploy-render
+    healthCheckPath: /health
+    envVars:
+      # App
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ALLOWED_ORIGINS
+        sync: false # set to the real frontend origin once known; see docs/render-deploy.md
+      - key: CHAT_RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: IS_ADMIN_API_LOCKED
+        value: "true" # public deploy — block admin/write CRUD routes (403), see common/admin_lock.py
+
+      # Gemini (ADR-0006)
+      - key: GEMINI_API_KEY
+        sync: false # required — real key, see docs/render-deploy.md
+      - key: GEMINI_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: LLM_MAX_TOKENS
+        value: "8192"
+
+      # Per-agent LLM config (TASK-017)
+      - key: ORCHESTRATOR_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: ORCHESTRATOR_LLM_TEMPERATURE
+        value: "0.0"
+      - key: ORCHESTRATOR_LLM_MAX_TOKENS
+        value: "2048"
+      - key: BOOKING_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: BOOKING_LLM_TEMPERATURE
+        value: "0.0"
+      - key: BOOKING_LLM_MAX_TOKENS
+        value: "2048"
+      - key: SYMPTOM_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: SYMPTOM_LLM_TEMPERATURE
+        value: "0.0"
+      - key: SYMPTOM_LLM_MAX_TOKENS
+        value: "2048"
+      - key: FAQ_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: FAQ_LLM_TEMPERATURE
+        value: "0.0"
+      - key: FAQ_LLM_MAX_TOKENS
+        value: "2048"
+      - key: EMERGENCY_LLM_MODEL
+        value: gemini-2.5-flash
+      - key: EMERGENCY_LLM_TEMPERATURE
+        value: "0.0"
+      - key: EMERGENCY_LLM_MAX_TOKENS
+        value: "2048"
+
+      # Postgres (managed — Neon/Supabase) — same instance as the vn service above
+      - key: POSTGRES_HOST
+        sync: false # required — Neon/Supabase host (same value as the vn service)
+      - key: POSTGRES_PORT
+        value: "5432"
+      - key: POSTGRES_DB
+        sync: false # required — Neon/Supabase database name (same value as the vn service)
+      - key: POSTGRES_USER
+        sync: false # required — Neon/Supabase database user (same value as the vn service)
+      - key: POSTGRES_PASSWORD
+        sync: false # required — Neon/Supabase database password (same value as the vn service)
+      - key: POSTGRES_SSL
+        value: "true" # managed Postgres rejects non-SSL connections
+
+      # Qdrant (managed — Qdrant Cloud) — same instance as the vn service above
+      - key: QDRANT_HOST
+        sync: false # required — Qdrant Cloud cluster host (same value as the vn service)
+      - key: QDRANT_PORT
+        value: "6333"
+      - key: QDRANT_HTTPS
+        value: "true" # Qdrant Cloud is HTTPS-only
+      - key: QDRANT_API_KEY
+        sync: false # required — Qdrant Cloud cluster API key (same value as the vn service)
+      - key: QDRANT_COLLECTION
+        value: ai_clinic_knowledge_en
+      # Fixed per-process language (ADR-0023/ADR-0024) — this service only ever
+      # runs `en`. Deploy this service only after the jp service's first
+      # `alembic upgrade head` has finished — see the file-level comment above.
+      - key: LANG_SUFFIX
+        value: en
+      - key: SIMILARITY_THRESHOLD
+        value: "0.7"
+      - key: FAQ_SIMILARITY_THRESHOLD
+        value: "0.6"
+      - key: TOP_K
+        value: "6"
+
+      # Ingestion (ADR-0021)
+      - key: EMBEDDING_BATCH_SIZE
+        value: "100"
+
+      # Ingestion cron toggle — see the vn service's comment above; same rationale applies.
       - key: ENABLE_INGESTION_CRON
         value: "false"

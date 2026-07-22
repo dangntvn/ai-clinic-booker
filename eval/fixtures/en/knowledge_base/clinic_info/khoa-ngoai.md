@@ -15,7 +15,7 @@ The Surgery Department is one of the clinic's flagship specialties, with heavy i
 - Primary health care
 
 ## Medical team (per department page)
-Vũ Huy Nùng.
+Christopher Hale.
 
 Note: the "Ngoại" (Surgery) specialty label for the related doctors could not be mapped to any of the system's 14 `SPECIALTIES` enum values — this content is not used to create `doctors` records, and is used only as `clinic_info` (see TASK-024 Step 4).
 

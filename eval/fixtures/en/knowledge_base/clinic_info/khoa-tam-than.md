@@ -15,9 +15,9 @@ The Psychiatry Department examines and treats conditions related to psychologica
 - Psychiatric and epileptic emergency management
 
 ## Notable doctor
-Đỗ Như Chinh.
+Ethan Mitchell.
 
-Note: the "Tâm thần" (Psychiatry) specialty label cannot be mapped to any of the system's 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (see TASK-024 Step 4; note that Dr. Đỗ Như Chinh's actual specialty label in the bio at `/bac-si/` is "Thần kinh" (Neurology), different from this department name, and "Thần kinh" does map to the enum).
+Note: the "Tâm thần" (Psychiatry) specialty label cannot be mapped to any of the system's 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (see TASK-024 Step 4; note that Dr. Ethan Mitchell's actual specialty label in the bio at `/bac-si/` is "Thần kinh" (Neurology), different from this department name, and "Thần kinh" does map to the enum).
 
 ## Contact
 Hotline: 0888 999 000. Email: lienhe@tamanclinic.vn. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

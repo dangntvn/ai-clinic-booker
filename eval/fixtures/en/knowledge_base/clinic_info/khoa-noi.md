@@ -14,9 +14,9 @@ The Internal Medicine Department is one of the first departments to help identif
 - Diagnostic support for conditions with symptoms of unclear cause
 
 ## Medical team (per department page)
-Phạm Thị Lan Hương, Trần Thị Kim Anh, Phạm Quốc Cường.
+Emily Carter, Olivia Bennett, Daniel Osborne.
 
-Data note: "Phạm Quốc Cường" is mentioned on this department page but does not appear in the actual doctor list at `/bac-si/` (verified 2026-07-08) — the department page content may not be synchronized. This person is not included in `doctors.yaml`.
+Data note: "Daniel Osborne" is mentioned on this department page but does not appear in the actual doctor list at `/bac-si/` (verified 2026-07-08) — the department page content may not be synchronized. This person is not included in `doctors.yaml`.
 
 ## Contact
 Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 7:30 - 17:00.

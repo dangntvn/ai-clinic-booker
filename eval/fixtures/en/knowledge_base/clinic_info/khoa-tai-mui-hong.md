@@ -19,7 +19,7 @@ Ear-Nose-Throat is the body's gateway area, frequently exposed to bacteria and d
 General examination and treatment, sinus puncture, ear incision and drainage for otitis, polyp removal, nosebleed control, foreign body removal, adenoidectomy.
 
 ## Attending doctor
-Đoàn Việt Hùng.
+Nathan Bishop.
 
 ## Contact
 Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi.

@@ -15,7 +15,7 @@ The Dermatology Department is a flagship specialty of the clinic, with a team of
 - Parasitic infections: scabies and similar conditions
 
 ## Attending doctor
-Dr. Đào Thanh Thủy.
+Dr. Grace Foster.
 
 ## Contact
 Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.

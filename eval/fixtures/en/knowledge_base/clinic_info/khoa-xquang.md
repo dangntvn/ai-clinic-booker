@@ -16,7 +16,7 @@ The Radiology/Imaging Department specializes in diagnosing deep internal injurie
 - Examination of the digestive system, urinary system, and other organs
 
 ## Attending doctor
-Phùng Thị Thúy (specialty label in bio: "Chẩn đoán hình ảnh" / Diagnostic Imaging).
+Natalie Cross (specialty label in bio: "Chẩn đoán hình ảnh" / Diagnostic Imaging).
 
 Note: the "Chẩn đoán hình ảnh" (Diagnostic Imaging) / "X-Quang" (X-Ray) label cannot be mapped to any of the 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (TASK-024 Step 4).
 

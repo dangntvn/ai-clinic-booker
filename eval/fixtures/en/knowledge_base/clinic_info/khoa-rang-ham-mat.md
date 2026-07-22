@@ -18,7 +18,7 @@ The Dental Department operates under the motto "modern – fast – dedicated," 
 - Root canal treatment
 
 ## Medical team
-Dr. Lê Thị Huyền Trang.
+Dr. Henry Sullivan.
 
 ## Contact
 Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 7:30 - 17:00. Email: lienhe@tamanclinic.vn.

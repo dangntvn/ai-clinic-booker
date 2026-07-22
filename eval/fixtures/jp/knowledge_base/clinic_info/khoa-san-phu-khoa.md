@@ -19,7 +19,7 @@ fetched_date: 2026-07-08
 
 ## 担当医
 
-Nguyễn Thị Thúy 医師。
+Tanaka Nanami 医師。
 
 ## お問い合わせ
 

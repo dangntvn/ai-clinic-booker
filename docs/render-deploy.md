@@ -94,6 +94,54 @@ Cloud are still the managed services used, independent of which platform hosts t
 8. Trigger the first deploy. Watch the build logs — `pip install --no-cache-dir .` then the
    container starts with `alembic upgrade head && uvicorn ...`.
 
+## Deploying all 3 language servers (ADR-0023/ADR-0024)
+
+`render.yaml` on this branch now declares **three** Web Services —
+`ai-clinic-booker-backend-vn` / `-jp` / `-en` — one process per `LANG_SUFFIX`, all sharing the
+same Postgres and Qdrant Cloud instances (see ADR-0023 for why: language isolation is at the
+process level, business data stays shared, only RAG content + `doctors`/`bookings`/
+`chat_session_links` are suffixed per language per ADR-0024). Steps:
+
+1. Same repo/branch/Dockerfile/health-check as the single-service flow above — the difference is
+   there are now 3 service definitions in `render.yaml` instead of 1.
+2. If using the Blueprint flow (step 7 above), Render will offer to create all 3 services from
+   one `render.yaml` at once. **Do not let it deploy all 3 simultaneously on the first-ever
+   migrate.** See the sequencing constraint below — either create them one at a time in the
+   dashboard, or create all 3 as Blueprint resources but pause/suspend `-jp` and `-en` before the
+   first deploy, then resume them in order once `-vn` has migrated.
+3. Fill in the **same** `POSTGRES_*` / `QDRANT_HOST` / `QDRANT_API_KEY` secret values (`sync:
+   false` vars) in all three services' Environment tabs — they point at the one shared managed
+   Postgres/Qdrant Cloud instance. `QDRANT_COLLECTION` and `LANG_SUFFIX` are the only two vars
+   that must differ per service, and `render.yaml` already sets those correctly per block.
+4. Set `ALLOWED_ORIGINS` per service to whichever frontend origin serves that language (or the
+   same origin for all three if one widget deployment switches language client-side).
+
+### Migrate sequentially — mandatory on first deploy only
+
+ADR-0023's idempotent-migration guard (`_table_exists()` in
+`alembic/versions/0001_initial_schema.py`) is check-then-act, not atomic. If two services run
+`alembic upgrade head` against the shared Postgres at the same moment during the very first
+migration, there's a race: both can see "table doesn't exist yet" and both attempt
+`CREATE TABLE`, and the loser crashes. Once every service has migrated at least once, this is no
+longer a concern (subsequent deploys/restarts are no-ops for already-applied revisions), but the
+first migration on a fresh shared database **must** happen one service at a time:
+
+1. Deploy `ai-clinic-booker-backend-vn` first. Watch its deploy logs until `alembic upgrade
+   head` completes and `uvicorn` starts serving (health check goes green).
+2. Only then deploy `ai-clinic-booker-backend-jp`. Same wait-for-green-health-check step.
+3. Only then deploy `ai-clinic-booker-backend-en`.
+4. After all three have migrated once, redeploys/restarts of any service can happen in any order
+   or in parallel — the race window only exists on the first-ever `alembic upgrade head` against
+   an empty shared database.
+
+## Frontend routing to 3 backends
+
+Each language server has its own base URL (3 separate Render services = 3 separate `.onrender.com`
+hostnames, or 3 custom subdomains if mapped). Whatever selects the chat widget's language
+(locale switcher, subdomain, `Accept-Language`) must point the widget at the matching backend's
+URL — there is no single shared endpoint that routes by request the way a phương án A
+multi-tenant server would (see ADR-0023 Context for why phương án B was chosen instead).
+
 ## Required environment variables (Render Dashboard → Environment)
 
 Copy every variable in `.env.example` on this branch. The ones that **must** be filled with

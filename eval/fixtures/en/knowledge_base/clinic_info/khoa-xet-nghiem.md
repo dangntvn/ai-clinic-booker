@@ -15,7 +15,7 @@ The Laboratory/Testing Department provides comprehensive testing services: hemat
 - Urine: complete urinalysis and 24-hour urine testing
 
 ## Attending doctor
-Ngô Quang Minh.
+Lucas Harmon.
 
 Note: the "Xét nghiệm" (Testing) specialty label cannot be mapped to any of the 14 `SPECIALTIES` enum values — this content is used only as `clinic_info`, no `doctors` record is created with this specialty (TASK-024 Step 4).
 

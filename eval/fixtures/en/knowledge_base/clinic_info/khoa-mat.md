@@ -23,7 +23,7 @@ General examination and treatment, initial emergency care, subconjunctival injec
 Automatic refractometer, non-contact tonometer, fundoscopy, fluorescein retinal angiography.
 
 ## Attending doctor
-Nguyễn Thị Hải.
+Charlotte Hayes.
 
 ## Contact
 Hotline: 0888 999 000. Address: 45 Nguyen Chi Thanh Street, Lang Thuong Ward, Dong Da District, Hanoi. Operating hours: Monday - Sunday, 07:30 - 17:00.
