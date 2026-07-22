@@ -19,6 +19,11 @@
 #              dynamic ADK instruction provider (a callable, not a static
 #              string, same pattern as symptom/agent.py) to inject today's date
 #              as the anchor the LLM resolves relative dates against (BUG-009).
+#              ADR-0027 (2026-07-22): _render_specialty_code_table() builds the
+#              {specialty_code_table} block (display name at settings.lang_suffix
+#              -> snake_case code) so the LLM can look up a specialty code
+#              instead of guessing one when the patient names a specialty
+#              directly, without a doctor_id handoff from the Symptom Agent.
 ###############################################################################
 
 from datetime import UTC, datetime
@@ -29,6 +34,7 @@ from google.genai import types
 
 from common.config import settings
 from common.resilience import build_adk_model
+from dal.specialties import SPECIALTIES, specialty_display_name
 
 from .prompt import BOOKING_INSTRUCTION_TEMPLATE, REPLY_LANGUAGE_NAME
 from .tools import (
@@ -59,6 +65,25 @@ _WEEKDAY_NAMES_BY_LANG_SUFFIX = {
 }
 
 
+def _render_specialty_code_table() -> str:
+    """Build the "display name -> code" lookup block (ADR-0027 §1).
+
+    Mirror image of symptom/agent.py::_render_specialty_display_table (that
+    one goes TRIAGE vn label -> display name; this one goes display name ->
+    code) — kept as its own helper here rather than shared, matching the
+    existing one-helper-per-agent layout each prompt already uses.
+
+    One line per specialty, in SPECIALTIES order: the display name at this
+    server's settings.lang_suffix, an arrow, then the snake_case code — so the
+    LLM can look up whatever language it's replying in on the left, and copy
+    the code on the right verbatim into list_doctors_by_specialty, never
+    inventing/translating one itself.
+    """
+    return "\n".join(
+        f"{specialty_display_name(code, settings.lang_suffix)} → {code}" for code in SPECIALTIES
+    )
+
+
 def _build_instruction(ctx: ReadonlyContext) -> str:
     """ADK instruction provider — injects today's date/weekday as the anchor the
     LLM resolves relative Vietnamese dates against (BUG-009).
@@ -78,6 +103,10 @@ def _build_instruction(ctx: ReadonlyContext) -> str:
         # docstring (CEO decision 2026-07-22, supersedes BUG-039's per-message
         # auto-detect instruction).
         reply_language=REPLY_LANGUAGE_NAME,
+        # ADR-0027: display-name -> code table so the LLM can look up the
+        # specialty code instead of guessing/translating one when the patient
+        # names a specialty directly (no doctor_id handoff from Symptom Agent).
+        specialty_code_table=_render_specialty_code_table(),
     )
 
 

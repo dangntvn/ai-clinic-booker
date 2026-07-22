@@ -20,11 +20,23 @@
 #              raise-fasts on an unknown code/lang_suffix instead of silently
 #              defaulting — mirrors the "never silently default" stance tested
 #              for dal/lang_tables.py and common/config.py::reply_language_name.
+#              ADR-0027 (2026-07-22): added resolve_specialty coverage — codes
+#              and every display name (any of vn/jp/en) resolve back to the
+#              canonical code, tolerant of casing/whitespace but never fuzzy;
+#              an unrecognized string resolves to None. Includes the two cases
+#              ADR-0027 calls out by name as easy-to-mis-guess ("Orthopedics &
+#              Rheumatology"/"整形外科・リウマチ科" -> musculoskeletal,
+#              "Urology & Andrology"/"泌尿器科" -> urology_andrology).
 ###############################################################################
 
 import pytest
 
-from dal.specialties import SPECIALTIES, SPECIALTY_DISPLAY_NAMES, specialty_display_name
+from dal.specialties import (
+    SPECIALTIES,
+    SPECIALTY_DISPLAY_NAMES,
+    resolve_specialty,
+    specialty_display_name,
+)
 
 
 def test_specialties_has_exactly_14_distinct_codes():
@@ -94,3 +106,44 @@ def test_vn_column_matches_triage_table_canonical_labels():
     }
     for code, vn_label in expected_vn.items():
         assert specialty_display_name(code, "vn") == vn_label
+
+
+@pytest.mark.parametrize("code", SPECIALTIES)
+def test_resolve_specialty_returns_the_code_itself(code):
+    assert resolve_specialty(code) == code
+
+
+@pytest.mark.parametrize("code", SPECIALTIES)
+@pytest.mark.parametrize("lang_suffix", ["vn", "jp", "en"])
+def test_resolve_specialty_matches_every_display_name_in_every_language(code, lang_suffix):
+    display_name = SPECIALTY_DISPLAY_NAMES[code][lang_suffix]
+    assert resolve_specialty(display_name) == code
+
+
+def test_resolve_specialty_tolerates_case_and_whitespace():
+    # LLM-side mistakes resolve_specialty must forgive without being fuzzy
+    # (ADR-0027 §2): wrong casing and leading/trailing whitespace.
+    assert resolve_specialty("  Cardiology ") == "cardiology"
+    assert resolve_specialty("CARDIOLOGY") == "cardiology"
+
+
+def test_resolve_specialty_returns_none_for_an_unrecognized_string():
+    assert resolve_specialty("not_a_real_specialty_or_label") is None
+    assert resolve_specialty("") is None
+
+
+@pytest.mark.parametrize(
+    ("display_name", "expected_code"),
+    [
+        # ADR-0027 Context — the two specialties an LLM is most likely to
+        # mis-guess a code for instead of looking up in {specialty_code_table}.
+        ("Orthopedics & Rheumatology", "musculoskeletal"),
+        ("整形外科・リウマチ科", "musculoskeletal"),
+        ("Cơ xương khớp", "musculoskeletal"),
+        ("Urology & Andrology", "urology_andrology"),
+        ("泌尿器科", "urology_andrology"),
+        ("Tiết niệu – Nam khoa", "urology_andrology"),
+    ],
+)
+def test_resolve_specialty_covers_the_adr_0027_callout_cases(display_name, expected_code):
+    assert resolve_specialty(display_name) == expected_code

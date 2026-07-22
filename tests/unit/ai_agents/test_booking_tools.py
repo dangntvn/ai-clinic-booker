@@ -24,6 +24,12 @@
 #              snake_case specialty CODE (matching the real DB column); dict
 #              assertions check for the added `specialty_display` field at
 #              this process's settings.lang_suffix.
+#              ADR-0027 (2026-07-22): list_doctors_by_specialty now returns a
+#              status-dict ({"status": "ok", "doctors": [...]} or
+#              {"status": "unknown_specialty"}) instead of a bare list, and
+#              recognizes a display name or wrong-case string via
+#              dal.specialties.resolve_specialty — covers all three status
+#              branches plus the display-name-instead-of-code case.
 ###############################################################################
 
 from datetime import UTC, datetime
@@ -149,3 +155,101 @@ async def test_find_doctor_by_name_matches_a_real_doctor():
     assert result[0]["specialty_display"] == specialty_display_name(
         "general_internal_medicine", settings.lang_suffix
     )
+
+
+@pytest.mark.asyncio
+async def test_list_doctors_by_specialty_none_lists_every_active_doctor():
+    """specialty=None must return every active doctor via list_active, not
+    list_by_specialty (ADR-0027 §2, first status-dict branch)."""
+    roster = [
+        _doctor(3, "Phạm Thị Lan Hương"),
+        _doctor(4, "Trần Thị Kim Anh", specialty="cardiology"),
+    ]
+    with (
+        _patch_session(),
+        patch.object(tools, "DoctorRepository") as mock_repo_cls,
+    ):
+        mock_repo_cls.return_value.list_active = AsyncMock(return_value=roster)
+        result = await tools.list_doctors_by_specialty(None)
+
+    assert result["status"] == "ok"
+    assert [d["doctor_id"] for d in result["doctors"]] == [3, 4]
+    mock_repo_cls.return_value.list_active.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_doctors_by_specialty_valid_code_with_doctors():
+    """A valid code with a non-empty roster returns status 'ok' with those
+    doctors, resolved via dal.specialties.resolve_specialty."""
+    roster = [_doctor(4, "Trần Thị Kim Anh", specialty="cardiology")]
+    with (
+        _patch_session(),
+        patch.object(tools, "DoctorRepository") as mock_repo_cls,
+    ):
+        mock_repo_cls.return_value.list_by_specialty = AsyncMock(return_value=roster)
+        result = await tools.list_doctors_by_specialty("cardiology")
+
+    assert result == {
+        "status": "ok",
+        "doctors": [
+            {
+                "doctor_id": 4,
+                "full_name": "Trần Thị Kim Anh",
+                "title": "Bác sĩ",
+                "specialty": "cardiology",
+                "specialty_display": specialty_display_name("cardiology", settings.lang_suffix),
+                "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            }
+        ],
+    }
+    mock_repo_cls.return_value.list_by_specialty.assert_awaited_once_with("cardiology")
+
+
+@pytest.mark.asyncio
+async def test_list_doctors_by_specialty_valid_code_no_doctors_is_ok_with_empty_list():
+    """A real specialty with no active doctor is status 'ok' + an empty
+    "doctors" list — a genuine "no doctor in this specialty", distinct from
+    unknown_specialty (BUG-029-style false negative ADR-0027 protects against
+    being mistaken for a mapping error)."""
+    with (
+        _patch_session(),
+        patch.object(tools, "DoctorRepository") as mock_repo_cls,
+    ):
+        mock_repo_cls.return_value.list_by_specialty = AsyncMock(return_value=[])
+        result = await tools.list_doctors_by_specialty("dentistry")
+
+    assert result == {"status": "ok", "doctors": []}
+
+
+@pytest.mark.asyncio
+async def test_list_doctors_by_specialty_unrecognized_string_is_unknown_specialty():
+    """A string that resolves to nothing (typo/hallucinated code) must return
+    'unknown_specialty' — NOT an empty "doctors" list, and it must never reach
+    the DB (ADR-0027 §2: resolve_specialty is checked before calling the repo)."""
+    with (
+        _patch_session(),
+        patch.object(tools, "DoctorRepository") as mock_repo_cls,
+    ):
+        result = await tools.list_doctors_by_specialty("orthopedics")  # a plausible-looking guess
+
+    assert result == {"status": "unknown_specialty"}
+    mock_repo_cls.return_value.list_by_specialty.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_list_doctors_by_specialty_accepts_a_display_name_instead_of_a_code():
+    """The LLM passing a display name ("Cardiology") instead of the code
+    ("cardiology") must still resolve correctly via resolve_specialty
+    (ADR-0027 §2) — the tool calls the repo with the resolved CODE, not the
+    raw display name it was given."""
+    roster = [_doctor(4, "Trần Thị Kim Anh", specialty="cardiology")]
+    with (
+        _patch_session(),
+        patch.object(tools, "DoctorRepository") as mock_repo_cls,
+    ):
+        mock_repo_cls.return_value.list_by_specialty = AsyncMock(return_value=roster)
+        result = await tools.list_doctors_by_specialty("Cardiology")
+
+    assert result["status"] == "ok"
+    assert [d["doctor_id"] for d in result["doctors"]] == [4]
+    mock_repo_cls.return_value.list_by_specialty.assert_awaited_once_with("cardiology")
