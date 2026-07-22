@@ -20,20 +20,27 @@
 #
 #              Idempotency note (multi-server deploy, 2026-07-22): the 3
 #              language-specific servers (vn/jp/en, see
-#              0002_partition_knowledge_by_language.py) each track migration
-#              history in their own alembic_version_{suffix} table
+#              0002_partition_knowledge_by_language.py and
+#              0003_partition_business_tables_by_language.py) each track
+#              migration history in their own alembic_version_{suffix} table
 #              (alembic/env.py) on the one shared Postgres instance. That
 #              means every server's *first* `alembic upgrade head` starts
 #              from this revision's base state and replays this migration —
 #              so every op.create_table()/op.create_index() call here is
 #              guarded with an existence check: the first server to run it
-#              actually creates doctors/bookings/chat_session_links (truly
-#              shared, un-suffixed tables), and every subsequent server's
-#              replay is then a safe no-op instead of an "already exists"
-#              error. knowledge_base/knowledge_chunks/ingestion_jobs are
-#              still created here too (for the same replay reasons) but are
-#              immediately superseded — 0002 drops these 3 un-suffixed
-#              tables in favour of the per-language-suffixed ones.
+#              actually creates the un-suffixed tables below, and every
+#              subsequent server's replay is then a safe no-op instead of an
+#              "already exists" error. ALL 6 tables created here
+#              (doctors/bookings/chat_session_links, and
+#              knowledge_base/knowledge_chunks/ingestion_jobs) are
+#              immediately superseded by later migrations — 0002 drops the
+#              3 knowledge/RAG tables and 0003 drops doctors/bookings/
+#              chat_session_links (ADR-0024, 2026-07-22 — doctors partitioned
+#              by language forced bookings/chat_session_links to follow via
+#              the FK chain) in favour of the per-language-suffixed ones.
+#              None of these 6 are "truly shared" any more; this migration
+#              only exists as the from-base replay target every server's
+#              independent alembic_version_{suffix} history starts at.
 #
 #              OPERATIONAL REQUIREMENT (code-reviewer finding, 2026-07-22
 #              review 1/3): every _table_exists() guard below is a
@@ -180,11 +187,14 @@ def downgrade() -> None:
     # Guarded the same way as upgrade() (see module docstring) — a downgrade
     # replayed independently by more than one server's version tracking must
     # not error on tables an earlier downgrade already removed. Note this
-    # drops truly-shared tables (doctors/bookings/chat_session_links); running
-    # a downgrade to 0001's base while another language server is still live
-    # against the same DB will break that server — this was already true
-    # before the multi-server split and downgrading a shared production DB
-    # was never a supported single-command operation.
+    # drops the un-suffixed tables below (doctors/bookings/chat_session_links,
+    # plus the 3 RAG tables) that only exist as this revision's from-base
+    # replay target (see module docstring — 0002/0003 supersede them with
+    # per-language-suffixed tables); running a downgrade to 0001's base while
+    # another language server is still live against the same DB will break
+    # that server — this was already true before the multi-server split and
+    # downgrading a shared production DB was never a supported single-command
+    # operation.
     if _table_exists("chat_session_links"):
         op.drop_table("chat_session_links")
     if _table_exists("ingestion_jobs"):

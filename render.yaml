@@ -34,39 +34,39 @@ services:
       - key: GEMINI_API_KEY
         sync: false # required — real key, see docs/render-deploy.md
       - key: GEMINI_LLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-2.5-flash
       - key: GEMINI_EMBEDDING_MODEL
-        value: text-embedding-004
+        value: gemini-embedding-001
       - key: LLM_MAX_TOKENS
         value: "8192"
 
       # Per-agent LLM config (TASK-017)
       - key: ORCHESTRATOR_LLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-2.5-flash
       - key: ORCHESTRATOR_LLM_TEMPERATURE
         value: "0.0"
       - key: ORCHESTRATOR_LLM_MAX_TOKENS
         value: "2048"
       - key: BOOKING_LLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-2.5-flash
       - key: BOOKING_LLM_TEMPERATURE
         value: "0.0"
       - key: BOOKING_LLM_MAX_TOKENS
         value: "2048"
       - key: SYMPTOM_LLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-2.5-flash
       - key: SYMPTOM_LLM_TEMPERATURE
         value: "0.0"
       - key: SYMPTOM_LLM_MAX_TOKENS
         value: "2048"
       - key: FAQ_LLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-2.5-flash
       - key: FAQ_LLM_TEMPERATURE
         value: "0.0"
       - key: FAQ_LLM_MAX_TOKENS
         value: "2048"
       - key: EMERGENCY_LLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-2.5-flash
       - key: EMERGENCY_LLM_TEMPERATURE
         value: "0.0"
       - key: EMERGENCY_LLM_MAX_TOKENS

@@ -34,7 +34,14 @@ from sqlalchemy import text
 
 from common.config import SUPPORTED_LANG_SUFFIXES, settings
 from common.database import AsyncSessionFactory
-from dal.lang_tables import ingestion_jobs_table, knowledge_base_table, knowledge_chunks_table
+from dal.lang_tables import (
+    bookings_table,
+    chat_session_links_table,
+    doctors_table,
+    ingestion_jobs_table,
+    knowledge_base_table,
+    knowledge_chunks_table,
+)
 from dal.qdrant_client import get_qdrant_client
 
 
@@ -107,21 +114,25 @@ async def wipe() -> None:
     """Delete every row from the domain tables and the Qdrant collection."""
     _guard_against_production()
     async with AsyncSessionFactory() as session:
-        # knowledge_chunks/ingestion_jobs/knowledge_base are suffixed by
-        # settings.lang_suffix (multi-server deploy, 2026-07-22) — this script
-        # is meant to run against one server's own DB tables (matching that
-        # server's LANG_SUFFIX), not the bare pre-migration table names, which
-        # no longer exist after alembic/versions/0002_partition_knowledge_by_language.py.
+        # All 6 domain tables are suffixed by settings.lang_suffix
+        # (multi-server deploy, 2026-07-22) — this script is meant to run
+        # against one server's own DB tables (matching that server's
+        # LANG_SUFFIX), not the bare pre-migration table names, which no
+        # longer exist after alembic/versions/0002_partition_knowledge_by_language.py
+        # (knowledge_base/knowledge_chunks/ingestion_jobs) and
+        # 0003_partition_business_tables_by_language.py (doctors/bookings/
+        # chat_session_links, ADR-0024).
         suffix = settings.lang_suffix
         await session.execute(
             text(
-                f"TRUNCATE TABLE bookings, {knowledge_chunks_table(suffix)}, "
-                f"{ingestion_jobs_table(suffix)}, {knowledge_base_table(suffix)}, doctors "
+                f"TRUNCATE TABLE {bookings_table(suffix)}, {chat_session_links_table(suffix)}, "
+                f"{knowledge_chunks_table(suffix)}, {ingestion_jobs_table(suffix)}, "
+                f"{knowledge_base_table(suffix)}, {doctors_table(suffix)} "
                 "RESTART IDENTITY CASCADE"
             )
         )
         await session.execute(
-            text(f"ALTER SEQUENCE doctors_id_seq RESTART WITH {DOCTOR_ID_SEQUENCE_START}")
+            text(f"ALTER SEQUENCE {doctors_table(suffix)}_id_seq RESTART WITH {DOCTOR_ID_SEQUENCE_START}")
         )
         await session.commit()
 

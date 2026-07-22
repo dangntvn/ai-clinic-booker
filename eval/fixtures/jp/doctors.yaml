@@ -1,15 +1,16 @@
 # Fixture bác sĩ — dữ liệu HOÀN TOÀN GIẢ ĐỊNH/ẨN DANH (không phải người thật), dùng riêng cho eval.
-# Field khớp đúng tên cột model `data/doctor_repository.py::Doctor`.
+# Field khớp đúng tên cột model `dal/doctor_repository.py::Doctor`.
 # specialty PHẢI là 1 trong 14 giá trị enum SPECIALTIES — validate cứng ở modules/doctor/services.py::validate_specialty.
 # work_days: seed_eval_fixtures.py ghi đè bằng TEST_WORK_DAYS cố định cho mọi bác sĩ, không đọc từ field này.
 # fee: chưa có giá trị mẫu — để null.
 #
-# JP fixture: full_name giữ nguyên tiếng Việt gốc (tên riêng, không dịch/không phiên âm katakana).
+# JP fixture (ADR-0024, 2026-07-22): full_name là tên Nhật giả lập (không phải người thật,
+# không phiên âm/dịch từ tên Việt — server jp có roster bác sĩ riêng, khác người với vn/en).
 # title dịch sang tiếng Nhật y tế chuẩn; specialty GIỮ NGUYÊN tiếng Việt (enum SPECIALTIES hard-code,
 # không được dịch — xem TODO_TRANSLATE.md / task note).
 
 doctors:
-  - full_name: "Bùi Thị Ngọc Mai"
+  - full_name: "Sato Yuki"
     title: "医師"
     specialty: "Nội tổng quát"
     phone: null
@@ -21,7 +22,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Vũ Thị Thanh Hà"
+  - full_name: "Suzuki Haruka"
     title: "医師"
     specialty: "Nội tổng quát"
     phone: null
@@ -33,7 +34,7 @@ doctors:
     bio: "一般内科疾患の診察・治療において豊富な経験を有しています。"
     education: null
 
-  - full_name: "Đặng Quốc Bảo"
+  - full_name: "Takahashi Sota"
     title: "専門医（レベルI）"
     specialty: "Nhi"
     phone: null
@@ -45,7 +46,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Phan Thị Minh Châu"
+  - full_name: "Tanaka Nanami"
     title: "専門医（レベルI）"
     specialty: "Sản – Phụ khoa"
     phone: null
@@ -57,7 +58,7 @@ doctors:
     bio: "幅広い年齢層の女性を対象に、産婦人科の診察・相談の経験を有しています。"
     education: null
 
-  - full_name: "Nguyễn Đình Khoa"
+  - full_name: "Watanabe Ren"
     title: "医学修士・専門医"
     specialty: "Thần kinh"
     phone: null
@@ -69,7 +70,7 @@ doctors:
     bio: "神経系疾患に関する診察・相談を専門としています。"
     education: null
 
-  - full_name: "Trần Thị Bích Vân"
+  - full_name: "Ito Sakura"
     title: "医師"
     specialty: "Da liễu"
     phone: null
@@ -81,7 +82,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Nguyễn Văn Thắng"
+  - full_name: "Yamamoto Yuto"
     title: "専門医（レベルI）"
     specialty: "Tai Mũi Họng"
     phone: null
@@ -93,7 +94,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Lê Thị Thu Trang"
+  - full_name: "Nakamura Misaki"
     title: "専門医（レベルI）"
     specialty: "Mắt"
     phone: null
@@ -105,7 +106,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Nguyễn Thị Diễm My"
+  - full_name: "Kobayashi Kaito"
     title: "医師"
     specialty: "Răng Hàm Mặt"
     phone: null
@@ -117,7 +118,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Hoàng Anh Dũng"
+  - full_name: "Kato Ayaka"
     title: "医学修士・医師"
     specialty: "Cơ xương khớp"
     phone: null
@@ -129,7 +130,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Đinh Thị Phương Thảo"
+  - full_name: "Yoshida Rina"
     title: "医学修士・医師"
     specialty: "Cơ xương khớp"
     phone: null
@@ -141,7 +142,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Vũ Đình Long"
+  - full_name: "Yamada Sho"
     title: "専門医（レベルII）"
     specialty: "Tim mạch"
     phone: null
@@ -153,7 +154,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Nguyễn Thị Hoài Thu"
+  - full_name: "Sasaki Emi"
     title: "医学修士・医師"
     specialty: "Tim mạch"
     phone: null
@@ -165,7 +166,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Trịnh Quang Huy"
+  - full_name: "Yamaguchi Daiki"
     title: "専門医（レベルI）"
     specialty: "Tiêu hóa"
     phone: null
@@ -177,7 +178,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Lê Thị Ánh Tuyết"
+  - full_name: "Matsumoto Hana"
     title: "医師"
     specialty: "Tiêu hóa"
     phone: null
@@ -189,7 +190,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Bùi Xuân Trường"
+  - full_name: "Inoue Kenta"
     title: "専門医（レベルI）"
     specialty: "Hô hấp"
     phone: null
@@ -201,7 +202,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Cao Thị Yến Nhi"
+  - full_name: "Kimura Kaori"
     title: "医学修士・医師"
     specialty: "Hô hấp"
     phone: null
@@ -213,7 +214,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Phạm Sỹ Đức"
+  - full_name: "Hayashi Takumi"
     title: "専門医（レベルII）"
     specialty: "Nội tiết"
     phone: null
@@ -225,7 +226,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Mai Thị Lan Anh"
+  - full_name: "Shimizu Miyu"
     title: "医師"
     specialty: "Nội tiết"
     phone: null
@@ -237,7 +238,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Dương Minh Tuấn"
+  - full_name: "Yamazaki Hiroshi"
     title: "専門医（レベルI）"
     specialty: "Tiết niệu – Nam khoa"
     phone: null
@@ -249,7 +250,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Phan Văn Hải"
+  - full_name: "Mori Aoi"
     title: "医学修士・医師"
     specialty: "Tiết niệu – Nam khoa"
     phone: null
@@ -261,7 +262,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Ngô Thị Bích Ngọc"
+  - full_name: "Abe Kenji"
     title: "専門医（レベルI）"
     specialty: "Nhi"
     phone: null
@@ -273,7 +274,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Lê Thị Hồng Nhung"
+  - full_name: "Ikeda Ai"
     title: "専門医（レベルI）"
     specialty: "Sản – Phụ khoa"
     phone: null
@@ -285,7 +286,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Hoàng Văn Đạt"
+  - full_name: "Hashimoto Tomoya"
     title: "医学修士・医師"
     specialty: "Thần kinh"
     phone: null
@@ -297,7 +298,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Vũ Thị Kim Oanh"
+  - full_name: "Yamashita Yui"
     title: "医師"
     specialty: "Da liễu"
     phone: null
@@ -309,7 +310,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Đỗ Xuân Trường"
+  - full_name: "Ishikawa Riku"
     title: "専門医（レベルI）"
     specialty: "Tai Mũi Họng"
     phone: null
@@ -321,7 +322,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Phạm Khánh Linh"
+  - full_name: "Nakajima Chiharu"
     title: "医師"
     specialty: "Mắt"
     phone: null
@@ -333,7 +334,7 @@ doctors:
     bio: null
     education: null
 
-  - full_name: "Trần Quốc Việt"
+  - full_name: "Maeda Ryo"
     title: "専門医（レベルI）"
     specialty: "Răng Hàm Mặt"
     phone: null
