@@ -62,8 +62,8 @@ def _clear_leaked_env_vars(monkeypatch):
 def test_settings_defaults():
     settings = Settings(_env_file=None)
 
-    assert settings.gemini_llm_model == "gemini-2.0-flash"
-    assert settings.gemini_embedding_model == "text-embedding-004"
+    assert settings.gemini_llm_model == "gemini-2.5-flash"
+    assert settings.gemini_embedding_model == "gemini-embedding-001"
     assert settings.database_url.startswith("postgresql+asyncpg://")
     assert settings.qdrant_url.startswith("http://")
 
@@ -83,7 +83,7 @@ AGENT_PREFIXES = ["orchestrator", "booking", "symptom", "faq", "emergency"]
 def test_per_agent_llm_defaults_match_global_defaults(prefix):
     settings = Settings(_env_file=None)
 
-    assert getattr(settings, f"{prefix}_llm_model") == "gemini-2.0-flash"
+    assert getattr(settings, f"{prefix}_llm_model") == "gemini-2.5-flash"
     assert getattr(settings, f"{prefix}_llm_temperature") == 0.0
     assert getattr(settings, f"{prefix}_llm_max_tokens") == 2048
 
@@ -102,7 +102,7 @@ def test_per_agent_llm_fields_are_independently_env_overridable(monkeypatch, pre
 
     other_prefixes = [p for p in AGENT_PREFIXES if p != prefix]
     for other in other_prefixes:
-        assert getattr(settings, f"{other}_llm_model") == "gemini-2.0-flash"
+        assert getattr(settings, f"{other}_llm_model") == "gemini-2.5-flash"
 
 
 def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
@@ -111,7 +111,7 @@ def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
 
     settings = Settings(_env_file=None)
 
-    assert settings.gemini_embedding_model == "text-embedding-004"
+    assert settings.gemini_embedding_model == "gemini-embedding-001"
 
 
 # Managed-service settings (demo/deploy-render branch — Neon/Supabase Postgres,
@@ -169,10 +169,10 @@ def test_qdrant_api_key_defaults_to_empty_and_is_env_overridable(monkeypatch):
 # Settings._validate_lang_suffix.
 
 
-def test_lang_suffix_defaults_to_vn():
+def test_lang_suffix_defaults_to_en():
     settings = Settings(_env_file=None)
 
-    assert settings.lang_suffix == "vn"
+    assert settings.lang_suffix == "en"
 
 
 @pytest.mark.parametrize("suffix", ["vn", "jp", "en"])

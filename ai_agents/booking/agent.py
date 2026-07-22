@@ -30,7 +30,7 @@ from google.genai import types
 from common.config import settings
 from common.resilience import build_adk_model
 
-from .prompt import BOOKING_INSTRUCTION_TEMPLATE
+from .prompt import BOOKING_INSTRUCTION_TEMPLATE, REPLY_LANGUAGE_NAME
 from .tools import (
     cancel_booking,
     check_available_slots,
@@ -41,10 +41,22 @@ from .tools import (
     update_booking,
 )
 
-# Vietnamese weekday labels keyed by datetime.weekday() (Mon=0). Hard-coded
-# rather than strftime("%A") so the injected anchor never depends on the host
-# locale (a Windows/Linux runner with a non-vi locale would emit English names).
-_VN_WEEKDAYS = ("Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật")
+# Weekday labels keyed by datetime.weekday() (Mon=0), one tuple per LANG_SUFFIX so the
+# injected reference date always matches this process's fixed reply language (CEO decision
+# 2026-07-22, common.config.REPLY_LANGUAGE_NAME_BY_LANG_SUFFIX / prompt.py's REPLY_LANGUAGE_NAME).
+# Previously this was a single Vietnamese-only tuple — on the jp/en servers that leaked a
+# literal Vietnamese weekday label (e.g. "Thứ Tư") into the NGÀY THAM CHIẾU line of an
+# otherwise jp/en reply, exactly the kind of mixed-language leak this task's language-fix rule
+# is meant to prevent, just resurfacing in the date anchor instead of the model's own wording
+# (code-reviewer finding, review 1/3). Hard-coded rather than strftime("%A")/babel so the
+# injected anchor never depends on the host locale (a Windows/Linux runner with a non-vi/ja/en
+# locale would emit yet another language) and so each tuple stays in lockstep with
+# REPLY_LANGUAGE_NAME_BY_LANG_SUFFIX's own 3 keys.
+_WEEKDAY_NAMES_BY_LANG_SUFFIX = {
+    "vn": ("Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"),
+    "jp": ("月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"),
+    "en": ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+}
 
 
 def _build_instruction(ctx: ReadonlyContext) -> str:
@@ -60,7 +72,12 @@ def _build_instruction(ctx: ReadonlyContext) -> str:
     today = datetime.now(UTC).date()
     return BOOKING_INSTRUCTION_TEMPLATE.format(
         today_iso=today.isoformat(),
-        today_weekday=_VN_WEEKDAYS[today.weekday()],
+        today_weekday=_WEEKDAY_NAMES_BY_LANG_SUFFIX[settings.lang_suffix][today.weekday()],
+        # Resolved once at prompt.py's import time (LANG_SUFFIX is fixed for this
+        # process's whole lifetime) — not recomputed per request, see that module's
+        # docstring (CEO decision 2026-07-22, supersedes BUG-039's per-message
+        # auto-detect instruction).
+        reply_language=REPLY_LANGUAGE_NAME,
     )
 
 

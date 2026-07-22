@@ -34,6 +34,39 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # on dal/ (avoiding a common -> dal backward dependency).
 SUPPORTED_LANG_SUFFIXES = {"vn", "jp", "en"}
 
+# Reply-language name per LANG_SUFFIX (CEO decision 2026-07-22 — supersedes BUG-039's
+# per-message auto-detect instruction, see ai_agents/*/prompt.py module docstrings): each of
+# the 3 per-language servers must ALWAYS reply in its own fixed language, regardless of what
+# language the customer's message happens to be written in — LANG_SUFFIX already pins each
+# server to exactly one audience for its whole process lifetime (ADR-0023, docker-compose.yml
+# env_file comment), so there is nothing left to "detect" per request. Names are in
+# Vietnamese (not English) to read naturally alongside every other Vietnamese-language rule
+# in these prompts. Public + keyed by the same SUPPORTED_LANG_SUFFIXES set so prompt.py
+# modules building this instruction at import time (not per-request, since LANG_SUFFIX never
+# changes mid-process) share one definition instead of 5 copies.
+REPLY_LANGUAGE_NAME_BY_LANG_SUFFIX = {
+    "vn": "tiếng Việt",
+    "jp": "tiếng Nhật",
+    "en": "tiếng Anh",
+}
+
+
+def reply_language_name(lang_suffix: str) -> str:
+    """Vietnamese name of the language a LANG_SUFFIX-pinned server must always reply in.
+
+    Called once at each ai_agents/*/prompt.py module's import time to bake the fixed reply
+    language directly into that process's system prompt — not per-request, because
+    LANG_SUFFIX is fixed for a server's whole lifetime (see REPLY_LANGUAGE_NAME_BY_LANG_SUFFIX
+    above for why "detect per message" was removed).
+    """
+    try:
+        return REPLY_LANGUAGE_NAME_BY_LANG_SUFFIX[lang_suffix]
+    except KeyError:
+        raise ValueError(
+            f"lang_suffix={lang_suffix!r} is not one of "
+            f"{sorted(REPLY_LANGUAGE_NAME_BY_LANG_SUFFIX)}"
+        ) from None
+
 
 class Settings(BaseSettings):
     """Application-wide configuration loaded from environment variables / .env.
@@ -75,8 +108,8 @@ class Settings(BaseSettings):
     # own model (used only by common/gemini_client.embed_batch) and is
     # intentionally independent of every per-agent chat field below it.
     gemini_api_key: str = ""
-    gemini_llm_model: str = "gemini-2.0-flash"
-    gemini_embedding_model: str = "text-embedding-004"
+    gemini_llm_model: str = "gemini-2.5-flash"
+    gemini_embedding_model: str = "gemini-embedding-001"
     llm_temperature: float = 0.0
     # 2048 was too small for callers needing long structured output (e.g. eval/deepeval_gemini.py's
     # LLM-judge, which returns a JSON object with extracted facts/reasoning) — a `gemini-2.5-flash`
@@ -90,23 +123,23 @@ class Settings(BaseSettings):
 
     # Per-agent LLM config (TASK-017) — each agent's model/temperature/
     # max_tokens is tunable independently via its own env var.
-    orchestrator_llm_model: str = "gemini-2.0-flash"
+    orchestrator_llm_model: str = "gemini-2.5-flash"
     orchestrator_llm_temperature: float = 0.0
     orchestrator_llm_max_tokens: int = 2048
 
-    booking_llm_model: str = "gemini-2.0-flash"
+    booking_llm_model: str = "gemini-2.5-flash"
     booking_llm_temperature: float = 0.0
     booking_llm_max_tokens: int = 2048
 
-    symptom_llm_model: str = "gemini-2.0-flash"
+    symptom_llm_model: str = "gemini-2.5-flash"
     symptom_llm_temperature: float = 0.0
     symptom_llm_max_tokens: int = 2048
 
-    faq_llm_model: str = "gemini-2.0-flash"
+    faq_llm_model: str = "gemini-2.5-flash"
     faq_llm_temperature: float = 0.0
     faq_llm_max_tokens: int = 2048
 
-    emergency_llm_model: str = "gemini-2.0-flash"
+    emergency_llm_model: str = "gemini-2.5-flash"
     emergency_llm_temperature: float = 0.0
     emergency_llm_max_tokens: int = 2048
 
@@ -153,7 +186,7 @@ class Settings(BaseSettings):
     # as scripts/seed_eval_fixtures.py::_seed_lang()) — a typo would otherwise
     # point a server at the wrong (or a nonexistent) set of tables with no error
     # at startup, only a confusing failure later at first query.
-    lang_suffix: str = "vn"
+    lang_suffix: str = "en"
     similarity_threshold: float = 0.7  # BUG-002: 0.5 let every irrelevant-topic query "ground"
     # FAQ-only recall knob (Nhóm B task 5 — FAQ improvements, 2026-07-10). FAQ answers non-medical clinic content (policy/clinic_info)
     # where a marginal miss only costs a false "not found", not the safety risk that a loose

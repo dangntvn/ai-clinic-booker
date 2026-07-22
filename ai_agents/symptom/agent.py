@@ -26,7 +26,7 @@ from google.genai import types
 from common.config import settings
 from common.resilience import build_adk_model
 
-from .prompt import SYMPTOM_INSTRUCTION_TEMPLATE, TRIAGE_TABLE
+from .prompt import REPLY_LANGUAGE_NAME, SYMPTOM_INSTRUCTION_TEMPLATE, TRIAGE_TABLE
 from .tools import search_knowledge_base
 
 
@@ -62,6 +62,11 @@ async def _build_instruction(ctx: ReadonlyContext) -> str:
     return SYMPTOM_INSTRUCTION_TEMPLATE.format(
         triage_table=TRIAGE_TABLE,
         doctors_context=_render_doctors_context(doctors),
+        # Resolved once at prompt.py's import time (LANG_SUFFIX is fixed for this
+        # process's whole lifetime) — not recomputed per request, see that module's
+        # docstring (CEO decision 2026-07-22, supersedes BUG-039's per-message
+        # auto-detect instruction).
+        reply_language=REPLY_LANGUAGE_NAME,
     )
 
 
