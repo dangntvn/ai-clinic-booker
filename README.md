@@ -23,6 +23,10 @@ a production deployment would add.
 **Stack:** FastAPI · Google ADK (multi-agent) · Gemini · Qdrant · PostgreSQL · APScheduler ·
 Alembic · structlog · DeepEval
 
+**🔗 Live demo:** [ai-clinic-booker-demo.vercel.app](https://ai-clinic-booker-demo.vercel.app/)
+
+![Demo](docs/assets/demo-en-1.png)
+
 ---
 
 ## What this project demonstrates
