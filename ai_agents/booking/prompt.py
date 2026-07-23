@@ -57,6 +57,12 @@
 #              wrong-code guess is never read to the patient as "this clinic
 #              has no doctor in that specialty" (the false-negative ADR-0027
 #              exists to close).
+#              BUG-040 (2026-07-23): rule 7's absolute "no action outside
+#              booking scope" was blocking legitimate out-of-scope questions
+#              (e.g. clinic address) from ever reaching transfer_to_agent —
+#              added a carve-out that transfers back to orchestrator_agent
+#              for genuine requests, while keeping the injection guard itself
+#              unchanged.
 ###############################################################################
 
 from common.config import reply_language_name, settings

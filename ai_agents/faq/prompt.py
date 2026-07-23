@@ -34,6 +34,12 @@
 #              the fixed language is baked in here at import time via
 #              common.config.reply_language_name(settings.lang_suffix)
 #              instead of per-request).
+#              BUG-040 (2026-07-23): rule 4's absolute "no action outside FAQ
+#              scope" was blocking legitimate out-of-scope requests (e.g. the
+#              patient deciding to book after an FAQ answer) from reaching
+#              transfer_to_agent — added a carve-out (now rule 5) that
+#              transfers back to orchestrator_agent for genuine requests,
+#              while keeping the injection guard itself unchanged.
 ###############################################################################
 
 from common.config import reply_language_name, settings

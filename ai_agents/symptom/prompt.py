@@ -43,6 +43,16 @@
 #              symptom/agent.py::_build_instruction from dal/specialties.py's
 #              registry at settings.lang_suffix — the LLM copies the label
 #              from that table, it never translates one itself.
+#              BUG-040 (2026-07-23): rule 3's absolute "no action outside
+#              triage scope" was blocking legitimate out-of-scope requests
+#              (e.g. the patient agreeing to book after a specialty/doctor
+#              recommendation) from reaching transfer_to_agent — added a
+#              carve-out (now rule 4) that transfers back to
+#              orchestrator_agent for genuine requests, while keeping the
+#              injection guard itself unchanged. Rule 5's booking invitation
+#              now also calls out that accepting it must trigger the same
+#              transfer_to_agent call in-turn (carrying the specialty/doctor
+#              already settled on), instead of just replying with words.
 ###############################################################################
 
 from common.config import reply_language_name, settings
