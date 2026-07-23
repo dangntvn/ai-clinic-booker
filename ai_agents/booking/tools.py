@@ -22,14 +22,38 @@
 #              session since ADK tool functions are called independently by
 #              the LLM, not injected with a shared request session the way
 #              FastAPI Depends() works.
+#              ADR-0026 (2026-07-22): `specialty` (the DB column) is now a
+#              snake_case internal code — _doctor_to_dict adds
+#              `specialty_display`, the display-name lookup at
+#              settings.lang_suffix, so the Booking Agent has a ready-to-read
+#              label and never has to translate the code itself.
+#              ADR-0027 (2026-07-22): list_doctors_by_specialty's `specialty`
+#              parameter is now recognized via dal.specialties.resolve_specialty
+#              (tolerates a display name or wrong casing, deterministic — never
+#              fuzzy) and its return shape is a status-dict, mirroring
+#              check_available_slots's {"status": ...} pattern, so a false
+#              negative ("phòng khám không có bác sĩ khoa X") caused by the
+#              LLM guessing a wrong code can never be confused with a real
+#              empty roster for a valid specialty. The `specialty` parameter
+#              is typed Literal[*SPECIALTIES] | None so the ADK function
+#              declaration itself constrains Gemini to one of the 14 codes
+#              (verified: google-adk 2.3.0 emits a JSON-schema `enum` for a
+#              Literal[...] | None parameter, see
+#              .claude/memory/2026-07-22-adr-0027-schema-enum-verification.md
+#              at the workspace root) — resolve_specialty is kept as a second,
+#              harmless layer for whichever caller/model version doesn't
+#              respect that schema.
 ###############################################################################
 
 from datetime import datetime, timedelta
+from typing import Literal
 
+from common.config import settings
 from common.database import AsyncSessionFactory
 from core.exceptions import InvalidSlotError, NotFoundError, SlotTakenError
 from dal.booking_repository import BookingRepository
 from dal.doctor_repository import Doctor, DoctorRepository
+from dal.specialties import SPECIALTIES, resolve_specialty, specialty_display_name
 
 from ..core.domain.doctor_lookup import name_matches
 
@@ -42,12 +66,20 @@ _MAX_SCAN_DAYS = 7
 def _doctor_to_dict(d: Doctor) -> dict:
     """Shape a Doctor row into the dict find_doctor_by_name/list_doctors_by_specialty
     return — doctor_id front and center since that's the only field the agent
-    is allowed to pass into check_available_slots/create_booking."""
+    is allowed to pass into check_available_slots/create_booking.
+
+    `specialty` is the snake_case internal code (a tool-argument value only —
+    e.g. for a follow-up list_doctors_by_specialty call); `specialty_display`
+    is the display-name lookup at settings.lang_suffix (ADR-0026) — the
+    prompt tells the agent to read this field, never `specialty`, when
+    telling the patient which specialty a doctor is in.
+    """
     return {
         "doctor_id": d.id,
         "full_name": d.full_name,
         "title": d.title,
         "specialty": d.specialty,
+        "specialty_display": specialty_display_name(d.specialty, settings.lang_suffix),
         "work_days": d.work_days,
     }
 
@@ -68,9 +100,13 @@ async def find_doctor_by_name(name: str) -> list[dict]:
         One dict per matching active doctor, each with the doctor_id needed for
         check_available_slots/create_booking plus enough detail to disambiguate:
         {"doctor_id": int, "full_name": str, "title": str | None,
-         "specialty": str, "work_days": list[str]}. Empty list if no active
-        doctor matches — in that case tell the patient honestly that no doctor
-        by that name was found; do NOT substitute a different doctor.
+         "specialty": str, "specialty_display": str, "work_days": list[str]}.
+        "specialty" is the internal snake_case code (tool-argument use only);
+        "specialty_display" is the display name at this server's language
+        (ADR-0026) — read THIS field when telling the patient the specialty,
+        never "specialty". Empty list if no active doctor matches — in that
+        case tell the patient honestly that no doctor by that name was found;
+        do NOT substitute a different doctor.
     """
     async with AsyncSessionFactory() as session:
         repo = DoctorRepository(session)
@@ -78,32 +114,59 @@ async def find_doctor_by_name(name: str) -> list[dict]:
     return [_doctor_to_dict(d) for d in doctors if name_matches(name, d.full_name)]
 
 
-async def list_doctors_by_specialty(specialty: str | None = None) -> list[dict]:
+async def list_doctors_by_specialty(specialty: Literal[*SPECIALTIES] | None = None) -> dict:
     """List active doctors, optionally by specialty, to auto-pick one (BUG-029).
 
     Use this when the patient has NOT named a specific doctor. Pass the
     specialty already known (from a Symptom Agent handoff, or one the patient
-    just stated) to get candidates for that specialty; pass specialty=None (or
-    the clinic's default specialty, e.g. "Nội tổng quát") when no specialty is
+    just stated — look it up in {specialty_code_table} first, ADR-0027) to
+    get candidates for that specialty; pass specialty=None (or the clinic's
+    default specialty code, "general_internal_medicine") when no specialty is
     known at all, so the flow can auto-select a reasonable default doctor
     instead of blocking the booking on an extra question.
 
     Args:
-        specialty: One of the clinic's specialty names (BIZ-001 §6), or None
-            to list every active doctor regardless of specialty.
+        specialty: One of the clinic's specialty CODES (snake_case, e.g.
+            "cardiology" — see dal/specialties.py::SPECIALTIES, ADR-0026), or
+            None to list every active doctor regardless of specialty. A
+            display name or a wrong-case variant is still recognized
+            (dal.specialties.resolve_specialty, ADR-0027) — but always prefer
+            the code from {specialty_code_table}.
 
     Returns:
-        One dict per matching active doctor, same shape as
-        find_doctor_by_name: {"doctor_id": int, "full_name": str,
-        "title": str | None, "specialty": str, "work_days": list[str]}. Empty
-        list if no active doctor matches — do NOT fabricate a doctor_id in
-        that case; tell the patient honestly and offer a different specialty
-        instead of silently substituting one.
+        {"status": "ok", "doctors": [...]} when specialty is None or resolves
+        to one of the 14 valid codes. Each item in "doctors" has the same
+        shape as find_doctor_by_name's results: {"doctor_id": int,
+        "full_name": str, "title": str | None, "specialty": str,
+        "specialty_display": str, "work_days": list[str]}. "specialty" is the
+        internal snake_case code (tool-argument use only); "specialty_display"
+        is the display name at this server's language (ADR-0026) — read THIS
+        field when telling the patient the specialty, never "specialty".
+        "doctors" CAN be empty — that is a real "no active doctor in this
+        specialty" (tell the patient honestly, offer a different specialty;
+        do NOT fabricate a doctor_id).
+
+        {"status": "unknown_specialty"} when `specialty` does not resolve to
+        any of the 14 codes (ADR-0027) — this is DIFFERENT from an empty
+        "doctors" list: it means the code/name passed wasn't recognized at
+        all, most likely because it was guessed instead of looked up. Do NOT
+        tell the patient there's no doctor in that specialty; look the code
+        up again in {specialty_code_table} and call this tool once more.
     """
+    if specialty is None:
+        async with AsyncSessionFactory() as session:
+            repo = DoctorRepository(session)
+            doctors = await repo.list_active()
+        return {"status": "ok", "doctors": [_doctor_to_dict(d) for d in doctors]}
+
+    code = resolve_specialty(specialty)
+    if code is None:
+        return {"status": "unknown_specialty"}
+
     async with AsyncSessionFactory() as session:
         repo = DoctorRepository(session)
-        doctors = await repo.list_by_specialty(specialty) if specialty else await repo.list_active()
-    return [_doctor_to_dict(d) for d in doctors]
+        doctors = await repo.list_by_specialty(code)
+    return {"status": "ok", "doctors": [_doctor_to_dict(d) for d in doctors]}
 
 
 async def check_available_slots(doctor_id: int, date_iso: str) -> dict:

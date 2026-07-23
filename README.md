@@ -262,6 +262,21 @@ docker compose up -d          # Postgres + Qdrant + app; app runs migrations on 
 python scripts/smoke_test.py  # one message per intent against the running stack
 ```
 
+**Per-language 3-server local test (ADR-0023, `app-vn`/`app-jp`/`app-en`)** — these are gated
+behind the `multi-lang` compose profile, so they never start from a bare `docker compose up`.
+On a fresh/empty DB, the first run **must** migrate sequentially before starting the servers —
+running them concurrently on an empty DB races the idempotent-guard migrations:
+
+```bash
+# First time only, on an empty DB — one at a time, wait for each to exit:
+docker compose run --rm --no-deps app-vn alembic upgrade head
+docker compose run --rm --no-deps app-jp alembic upgrade head
+docker compose run --rm --no-deps app-en alembic upgrade head
+
+# Only after all three above have finished:
+docker compose --profile multi-lang up -d app-vn app-jp app-en
+```
+
 ---
 
 ## API Reference
@@ -307,8 +322,8 @@ defaults in `.env.example`; the ones worth knowing about:
 | Variable | Default | Description |
 |---|---|---|
 | `GEMINI_API_KEY` | *(required)* | Gemini API key |
-| `{ORCHESTRATOR,BOOKING,SYMPTOM,FAQ,EMERGENCY}_LLM_MODEL` | `gemini-2.0-flash` | Each agent's model is independently configurable, not shared/hardcoded |
-| `GEMINI_EMBEDDING_MODEL` | `text-embedding-004` | Embedding model for RAG |
+| `{ORCHESTRATOR,BOOKING,SYMPTOM,FAQ,EMERGENCY}_LLM_MODEL` | `gemini-2.5-flash` | Each agent's model is independently configurable, not shared/hardcoded |
+| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Embedding model for RAG |
 | `SIMILARITY_THRESHOLD` | `0.7` | RAG grounding cutoff — below this, agents abstain instead of answering |
 | `TOP_K` | `6` | Chunks retrieved per query |
 | `POSTGRES_*` | — | Composed into `database_url` |

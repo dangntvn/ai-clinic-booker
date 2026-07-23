@@ -19,21 +19,34 @@
 from sqlalchemy import ForeignKey, Integer, String, select, text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from common.config import settings
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
+from dal.lang_tables import ingestion_jobs_table, knowledge_base_table
+
+# Suffixed per-language table name (multi-server deploy) — reused below by both
+# the ORM model and the raw-SQL claim() query, so both stay in sync with a
+# single source of truth instead of duplicating the f-string.
+_TABLE_NAME = ingestion_jobs_table(settings.lang_suffix)
 
 
 class IngestionJob(BaseModel):
-    """ORM model for the ``ingestion_jobs`` table (ADR-0021).
+    """ORM model for the ``ingestion_jobs_{lang_suffix}`` table (ADR-0021).
 
     status progresses: pending_chunk -> chunking -> pending_embed -> embedding
     -> done | failed.
+
+    Table name (and the FK target below) is suffixed by ``settings.lang_suffix``
+    — see dal/knowledge_repository.py::KnowledgeBase docstring for the
+    multi-server rationale.
     """
 
-    __tablename__ = "ingestion_jobs"
+    __tablename__ = _TABLE_NAME
 
     knowledge_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("knowledge_base.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey(f"{knowledge_base_table(settings.lang_suffix)}.id", ondelete="CASCADE"),
+        nullable=False,
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending_chunk")
     error_msg: Mapped[str | None] = mapped_column(String(500))
@@ -71,8 +84,14 @@ class IngestionJobRepository(BaseRepository[IngestionJob]):
             True if this call won the claim, False if another worker already did.
         """
         result = await self.session.execute(
+            # Table name is an f-string, not a bind param — SQL doesn't allow
+            # parameterising identifiers (table/column names), only values.
+            # Safe here since _TABLE_NAME is built from settings.lang_suffix,
+            # which field_validator._validate_lang_suffix (common/config.py)
+            # already restricts to the fixed {"vn", "jp", "en"} set, never
+            # from unsanitised user input.
             text(
-                "UPDATE ingestion_jobs SET status = :to_status, updated_at = now() "
+                f"UPDATE {_TABLE_NAME} SET status = :to_status, updated_at = now() "
                 "WHERE id = :id AND status = :from_status RETURNING id"
             ),
             {"id": job_id, "from_status": from_status, "to_status": to_status},

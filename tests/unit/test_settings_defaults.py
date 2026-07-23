@@ -24,6 +24,7 @@
 ###############################################################################
 
 import pytest
+from pydantic import ValidationError
 
 from common.config import Settings
 
@@ -45,6 +46,10 @@ _ENV_VARS_UNDER_TEST = [
     "EMERGENCY_LLM_MODEL",
     "EMERGENCY_LLM_TEMPERATURE",
     "EMERGENCY_LLM_MAX_TOKENS",
+    "POSTGRES_SSL",
+    "QDRANT_HTTPS",
+    "QDRANT_API_KEY",
+    "LANG_SUFFIX",
 ]
 
 
@@ -57,8 +62,8 @@ def _clear_leaked_env_vars(monkeypatch):
 def test_settings_defaults():
     settings = Settings(_env_file=None)
 
-    assert settings.gemini_llm_model == "gemini-2.0-flash"
-    assert settings.gemini_embedding_model == "text-embedding-004"
+    assert settings.gemini_llm_model == "gemini-2.5-flash"
+    assert settings.gemini_embedding_model == "gemini-embedding-001"
     assert settings.database_url.startswith("postgresql+asyncpg://")
     assert settings.qdrant_url.startswith("http://")
 
@@ -78,7 +83,7 @@ AGENT_PREFIXES = ["orchestrator", "booking", "symptom", "faq", "emergency"]
 def test_per_agent_llm_defaults_match_global_defaults(prefix):
     settings = Settings(_env_file=None)
 
-    assert getattr(settings, f"{prefix}_llm_model") == "gemini-2.0-flash"
+    assert getattr(settings, f"{prefix}_llm_model") == "gemini-2.5-flash"
     assert getattr(settings, f"{prefix}_llm_temperature") == 0.0
     assert getattr(settings, f"{prefix}_llm_max_tokens") == 2048
 
@@ -97,7 +102,7 @@ def test_per_agent_llm_fields_are_independently_env_overridable(monkeypatch, pre
 
     other_prefixes = [p for p in AGENT_PREFIXES if p != prefix]
     for other in other_prefixes:
-        assert getattr(settings, f"{other}_llm_model") == "gemini-2.0-flash"
+        assert getattr(settings, f"{other}_llm_model") == "gemini-2.5-flash"
 
 
 def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
@@ -106,4 +111,82 @@ def test_embedding_model_independent_of_per_agent_fields(monkeypatch):
 
     settings = Settings(_env_file=None)
 
-    assert settings.gemini_embedding_model == "text-embedding-004"
+    assert settings.gemini_embedding_model == "gemini-embedding-001"
+
+
+# Managed-service settings (demo/deploy-render branch — Neon/Supabase Postgres,
+# Qdrant Cloud) default off/empty so local docker-compose is unaffected; see
+# common/config.py's postgres_ssl/qdrant_https/qdrant_api_key docstrings.
+
+
+def test_postgres_ssl_defaults_to_false_and_no_connect_args():
+    settings = Settings(_env_file=None)
+
+    assert settings.postgres_ssl is False
+    assert settings.postgres_async_connect_args == {}
+    assert settings.postgres_sync_connect_args == {}
+
+
+def test_postgres_ssl_true_adds_connect_args(monkeypatch):
+    monkeypatch.setenv("POSTGRES_SSL", "true")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.postgres_ssl is True
+    assert settings.postgres_async_connect_args == {"ssl": "require"}
+    assert settings.postgres_sync_connect_args == {"sslmode": "require"}
+
+
+def test_qdrant_https_defaults_to_false_and_http_scheme():
+    settings = Settings(_env_file=None)
+
+    assert settings.qdrant_https is False
+    assert settings.qdrant_url.startswith("http://")
+
+
+def test_qdrant_https_true_switches_to_https_scheme(monkeypatch):
+    monkeypatch.setenv("QDRANT_HTTPS", "true")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.qdrant_https is True
+    assert settings.qdrant_url.startswith("https://")
+
+
+def test_qdrant_api_key_defaults_to_empty_and_is_env_overridable(monkeypatch):
+    settings = Settings(_env_file=None)
+    assert settings.qdrant_api_key == ""
+
+    monkeypatch.setenv("QDRANT_API_KEY", "test-key")
+    settings = Settings(_env_file=None)
+    assert settings.qdrant_api_key == "test-key"
+
+
+# lang_suffix (multi-server deploy, 2026-07-22) — each of the 3 independently
+# deployed backend servers (vn/jp/en) is fixed to exactly one language for its
+# whole process lifetime; this field is what dal/*_repository.py's ORM models
+# suffix their table names with. See common/config.py's field docstring and
+# Settings._validate_lang_suffix.
+
+
+def test_lang_suffix_defaults_to_en():
+    settings = Settings(_env_file=None)
+
+    assert settings.lang_suffix == "en"
+
+
+@pytest.mark.parametrize("suffix", ["vn", "jp", "en"])
+def test_lang_suffix_accepts_every_supported_value(monkeypatch, suffix):
+    monkeypatch.setenv("LANG_SUFFIX", suffix)
+
+    settings = Settings(_env_file=None)
+
+    assert settings.lang_suffix == suffix
+
+
+@pytest.mark.parametrize("bad_value", ["ja", "fr", "VN", "", "vn_jp"])
+def test_lang_suffix_raises_on_invalid_value(monkeypatch, bad_value):
+    monkeypatch.setenv("LANG_SUFFIX", bad_value)
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)

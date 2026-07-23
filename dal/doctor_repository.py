@@ -14,48 +14,50 @@
 #
 # Description: Doctor repository — ORM model + CRUD for the doctors table,
 #              which holds both operational fields (specialty, schedule) and
-#              profile fields (bio, education) in one row (ADR-0020).
+#              profile fields (bio, education) in one row (ADR-0020). Table
+#              name is suffixed by language (ADR-0024, 2026-07-22) — each of
+#              the 3 servers (vn/jp/en) owns its own roster with localized
+#              full_name data, not a shared clinic-wide table.
 ###############################################################################
 
 from sqlalchemy import ARRAY, JSON, Boolean, Numeric, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
+from common.config import settings
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
+from dal.lang_tables import doctors_table
 
-# BIZ-001 §6 — the clinic's 14 specialties, exact Vietnamese names (this is
-# the single source of truth other tasks validate `specialty` against).
-SPECIALTIES: tuple[str, ...] = (
-    "Nội tổng quát",
-    "Nhi",
-    "Sản – Phụ khoa",
-    "Tim mạch",
-    "Tiêu hóa",
-    "Hô hấp",
-    "Nội tiết",
-    "Thần kinh",
-    "Cơ xương khớp",
-    "Da liễu",
-    "Tai Mũi Họng",
-    "Mắt",
-    "Răng Hàm Mặt",
-    "Tiết niệu – Nam khoa",
-)
+# BIZ-001 §6 — the clinic's 14 specialties. Re-exported from dal/specialties.py
+# (ADR-0026, 2026-07-22) — that module is now the single source of truth for
+# the snake_case codes plus their vn/jp/en display names; this import keeps
+# existing `from dal.doctor_repository import SPECIALTIES` call sites working.
+from dal.specialties import SPECIALTIES  # noqa: F401
 
 
 class Doctor(BaseModel):
-    """ORM model for the ``doctors`` table (ARCH-001 §6.1, ADR-0020).
+    """ORM model for the ``doctors_{lang_suffix}`` table (ARCH-001 §6.1, ADR-0020).
 
     Operational fields (specialty, phone, work_days, room, shift, fee,
     is_active) and profile fields (bio, education, photo_url, extra) live in
     the same row — a deliberate merge documented in ADR-0020, not an
     oversight.
+
+    Table name is suffixed by ``settings.lang_suffix`` (multi-server deploy,
+    ADR-0024, 2026-07-22, see dal/lang_tables.py) so each of the 3
+    language-specific servers (vn/jp/en) owns its own doctor roster — the
+    roster is a *different set of people with localized names* per language,
+    not one clinic's roster viewed through 3 storefronts. ``settings`` is a
+    module-load-time singleton (common/config.py), so this is evaluated once
+    per process, matching that process's fixed language.
     """
 
-    __tablename__ = "doctors"
+    __tablename__ = doctors_table(settings.lang_suffix)
 
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     title: Mapped[str | None] = mapped_column(String(64))
+    # snake_case code (one of SPECIALTIES, dal/specialties.py) — NOT a display
+    # name; see specialty_display_name() for the vn/jp/en label (ADR-0026).
     specialty: Mapped[str] = mapped_column(String(64), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(32))
     work_days: Mapped[list[str]] = mapped_column(ARRAY(String(16)), nullable=False, default=list)

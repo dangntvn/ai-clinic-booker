@@ -22,11 +22,24 @@
 #              offline: the roster is simulated directly (the empty-specialty
 #              state can no longer be reproduced against the seeded DB after
 #              BUG-017 gave every specialty >= 2 doctors).
+#              ADR-0026 (2026-07-22): `_doctor()` fixtures now pass the
+#              snake_case specialty CODE (matching the real DB column), and
+#              assertions check for the rendered DISPLAY NAME at whatever
+#              settings.lang_suffix this test process is running under (not
+#              hardcoded "en" — LANG_SUFFIX is env-driven, ADR-0023/0024), not
+#              the raw code — that's the behavior _render_doctors_context now
+#              has (tra dal/specialties.py, never the code verbatim).
 ###############################################################################
 
 from types import SimpleNamespace
 
 from ai_agents.symptom.agent import _render_doctors_context
+from common.config import settings
+from dal.specialties import specialty_display_name
+
+
+def _display(code: str) -> str:
+    return specialty_display_name(code, settings.lang_suffix)
 
 
 def _doctor(doctor_id, full_name, specialty):
@@ -45,32 +58,33 @@ def test_empty_roster_renders_explicit_no_doctor_marker():
 
 
 def test_uncovered_specialty_produces_no_doctor_line():
-    """A roster with no Tim mạch doctor must not surface any doctor tied to
-    'Tim mạch' — the block only ever pairs a doctor with their OWN specialty,
-    so the LLM has nothing to fabricate a cardiologist from."""
+    """A roster with no cardiology doctor must not surface any doctor tied to
+    'cardiology' — the block only ever pairs a doctor with their OWN
+    specialty, so the LLM has nothing to fabricate a cardiologist from."""
     roster = [
-        _doctor(3, "Phạm Thị Lan Hương", "Nội tổng quát"),
-        _doctor(8, "Đào Thanh Thủy", "Da liễu"),
+        _doctor(3, "Phạm Thị Lan Hương", "general_internal_medicine"),
+        _doctor(8, "Đào Thanh Thủy", "dermatology"),
     ]
     rendered = _render_doctors_context(roster)
     lines = rendered.splitlines()
 
-    # Each doctor renders on exactly one line, paired with their OWN specialty.
+    # Each doctor renders on exactly one line, paired with their OWN specialty
+    # display name at this process's settings.lang_suffix.
     huong = next(ln for ln in lines if "Phạm Thị Lan Hương" in ln)
     thuy = next(ln for ln in lines if "Đào Thanh Thủy" in ln)
-    assert "Nội tổng quát" in huong
-    assert "Da liễu" in thuy
-    # The uncovered specialty appears nowhere in the block.
-    assert "Tim mạch" not in rendered
+    assert _display("general_internal_medicine") in huong
+    assert _display("dermatology") in thuy
+    # The uncovered specialty's display name appears nowhere in the block.
+    assert _display("cardiology") not in rendered
 
 
 def test_each_doctor_rendered_only_under_their_own_specialty():
-    """Sanity: no cross-attribution — a Da liễu doctor never renders under any
-    other specialty label."""
-    roster = [_doctor(8, "Đào Thanh Thủy", "Da liễu")]
+    """Sanity: no cross-attribution — a dermatology doctor never renders under
+    any other specialty's display name."""
+    roster = [_doctor(8, "Đào Thanh Thủy", "dermatology")]
     rendered = _render_doctors_context(roster)
 
     assert rendered.count("Đào Thanh Thủy") == 1
-    assert "Da liễu" in rendered
-    for other in ("Tim mạch", "Tiêu hóa", "Hô hấp", "Nội tiết"):
-        assert other not in rendered
+    assert _display("dermatology") in rendered
+    for other_code in ("cardiology", "gastroenterology", "pulmonology", "endocrinology"):
+        assert _display(other_code) not in rendered

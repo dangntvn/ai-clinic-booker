@@ -23,6 +23,7 @@
 ###############################################################################
 
 import asyncio
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -31,11 +32,53 @@ import httpx
 import yaml
 from sqlalchemy import text
 
-from common.config import settings
+from common.config import SUPPORTED_LANG_SUFFIXES, settings
 from common.database import AsyncSessionFactory
+from dal.lang_tables import (
+    bookings_table,
+    chat_session_links_table,
+    doctors_table,
+    ingestion_jobs_table,
+    knowledge_base_table,
+    knowledge_chunks_table,
+)
 from dal.qdrant_client import get_qdrant_client
 
-FIXTURES_DIR = Path(__file__).parent.parent / "eval" / "fixtures"
+
+def _seed_lang() -> str:
+    """Pick the fixture language from SEED_LANG — never guess a default.
+
+    Each language's fixtures (doctors, addresses, phone numbers) are
+    fully independent datasets, so silently falling back to one (e.g.
+    "vn") could seed the wrong language's data without anyone noticing.
+
+    Also cross-checks against settings.lang_suffix (LANG_SUFFIX) — the two
+    env vars are independent (SEED_LANG only picks the fixtures/ directory;
+    LANG_SUFFIX only picks the DB table suffix wipe() truncates), so nothing
+    stops an operator setting SEED_LANG=jp while LANG_SUFFIX defaults to
+    "vn". Without this check that mismatch would silently TRUNCATE the wrong
+    language's tables (wipe() truncates by lang_suffix) while seeding the
+    *other* language's fixtures through the API — a data-loss footgun with no
+    error at all (code-reviewer finding, 2026-07-22 review 1/3).
+    """
+    lang = os.environ.get("SEED_LANG")
+    if lang not in SUPPORTED_LANG_SUFFIXES:
+        raise RuntimeError(
+            f"SEED_LANG={lang!r} is not set to one of {sorted(SUPPORTED_LANG_SUFFIXES)} — "
+            "set SEED_LANG=vn|jp|en explicitly before running this script."
+        )
+    if lang != settings.lang_suffix:
+        raise RuntimeError(
+            f"SEED_LANG={lang!r} does not match settings.lang_suffix={settings.lang_suffix!r} "
+            "(LANG_SUFFIX env var) — wipe() truncates tables by lang_suffix while this seeds "
+            f"the {lang!r} fixtures, so a mismatch would wipe one language's tables and seed "
+            "another's. Set LANG_SUFFIX to the same value as SEED_LANG before running this "
+            "script."
+        )
+    return lang
+
+
+FIXTURES_DIR = Path(__file__).parent.parent / "eval" / "fixtures" / _seed_lang()
 API_BASE = "http://localhost:8000/api/v1"
 
 # TASK-026 decision (eval/data_requirements.md §5.1, option a): the real site
@@ -71,14 +114,25 @@ async def wipe() -> None:
     """Delete every row from the domain tables and the Qdrant collection."""
     _guard_against_production()
     async with AsyncSessionFactory() as session:
+        # All 6 domain tables are suffixed by settings.lang_suffix
+        # (multi-server deploy, 2026-07-22) — this script is meant to run
+        # against one server's own DB tables (matching that server's
+        # LANG_SUFFIX), not the bare pre-migration table names, which no
+        # longer exist after alembic/versions/0002_partition_knowledge_by_language.py
+        # (knowledge_base/knowledge_chunks/ingestion_jobs) and
+        # 0003_partition_business_tables_by_language.py (doctors/bookings/
+        # chat_session_links, ADR-0024).
+        suffix = settings.lang_suffix
         await session.execute(
             text(
-                "TRUNCATE TABLE bookings, knowledge_chunks, ingestion_jobs, "
-                "knowledge_base, doctors RESTART IDENTITY CASCADE"
+                f"TRUNCATE TABLE {bookings_table(suffix)}, {chat_session_links_table(suffix)}, "
+                f"{knowledge_chunks_table(suffix)}, {ingestion_jobs_table(suffix)}, "
+                f"{knowledge_base_table(suffix)}, {doctors_table(suffix)} "
+                "RESTART IDENTITY CASCADE"
             )
         )
         await session.execute(
-            text(f"ALTER SEQUENCE doctors_id_seq RESTART WITH {DOCTOR_ID_SEQUENCE_START}")
+            text(f"ALTER SEQUENCE {doctors_table(suffix)}_id_seq RESTART WITH {DOCTOR_ID_SEQUENCE_START}")
         )
         await session.commit()
 
@@ -94,19 +148,16 @@ def _parse_fixture(path: Path) -> dict:
     return {"category": meta["category"], "title": meta["title"], "content": body.strip()}
 
 
-# doctors.yaml (verified-real) is seeded FIRST so its rows keep ids 3–13 (the
-# ids eval cases hardcode); doctors_coverage_fill.yaml (synthetic top-up so
-# every specialty has >= 2 active doctors, BUG-017) is seeded AFTER, taking
-# ids 14+. Keep this order stable so a reseed reproduces the same ids.
-_DOCTOR_FIXTURES = ("doctors.yaml", "doctors_coverage_fill.yaml")
+# doctors.yaml holds every doctor for the language in seed order — ids are
+# assigned sequentially starting at DOCTOR_ID_SEQUENCE_START, so keep this
+# file's row order stable across reseeds to reproduce the same ids.
+_DOCTORS_FILE = "doctors.yaml"
 
 
-async def _seed_doctor_fixture(http: httpx.AsyncClient, filename: str) -> list[int]:
-    fixture = yaml.safe_load((FIXTURES_DIR / filename).read_text(encoding="utf-8"))
+async def seed_doctors(http: httpx.AsyncClient) -> list[int]:
+    fixture = yaml.safe_load((FIXTURES_DIR / _DOCTORS_FILE).read_text(encoding="utf-8"))
     ids = []
     for doctor in fixture["doctors"]:
-        # coverage-fill rows carry name/title/specialty only; .get() keeps the
-        # richer real-doctor rows working while letting the sparse ones default.
         body = {
             "full_name": doctor["full_name"],
             "title": doctor.get("title"),
@@ -122,13 +173,6 @@ async def _seed_doctor_fixture(http: httpx.AsyncClient, filename: str) -> list[i
         resp = await http.post(f"{API_BASE}/doctors", json=body)
         resp.raise_for_status()
         ids.append(resp.json()["id"])
-    return ids
-
-
-async def seed_doctors(http: httpx.AsyncClient) -> list[int]:
-    ids: list[int] = []
-    for filename in _DOCTOR_FIXTURES:
-        ids.extend(await _seed_doctor_fixture(http, filename))
     return ids
 
 

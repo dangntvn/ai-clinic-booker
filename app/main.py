@@ -24,6 +24,10 @@
 #              built widget bundle directly") was removed 2026-07-16 — the
 #              widget is now hosted separately from this backend (CEO
 #              decision, see .claude/memory/2026-07-16-widget-hosting-moved-off-backend.md).
+#              Render demo deploy (docs/render-deploy.md): the ingestion cron can be disabled
+#              via ``settings.enable_ingestion_cron`` (env ``ENABLE_INGESTION_CRON=false``) —
+#              CEO runs ingestion/cron on a local machine for that demo, Render only serves
+#              chat/API. Scheduler code itself is untouched, just not started.
 ###############################################################################
 
 from contextlib import asynccontextmanager
@@ -33,12 +37,24 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import build_router
 from common.config import settings
+from common.observability import get_logger
 from modules.knowledge_ingestion.cron import setup_scheduler
+
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    """Start the ingestion cron scheduler on boot, stop it on shutdown."""
+    """Start the ingestion cron scheduler on boot, stop it on shutdown.
+
+    Skipped entirely when ``settings.enable_ingestion_cron`` is False — the app still serves
+    chat/API traffic normally, it just never calls ``setup_scheduler()``/starts the
+    APScheduler jobstore (see docs/render-deploy.md for why the Render demo deploy sets this).
+    """
+    if not settings.enable_ingestion_cron:
+        logger.info("ingestion_cron.disabled", reason="ENABLE_INGESTION_CRON=false")
+        yield
+        return
     scheduler = setup_scheduler()
     scheduler.start()
     yield

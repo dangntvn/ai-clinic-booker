@@ -1,0 +1,349 @@
+# Fixture bác sĩ — dữ liệu HOÀN TOÀN GIẢ ĐỊNH/ẨN DANH (không phải người thật), dùng riêng cho eval.
+# Field khớp đúng tên cột model `dal/doctor_repository.py::Doctor`.
+# specialty PHẢI là 1 trong 14 mã snake_case của SPECIALTIES (dal/specialties.py, ADR-0026,
+# 2026-07-22) — validate cứng ở modules/doctor/services.py::validate_specialty. specialty là mã
+# định danh nội bộ, KHÔNG phải nhãn hiển thị — tên hiển thị đến từ specialty_display_name().
+# work_days: seed_eval_fixtures.py ghi đè bằng TEST_WORK_DAYS cố định cho mọi bác sĩ, không đọc từ field này.
+# fee: chưa có giá trị mẫu — để null.
+#
+# JP fixture (ADR-0024, 2026-07-22): full_name là tên Nhật giả lập (không phải người thật,
+# không phiên âm/dịch từ tên Việt — server jp có roster bác sĩ riêng, khác người với vn/en).
+# title dịch sang tiếng Nhật y tế chuẩn; specialty là MÃ snake_case cố định (không đổi theo ngôn
+# ngữ, ADR-0026) — tên hiển thị tiếng Nhật của khoa đến từ dal/specialties.py, không nằm ở đây.
+
+doctors:
+  - full_name: "Sato Yuki"
+    title: "医師"
+    specialty: "general_internal_medicine"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Suzuki Haruka"
+    title: "医師"
+    specialty: "general_internal_medicine"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: "一般内科疾患の診察・治療において豊富な経験を有しています。"
+    education: null
+
+  - full_name: "Takahashi Sota"
+    title: "専門医（レベルI）"
+    specialty: "pediatrics"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Tanaka Nanami"
+    title: "専門医（レベルI）"
+    specialty: "obstetrics_gynecology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: "幅広い年齢層の女性を対象に、産婦人科の診察・相談の経験を有しています。"
+    education: null
+
+  - full_name: "Watanabe Ren"
+    title: "医学修士・専門医"
+    specialty: "neurology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: "神経系疾患に関する診察・相談を専門としています。"
+    education: null
+
+  - full_name: "Ito Sakura"
+    title: "医師"
+    specialty: "dermatology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Yamamoto Yuto"
+    title: "専門医（レベルI）"
+    specialty: "otolaryngology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Nakamura Misaki"
+    title: "専門医（レベルI）"
+    specialty: "ophthalmology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Kobayashi Kaito"
+    title: "医師"
+    specialty: "dentistry"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Kato Ayaka"
+    title: "医学修士・医師"
+    specialty: "musculoskeletal"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Yoshida Rina"
+    title: "医学修士・医師"
+    specialty: "musculoskeletal"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Yamada Sho"
+    title: "専門医（レベルII）"
+    specialty: "cardiology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Sasaki Emi"
+    title: "医学修士・医師"
+    specialty: "cardiology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Yamaguchi Daiki"
+    title: "専門医（レベルI）"
+    specialty: "gastroenterology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Matsumoto Hana"
+    title: "医師"
+    specialty: "gastroenterology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Inoue Kenta"
+    title: "専門医（レベルI）"
+    specialty: "pulmonology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Kimura Kaori"
+    title: "医学修士・医師"
+    specialty: "pulmonology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Hayashi Takumi"
+    title: "専門医（レベルII）"
+    specialty: "endocrinology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Shimizu Miyu"
+    title: "医師"
+    specialty: "endocrinology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Yamazaki Hiroshi"
+    title: "専門医（レベルI）"
+    specialty: "urology_andrology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午前"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Mori Aoi"
+    title: "医学修士・医師"
+    specialty: "urology_andrology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Abe Kenji"
+    title: "専門医（レベルI）"
+    specialty: "pediatrics"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Ikeda Ai"
+    title: "専門医（レベルI）"
+    specialty: "obstetrics_gynecology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Hashimoto Tomoya"
+    title: "医学修士・医師"
+    specialty: "neurology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Yamashita Yui"
+    title: "医師"
+    specialty: "dermatology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Ishikawa Riku"
+    title: "専門医（レベルI）"
+    specialty: "otolaryngology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Nakajima Chiharu"
+    title: "医師"
+    specialty: "ophthalmology"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null
+
+  - full_name: "Maeda Ryo"
+    title: "専門医（レベルI）"
+    specialty: "dentistry"
+    phone: null
+    work_days: null
+    room: null
+    shift: "午後"
+    fee: null
+    is_active: true
+    bio: null
+    education: null

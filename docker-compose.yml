@@ -12,6 +12,64 @@ services:
       qdrant:
         condition: service_healthy
 
+  # Per-language server partitioning (ADR-0023) — 3 independent servers sharing
+  # the one Postgres/Qdrant below, each fixed to its own LANG_SUFFIX for the
+  # process lifetime via env_file. Not started alongside `app` above (that's
+  # the single-language dev default) — used for local 3-server test scenarios.
+  # Gated behind the `multi-lang` profile (see `profiles:` on each service
+  # below) so a bare `docker compose up` never starts these alongside `app`.
+  #
+  # LẦN ĐẦU TRÊN DB RỖNG — BẮT BUỘC migrate tuần tự, KHÔNG chạy song song (ADR-0023):
+  #   docker compose run --rm --no-deps app-vn alembic upgrade head
+  #   docker compose run --rm --no-deps app-jp alembic upgrade head
+  #   docker compose run --rm --no-deps app-en alembic upgrade head
+  # (each command overrides the container's CMD to run ONLY `alembic upgrade
+  # head`, no uvicorn — run one at a time, wait for each to exit before
+  # starting the next; do not run these three in parallel/background.)
+  # Only after all three commands above have completed (one at a time) is it
+  # safe to run:
+  #   docker compose --profile multi-lang up -d app-vn app-jp app-en
+  # At that point `alembic upgrade head` inside each service's CMD is a no-op
+  # (already at head), so starting all three together is safe. Running the
+  # `up` step on a still-empty DB without doing the sequential step first
+  # violates the ADR-0023 mandatory operational constraint (concurrent
+  # check-then-act race in the idempotent-guard migrations).
+  app-vn:
+    build: .
+    env_file: .env.vn
+    ports:
+      - "8001:8000"
+    profiles: ["multi-lang"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  app-jp:
+    build: .
+    env_file: .env.jp
+    ports:
+      - "8002:8000"
+    profiles: ["multi-lang"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  app-en:
+    build: .
+    env_file: .env.en
+    ports:
+      - "8003:8000"
+    profiles: ["multi-lang"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
   qdrant:
     image: qdrant/qdrant:latest
     ports:
@@ -27,15 +85,15 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ai_clinic_booker}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ai_clinic_booker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 10

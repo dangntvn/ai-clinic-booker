@@ -25,6 +25,9 @@
 #              holds ChatSessionLink — a thin mapping table so
 #              modules/booking can look up a booking's chat history via
 #              ADK's SessionService, without storing message content here.
+#              Both tables (and their FK targets/index name) are suffixed by
+#              language (ADR-0024, 2026-07-22) — each server's bookings only
+#              ever reference that same server's own doctors_{suffix} roster.
 ###############################################################################
 
 from datetime import UTC, date, datetime, time, timedelta
@@ -33,10 +36,12 @@ from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, select, tex
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column
 
+from common.config import settings
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
 from core.exceptions import InvalidSlotError, NotFoundError, SlotTakenError
 from dal.doctor_repository import Doctor
+from dal.lang_tables import bookings_table, chat_session_links_table, doctors_table
 
 # Clinic hours (ARCH-001 doesn't pin these — a single-branch clinic default;
 # revisit if per-doctor shifts need finer-grained slotting than "work_days").
@@ -48,17 +53,22 @@ SLOT_DURATION_MINUTES = 30
 
 
 class Booking(BaseModel):
-    """ORM model for the ``bookings`` table (ARCH-001 §6.1, ADR-0009).
+    """ORM model for the ``bookings_{lang_suffix}`` table (ARCH-001 §6.1, ADR-0009).
 
     The partial unique index is created in the Alembic migration, not here —
     SQLAlchemy's declarative ``Index`` with a ``postgresql_where`` clause is
     used so ``Base.metadata`` reflects it for autogenerate.
+
+    Table name, FK target, and index name are all suffixed by
+    ``settings.lang_suffix`` (ADR-0024, 2026-07-22) — the index name must be
+    suffixed too since all 3 servers' tables live on the one shared Postgres
+    instance and index names aren't scoped per-table the way column names are.
     """
 
-    __tablename__ = "bookings"
+    __tablename__ = bookings_table(settings.lang_suffix)
     __table_args__ = (
         Index(
-            "ix_bookings_doctor_slot_active",
+            f"ix_bookings_{settings.lang_suffix}_doctor_slot_active",
             "doctor_id",
             "slot_time",
             unique=True,
@@ -69,7 +79,9 @@ class Booking(BaseModel):
     patient_name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone: Mapped[str] = mapped_column(String(32), nullable=False)
     doctor_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("doctors.id", ondelete="RESTRICT"), nullable=False
+        Integer,
+        ForeignKey(f"{doctors_table(settings.lang_suffix)}.id", ondelete="RESTRICT"),
+        nullable=False,
     )
     # DateTime(timezone=True) must be explicit — Mapped[datetime] alone infers
     # a naive DateTime(), mismatching the TIMESTAMPTZ column (BUG-006) and
@@ -79,17 +91,20 @@ class Booking(BaseModel):
 
 
 class ChatSessionLink(BaseModel):
-    """ORM model for ``chat_session_links`` — thin booking-to-session mapping.
+    """ORM model for ``chat_session_links_{lang_suffix}`` — thin booking-to-session mapping.
 
     No message content lives here; ``session_id`` is the key into ADK's own
     ``sessions``/``events`` tables via ``SessionService.get_session()``
-    (ARCH-001 §6.1) — never queried directly.
+    (ARCH-001 §6.1) — never queried directly. Table name and FK target are
+    suffixed by language (ADR-0024, 2026-07-22), same rationale as ``Booking``.
     """
 
-    __tablename__ = "chat_session_links"
+    __tablename__ = chat_session_links_table(settings.lang_suffix)
 
     booking_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("bookings.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey(f"{bookings_table(settings.lang_suffix)}.id", ondelete="CASCADE"),
+        nullable=False,
     )
     session_id: Mapped[str] = mapped_column(String(128), nullable=False)
     user_id: Mapped[str] = mapped_column(String(128), nullable=False)

@@ -20,17 +20,26 @@
 from sqlalchemy import ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
+from common.config import settings
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
+from dal.lang_tables import knowledge_base_table, knowledge_chunks_table
 
 
 class KnowledgeChunk(BaseModel):
-    """ORM model for the ``knowledge_chunks`` table (ADR-0021)."""
+    """ORM model for the ``knowledge_chunks_{lang_suffix}`` table (ADR-0021).
 
-    __tablename__ = "knowledge_chunks"
+    Table name (and the FK target below) is suffixed by ``settings.lang_suffix``
+    — see dal/knowledge_repository.py::KnowledgeBase docstring for the
+    multi-server rationale.
+    """
+
+    __tablename__ = knowledge_chunks_table(settings.lang_suffix)
 
     knowledge_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("knowledge_base.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey(f"{knowledge_base_table(settings.lang_suffix)}.id", ondelete="CASCADE"),
+        nullable=False,
     )
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     text: Mapped[str] = mapped_column(String, nullable=False)

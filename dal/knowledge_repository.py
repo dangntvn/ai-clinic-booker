@@ -22,17 +22,26 @@ from datetime import datetime
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from common.config import settings
 from core.base_model import BaseModel
 from core.base_repository import BaseRepository
+from dal.lang_tables import knowledge_base_table
 
 # BIZ-001/SRS-001 knowledge categories — must match Qdrant payload filter values.
 KNOWLEDGE_CATEGORIES = ("policy", "clinic_info", "medical_guide")
 
 
 class KnowledgeBase(BaseModel):
-    """ORM model for the ``knowledge_base`` table (ARCH-001 §6.1)."""
+    """ORM model for the ``knowledge_base_{lang_suffix}`` table (ARCH-001 §6.1).
 
-    __tablename__ = "knowledge_base"
+    Table name is suffixed by ``settings.lang_suffix`` (multi-server deploy,
+    2026-07-22, see dal/lang_tables.py) so each of the 3 language-specific
+    servers (vn/jp/en) owns its own table on the one shared Postgres instance.
+    ``settings`` is a module-load-time singleton (common/config.py), so this
+    is evaluated once per process, matching that process's fixed language.
+    """
+
+    __tablename__ = knowledge_base_table(settings.lang_suffix)
 
     category: Mapped[str] = mapped_column(String(32), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)

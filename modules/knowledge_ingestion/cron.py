@@ -25,15 +25,38 @@ from sqlalchemy import text
 from common.config import settings
 from common.database import AsyncSessionFactory
 from common.observability import get_logger
+from dal.lang_tables import ingestion_jobs_table
 from modules.knowledge_ingestion import job_chunk, job_embedding
 
 logger = get_logger(__name__)
+
+# Suffixed per-language table name (multi-server deploy, 2026-07-22) — this module
+# polls ingestion_jobs with raw SQL (not the ORM), so it must build the same
+# settings.lang_suffix-suffixed name as dal/ingestion_job_repository.py's
+# IngestionJob model rather than the old bare "ingestion_jobs" name, which no
+# longer exists after alembic/versions/0002_partition_knowledge_by_language.py.
+# Safe to interpolate directly (not a bind param — SQL can't parameterise
+# identifiers): lang_suffix is restricted to {"vn", "jp", "en"} by
+# Settings._validate_lang_suffix, never derived from unsanitised input.
+_INGESTION_JOBS_TABLE = ingestion_jobs_table(settings.lang_suffix)
 
 # APScheduler requires a synchronous SQLAlchemy URL for its job store; psycopg
 # (v3, sync mode) is the driver installed in pyproject.toml, not psycopg2.
 _sync_db_url = settings.database_url.replace("+asyncpg", "+psycopg")
 
-scheduler = AsyncIOScheduler(jobstores={"default": SQLAlchemyJobStore(url=_sync_db_url)})
+# SQLAlchemyJobStore.__init__(url=..., engine_options=None, ...) forwards
+# engine_options straight to create_engine(url, **engine_options) (verified against the
+# installed apscheduler source) — passing connect_args here (same sslmode
+# settings.postgres_sync_connect_args used by alembic/env.py) keeps this jobstore's
+# engine consistent with the rest of the app's SSL handling for managed Postgres.
+scheduler = AsyncIOScheduler(
+    jobstores={
+        "default": SQLAlchemyJobStore(
+            url=_sync_db_url,
+            engine_options={"connect_args": settings.postgres_sync_connect_args},
+        )
+    }
+)
 
 
 async def poll_chunk_jobs() -> None:
@@ -41,7 +64,7 @@ async def poll_chunk_jobs() -> None:
     async with AsyncSessionFactory() as session:
         result = await session.execute(
             text(
-                "SELECT id FROM ingestion_jobs WHERE status = 'pending_chunk' "
+                f"SELECT id FROM {_INGESTION_JOBS_TABLE} WHERE status = 'pending_chunk' "
                 "ORDER BY created_at ASC LIMIT :limit"
             ),
             {"limit": settings.ingestion_job_batch_size},
@@ -59,7 +82,7 @@ async def poll_embed_jobs() -> None:
     async with AsyncSessionFactory() as session:
         result = await session.execute(
             text(
-                "SELECT id FROM ingestion_jobs WHERE status = 'pending_embed' "
+                f"SELECT id FROM {_INGESTION_JOBS_TABLE} WHERE status = 'pending_embed' "
                 "ORDER BY created_at ASC LIMIT :limit"
             ),
             {"limit": settings.ingestion_job_batch_size},
@@ -82,7 +105,7 @@ async def sweep_stuck_jobs() -> None:
     async with AsyncSessionFactory() as session:
         stuck_result = await session.execute(
             text(
-                "UPDATE ingestion_jobs "
+                f"UPDATE {_INGESTION_JOBS_TABLE} "
                 "SET status = CASE "
                 "  WHEN status = 'chunking' THEN 'pending_chunk' "
                 "  WHEN status = 'embedding' THEN 'pending_embed' "
@@ -98,7 +121,7 @@ async def sweep_stuck_jobs() -> None:
 
         failed_result = await session.execute(
             text(
-                "UPDATE ingestion_jobs "
+                f"UPDATE {_INGESTION_JOBS_TABLE} "
                 "SET status = 'pending_chunk', updated_at = now() "
                 "WHERE status = 'failed' AND retry_count < :max_retry"
             ),

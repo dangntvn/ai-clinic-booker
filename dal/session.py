@@ -33,8 +33,17 @@ def get_session_service() -> BaseSessionService:
     creates its own async SQLAlchemy engine and, on first use, its 5 internal
     tables (``sessions``, ``events``, ``app_states``, ``user_states``,
     ``adk_internal_metadata``) in the same Postgres instance (ADR-0015).
+
+    ``DatabaseSessionService.__init__(self, db_url, **kwargs)`` forwards every
+    extra kwarg straight to ``create_async_engine(db_url, **kwargs)`` (verified
+    against the installed ``google-adk==2.3.0`` source) — passing
+    ``connect_args=settings.postgres_async_connect_args`` here keeps this
+    engine's SSL behaviour consistent with ``common/database.py``'s own
+    ``create_async_engine`` call for managed Postgres (Neon/Supabase).
     """
     global _session_service
     if _session_service is None:
-        _session_service = DatabaseSessionService(settings.database_url)
+        _session_service = DatabaseSessionService(
+            settings.database_url, connect_args=settings.postgres_async_connect_args
+        )
     return _session_service

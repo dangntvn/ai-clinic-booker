@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from common.admin_lock import require_admin_unlocked
 from common.database import get_session
 from core.exceptions import AppException
 from modules.doctor import services
@@ -59,7 +60,7 @@ class DoctorUpdate(BaseModel):
     extra: dict | None = None
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_admin_unlocked)])
 async def create_doctor(body: DoctorIn, session: AsyncSession = Depends(get_session)):
     try:
         doctor = await services.create_doctor(session, body.model_dump())
@@ -83,7 +84,7 @@ async def get_doctor(doctor_id: int, session: AsyncSession = Depends(get_session
     return doctor
 
 
-@router.patch("/{doctor_id}")
+@router.patch("/{doctor_id}", dependencies=[Depends(require_admin_unlocked)])
 async def update_doctor(
     doctor_id: int, body: DoctorUpdate, session: AsyncSession = Depends(get_session)
 ):
@@ -96,7 +97,7 @@ async def update_doctor(
         raise HTTPException(status_code=code, detail=e.message) from e
 
 
-@router.post("/{doctor_id}/deactivate")
+@router.post("/{doctor_id}/deactivate", dependencies=[Depends(require_admin_unlocked)])
 async def deactivate_doctor(doctor_id: int, session: AsyncSession = Depends(get_session)):
     try:
         return await services.deactivate_doctor(session, doctor_id)
